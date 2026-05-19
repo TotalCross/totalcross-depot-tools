@@ -4,10 +4,17 @@ FROM arm64v8/ubuntu:bionic
 # TotalCross
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        ca-certificates \
+        gnupg \
+        wget && \
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add - && \
+    echo 'deb https://apt.kitware.com/ubuntu/ bionic main' > /etc/apt/sources.list.d/kitware.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         cmake \
         curl \
         git \
-        gnupg \
         ninja-build \
         build-essential \
         libfontconfig1-dev \
@@ -39,9 +46,7 @@ RUN apt-get update && \
         libwayland-dev \
         libxkbcommon-dev \
         wayland-protocols \
-        ca-certificates \
-        rsync \
-        wget; \
+        rsync; \
     apt-get install -y libglvnd-dev || apt-get -f install; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
