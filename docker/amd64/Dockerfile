@@ -15,6 +15,7 @@ RUN apt-get update && \
         cmake \
         curl \
         git \
+        build-essential \
         libsdl2-dev \
         libfontconfig1-dev \
         ninja-build \
