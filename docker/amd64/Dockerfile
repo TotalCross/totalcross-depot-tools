@@ -12,6 +12,7 @@ RUN apt-get update && \
     echo 'deb https://apt.kitware.com/ubuntu/ bionic main' > /etc/apt/sources.list.d/kitware.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
+        ccache \
         cmake \
         curl \
         git \
