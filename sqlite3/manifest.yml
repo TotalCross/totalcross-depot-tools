@@ -1,0 +1,19 @@
+name: sqlite3
+version: 3.32.3
+release: sqlite3-3.32.3
+source:
+  type: zip
+  url: https://www.sqlite.org/2020/sqlite-amalgamation-3320300.zip
+  directory: sqlite-amalgamation-3320300
+build:
+  cmake_options:
+    - SQLITE_ENABLE_COLUMN_METADATA
+    - SQLITE_ENABLE_FTS5
+    - SQLITE_ENABLE_RTREE
+artifact:
+  include:
+    - sqlite3.h
+    - sqlite3ext.h
+  libraries:
+    - sqlite3
+

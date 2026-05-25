@@ -1,0 +1,20 @@
+name: mbedtls
+version: 3.5.2
+release: mbedtls-3.5.2
+source:
+  type: tar.gz
+  url: https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.5.2.tar.gz
+  directory: mbedtls-3.5.2
+build:
+  cmake_options:
+    ENABLE_TESTING: OFF
+    ENABLE_PROGRAMS: OFF
+artifact:
+  include:
+    - mbedtls
+    - psa
+  libraries:
+    - mbedtls
+    - mbedcrypto
+    - mbedx509
+

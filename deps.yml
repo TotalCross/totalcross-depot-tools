@@ -1,0 +1,24 @@
+bundle: native-deps-totalcross-7.2.0
+
+dependencies:
+  sqlite3:
+    version: 3.32.3
+    release: sqlite3-3.32.3
+    path: sqlite3
+  sqlite3-see:
+    version: 3.32.3
+    release: sqlite3-see-3.32.3
+    path: sqlite3-see
+  mbedtls:
+    version: 3.5.2
+    release: mbedtls-3.5.2
+    path: mbedtls
+  zlib:
+    version: 1.3.1
+    release: zlib-1.3.1
+    path: zlib
+  libpng:
+    version: 1.6.43
+    release: libpng-1.6.43
+    path: libpng
+

@@ -23,13 +23,13 @@ jobs:
       matrix:
         include:
           - image: totalcross/linux-amd64
-            dockerfile: docker/amd64/Dockerfile
+            dockerfile: docker/linux-amd64/Dockerfile
             platform: linux/amd64
           - image: totalcross/linux-arm32v7
-            dockerfile: docker/arm32v7/Dockerfile
+            dockerfile: docker/linux-arm32v7/Dockerfile
             platform: linux/arm/v7
           - image: totalcross/linux-arm64
-            dockerfile: docker/arm64/Dockerfile
+            dockerfile: docker/linux-arm64/Dockerfile
             platform: linux/arm64
 
     steps:
