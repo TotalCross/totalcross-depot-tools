@@ -1,0 +1,63 @@
+name: Release skia
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Skia target to build
+        required: true
+        default: linux-x86_64
+        type: choice
+        options:
+          - linux-x86_64
+          - macos-arm64
+          - macos-x86_64
+          - android-arm64
+          - android-armv7
+      upload_dev_bundle:
+        description: Package and upload the shared Skia dev bundle
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  release:
+    name: Build skia ${{ inputs.target }}
+    runs-on: ${{ startsWith(inputs.target, 'macos-') && 'macos-14' || 'ubuntu-24.04' }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Install Linux build tools
+        if: ${{ !startsWith(inputs.target, 'macos-') }}
+        run: sudo apt-get update && sudo apt-get install -y ninja-build python3 rsync
+
+      - name: Install Android NDK
+        id: setup-ndk
+        if: ${{ startsWith(inputs.target, 'android-') }}
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+          add-to-path: false
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build selected Skia target
+        working-directory: skia
+        env:
+          NDK_BUNDLE: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: ./scripts/build-${{ inputs.target }}.sh
+
+      - name: Package dev bundle
+        if: ${{ inputs.upload_dev_bundle }}
+        working-directory: skia
+        run: ./scripts/package-dev-bundle.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: skia-${{ inputs.target }}
+          path: skia/dist/*

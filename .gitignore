@@ -1,0 +1,13 @@
+# Dependency build outputs
+*/build/
+*/dist/
+*/install/
+*/out/
+*/src/
+*/staging/
+
+# Skia fetch/build working trees and installed prebuilts
+skia/depot_tools/
+skia/local/
+skia/skia/
+

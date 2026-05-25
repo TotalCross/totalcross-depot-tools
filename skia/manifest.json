@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "skia": {
+    "submodule_path": "skia",
+    "upstream_url": "https://skia.googlesource.com/skia.git",
+    "commit": "158dc9d7d4cafb177b99b68c5dc502f8f4282092"
+  },
+  "depot_tools": {
+    "submodule_path": "depot_tools",
+    "upstream_url": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
+    "commit": "e868546ad82d7d25eb0a925825d033c355e28152"
+  },
+  "release": {
+    "tag": "skia-158dc9d7-r1",
+    "dev_bundle": "skia-dev-158dc9d7.tar.gz",
+    "assets": [
+      "libskia-macos-arm64.a",
+      "libskia-macos-x86_64.a",
+      "libskia-linux-aarch64.a",
+      "libskia-linux-armv7l.a",
+      "libskia-linux-x86_64.a",
+      "libskia-android-arm64-v8a.so",
+      "libskia-android-armeabi-v7a.so"
+    ]
+  }
+}
+

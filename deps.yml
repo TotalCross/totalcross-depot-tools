@@ -21,4 +21,7 @@ dependencies:
     version: 1.6.43
     release: libpng-1.6.43
     path: libpng
-
+  skia:
+    version: 158dc9d7
+    release: skia-158dc9d7-r1
+    path: skia

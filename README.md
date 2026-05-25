@@ -14,10 +14,13 @@ packaging and CMake consumption files.
 - `<dependency>/scripts/package-artifact.sh`: creates release archives.
 - `docker`: shared build images by target platform.
 
+Skia is the exception on the build side: it is built with GN/Ninja through 
+scripts, and consumed through the CMake fetch/find modules imported from 
+TotalCrossVM.
+
 TotalCross can consume this repository as a submodule or as an unpacked package:
 
 ```cmake
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/sqlite3/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/mbedtls/cmake")
 ```
-
