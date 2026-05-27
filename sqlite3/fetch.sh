@@ -13,7 +13,7 @@ Options:
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: SQLITE3_GITHUB_TOKEN, then GITHUB_TOKEN
-  --dest DIR               Destination directory, default: sqlite3/local
+  --dest DIR               Destination root, default: sqlite3/local
 EOF
 }
 
@@ -25,7 +25,7 @@ variant="plain"
 release_tag="sqlite-3.32.3"
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
-dest="${script_dir}/local"
+dest_root="${script_dir}/local"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -54,7 +54,7 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --dest)
-      dest="${2:-}"
+      dest_root="${2:-}"
       shift 2
       ;;
     -h|--help)
@@ -236,6 +236,7 @@ if ! find "${artifact_root}/lib" -type f \( -name "libsqlite3.a" -o -name "sqlit
   exit 1
 fi
 
+dest="${dest_root}/${platform}/${arch}"
 rm -rf "${dest}"
 mkdir -p "${dest}"
 cp -a "${artifact_root}/." "${dest}/"

@@ -7,35 +7,7 @@ get_filename_component(TCVM_SQLITE3_AUTOFETCH_DEP_DIR "${TCVM_SQLITE3_AUTOFETCH_
 
 function(tcvm_auto_fetch_sqlite3)
   set(TCVM_SQLITE3_DEP_DIR "${TCVM_SQLITE3_AUTOFETCH_DEP_DIR}")
-  set(TCVM_DEFAULT_SQLITE3_DIR "${TCVM_SQLITE3_DEP_DIR}/local")
-
-  if(DEFINED SQLITE3_DIR AND NOT SQLITE3_DIR STREQUAL "${TCVM_DEFAULT_SQLITE3_DIR}")
-    return()
-  endif()
-
-  if(NOT DEFINED SQLITE3_DIR)
-    set(SQLITE3_DIR "${TCVM_DEFAULT_SQLITE3_DIR}" CACHE PATH "SQLite3 prebuilt directory")
-  endif()
-
-  if(WIN32)
-    set(TCVM_SQLITE3_LIBRARY "${SQLITE3_DIR}/lib/sqlite3.lib")
-  else()
-    set(TCVM_SQLITE3_LIBRARY "${SQLITE3_DIR}/lib/libsqlite3.a")
-  endif()
-
-  if(EXISTS "${SQLITE3_DIR}/include/sqlite3.h" AND EXISTS "${TCVM_SQLITE3_LIBRARY}")
-    return()
-  endif()
-
-  find_program(TCVM_BASH_EXECUTABLE bash)
-  if(NOT TCVM_BASH_EXECUTABLE)
-    message(FATAL_ERROR "Unable to auto-fetch SQLite3 because 'bash' was not found")
-  endif()
-
-  set(TCVM_SQLITE3_FETCH_SCRIPT "${TCVM_SQLITE3_DEP_DIR}/fetch.sh")
-  if(NOT EXISTS "${TCVM_SQLITE3_FETCH_SCRIPT}")
-    message(FATAL_ERROR "Unable to auto-fetch SQLite3 because '${TCVM_SQLITE3_FETCH_SCRIPT}' does not exist")
-  endif()
+  set(TCVM_SQLITE3_LOCAL_ROOT "${TCVM_SQLITE3_DEP_DIR}/local")
 
   if(NOT DEFINED SQLITE3_VARIANT AND DEFINED ENV{SQLITE3_VARIANT})
     set(SQLITE3_VARIANT "$ENV{SQLITE3_VARIANT}")
@@ -106,6 +78,34 @@ function(tcvm_auto_fetch_sqlite3)
     message(FATAL_ERROR "Unable to auto-fetch SQLite3 for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
   endif()
 
+  set(TCVM_DEFAULT_SQLITE3_DIR "${TCVM_SQLITE3_LOCAL_ROOT}/${TCVM_SQLITE3_PLATFORM}/${TCVM_SQLITE3_ARCH}")
+
+  if(DEFINED SQLITE3_DIR AND NOT SQLITE3_DIR STREQUAL "${TCVM_DEFAULT_SQLITE3_DIR}")
+    return()
+  endif()
+
+  set(SQLITE3_DIR "${TCVM_DEFAULT_SQLITE3_DIR}" CACHE PATH "SQLite3 prebuilt directory" FORCE)
+
+  if(WIN32)
+    set(TCVM_SQLITE3_LIBRARY "${SQLITE3_DIR}/lib/sqlite3.lib")
+  else()
+    set(TCVM_SQLITE3_LIBRARY "${SQLITE3_DIR}/lib/libsqlite3.a")
+  endif()
+
+  if(EXISTS "${SQLITE3_DIR}/include/sqlite3.h" AND EXISTS "${TCVM_SQLITE3_LIBRARY}")
+    return()
+  endif()
+
+  find_program(TCVM_BASH_EXECUTABLE bash)
+  if(NOT TCVM_BASH_EXECUTABLE)
+    message(FATAL_ERROR "Unable to auto-fetch SQLite3 because 'bash' was not found")
+  endif()
+
+  set(TCVM_SQLITE3_FETCH_SCRIPT "${TCVM_SQLITE3_DEP_DIR}/fetch.sh")
+  if(NOT EXISTS "${TCVM_SQLITE3_FETCH_SCRIPT}")
+    message(FATAL_ERROR "Unable to auto-fetch SQLite3 because '${TCVM_SQLITE3_FETCH_SCRIPT}' does not exist")
+  endif()
+
   message(STATUS "SQLite3 artifacts not found locally. Fetching ${SQLITE3_VARIANT}/${TCVM_SQLITE3_PLATFORM}/${TCVM_SQLITE3_ARCH}...")
 
   execute_process(
@@ -117,7 +117,7 @@ function(tcvm_auto_fetch_sqlite3)
       --release-tag "${SQLITE3_RELEASE_TAG}"
       --github-repo "${SQLITE3_GITHUB_REPO}"
       --github-token-env "${SQLITE3_GITHUB_TOKEN_ENV}"
-      --dest "${SQLITE3_DIR}"
+      --dest "${TCVM_SQLITE3_LOCAL_ROOT}"
     WORKING_DIRECTORY "${TCVM_SQLITE3_DEP_DIR}"
     RESULT_VARIABLE TCVM_SQLITE3_FETCH_RESULT
     OUTPUT_VARIABLE TCVM_SQLITE3_FETCH_STDOUT

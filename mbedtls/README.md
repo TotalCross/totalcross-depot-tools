@@ -19,6 +19,9 @@ mbedtls/<platform>/<arch>/
   manifest.txt
 ```
 
+Fetched prebuilts are installed with the same platform split under
+`local/<platform>/<arch>`.
+
 To consume a prebuilt release asset:
 
 ```bash

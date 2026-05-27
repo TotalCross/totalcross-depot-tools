@@ -7,42 +7,7 @@ get_filename_component(TCVM_MBEDTLS_AUTOFETCH_DEP_DIR "${TCVM_MBEDTLS_AUTOFETCH_
 
 function(tcvm_auto_fetch_mbedtls)
   set(TCVM_MBEDTLS_DEP_DIR "${TCVM_MBEDTLS_AUTOFETCH_DEP_DIR}")
-  set(TCVM_DEFAULT_MBEDTLS_DIR "${TCVM_MBEDTLS_DEP_DIR}/local")
-
-  if(DEFINED MBEDTLS_DIR AND NOT MBEDTLS_DIR STREQUAL "${TCVM_DEFAULT_MBEDTLS_DIR}")
-    return()
-  endif()
-
-  if(NOT DEFINED MBEDTLS_DIR)
-    set(MBEDTLS_DIR "${TCVM_DEFAULT_MBEDTLS_DIR}" CACHE PATH "mbedTLS prebuilt directory")
-  endif()
-
-  if(WIN32)
-    set(TCVM_MBEDTLS_LIBRARY "${MBEDTLS_DIR}/lib/mbedtls.lib")
-    set(TCVM_MBEDX509_LIBRARY "${MBEDTLS_DIR}/lib/mbedx509.lib")
-    set(TCVM_MBEDCRYPTO_LIBRARY "${MBEDTLS_DIR}/lib/mbedcrypto.lib")
-  else()
-    set(TCVM_MBEDTLS_LIBRARY "${MBEDTLS_DIR}/lib/libmbedtls.a")
-    set(TCVM_MBEDX509_LIBRARY "${MBEDTLS_DIR}/lib/libmbedx509.a")
-    set(TCVM_MBEDCRYPTO_LIBRARY "${MBEDTLS_DIR}/lib/libmbedcrypto.a")
-  endif()
-
-  if(EXISTS "${MBEDTLS_DIR}/include/mbedtls/ssl.h"
-      AND EXISTS "${TCVM_MBEDTLS_LIBRARY}"
-      AND EXISTS "${TCVM_MBEDX509_LIBRARY}"
-      AND EXISTS "${TCVM_MBEDCRYPTO_LIBRARY}")
-    return()
-  endif()
-
-  find_program(TCVM_BASH_EXECUTABLE bash)
-  if(NOT TCVM_BASH_EXECUTABLE)
-    message(FATAL_ERROR "Unable to auto-fetch mbedTLS because 'bash' was not found")
-  endif()
-
-  set(TCVM_MBEDTLS_FETCH_SCRIPT "${TCVM_MBEDTLS_DEP_DIR}/fetch.sh")
-  if(NOT EXISTS "${TCVM_MBEDTLS_FETCH_SCRIPT}")
-    message(FATAL_ERROR "Unable to auto-fetch mbedTLS because '${TCVM_MBEDTLS_FETCH_SCRIPT}' does not exist")
-  endif()
+  set(TCVM_MBEDTLS_LOCAL_ROOT "${TCVM_MBEDTLS_DEP_DIR}/local")
 
   if(NOT DEFINED MBEDTLS_RELEASE_TAG AND DEFINED ENV{MBEDTLS_RELEASE_TAG})
     set(MBEDTLS_RELEASE_TAG "$ENV{MBEDTLS_RELEASE_TAG}")
@@ -107,6 +72,41 @@ function(tcvm_auto_fetch_mbedtls)
     message(FATAL_ERROR "Unable to auto-fetch mbedTLS for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
   endif()
 
+  set(TCVM_DEFAULT_MBEDTLS_DIR "${TCVM_MBEDTLS_LOCAL_ROOT}/${TCVM_MBEDTLS_PLATFORM}/${TCVM_MBEDTLS_ARCH}")
+
+  if(DEFINED MBEDTLS_DIR AND NOT MBEDTLS_DIR STREQUAL "${TCVM_DEFAULT_MBEDTLS_DIR}")
+    return()
+  endif()
+
+  set(MBEDTLS_DIR "${TCVM_DEFAULT_MBEDTLS_DIR}" CACHE PATH "mbedTLS prebuilt directory" FORCE)
+
+  if(WIN32)
+    set(TCVM_MBEDTLS_LIBRARY "${MBEDTLS_DIR}/lib/mbedtls.lib")
+    set(TCVM_MBEDX509_LIBRARY "${MBEDTLS_DIR}/lib/mbedx509.lib")
+    set(TCVM_MBEDCRYPTO_LIBRARY "${MBEDTLS_DIR}/lib/mbedcrypto.lib")
+  else()
+    set(TCVM_MBEDTLS_LIBRARY "${MBEDTLS_DIR}/lib/libmbedtls.a")
+    set(TCVM_MBEDX509_LIBRARY "${MBEDTLS_DIR}/lib/libmbedx509.a")
+    set(TCVM_MBEDCRYPTO_LIBRARY "${MBEDTLS_DIR}/lib/libmbedcrypto.a")
+  endif()
+
+  if(EXISTS "${MBEDTLS_DIR}/include/mbedtls/ssl.h"
+      AND EXISTS "${TCVM_MBEDTLS_LIBRARY}"
+      AND EXISTS "${TCVM_MBEDX509_LIBRARY}"
+      AND EXISTS "${TCVM_MBEDCRYPTO_LIBRARY}")
+    return()
+  endif()
+
+  find_program(TCVM_BASH_EXECUTABLE bash)
+  if(NOT TCVM_BASH_EXECUTABLE)
+    message(FATAL_ERROR "Unable to auto-fetch mbedTLS because 'bash' was not found")
+  endif()
+
+  set(TCVM_MBEDTLS_FETCH_SCRIPT "${TCVM_MBEDTLS_DEP_DIR}/fetch.sh")
+  if(NOT EXISTS "${TCVM_MBEDTLS_FETCH_SCRIPT}")
+    message(FATAL_ERROR "Unable to auto-fetch mbedTLS because '${TCVM_MBEDTLS_FETCH_SCRIPT}' does not exist")
+  endif()
+
   message(STATUS "mbedTLS artifacts not found locally. Fetching ${TCVM_MBEDTLS_PLATFORM}/${TCVM_MBEDTLS_ARCH}...")
 
   execute_process(
@@ -117,7 +117,7 @@ function(tcvm_auto_fetch_mbedtls)
       --release-tag "${MBEDTLS_RELEASE_TAG}"
       --github-repo "${MBEDTLS_GITHUB_REPO}"
       --github-token-env "${MBEDTLS_GITHUB_TOKEN_ENV}"
-      --dest "${MBEDTLS_DIR}"
+      --dest "${TCVM_MBEDTLS_LOCAL_ROOT}"
     WORKING_DIRECTORY "${TCVM_MBEDTLS_DEP_DIR}"
     RESULT_VARIABLE TCVM_MBEDTLS_FETCH_RESULT
     OUTPUT_VARIABLE TCVM_MBEDTLS_FETCH_STDOUT
