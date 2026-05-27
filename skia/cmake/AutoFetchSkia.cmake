@@ -2,8 +2,11 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-only
 
+get_filename_component(TCVM_SKIA_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+get_filename_component(TCVM_SKIA_AUTOFETCH_DEP_DIR "${TCVM_SKIA_AUTOFETCH_DIR}/.." ABSOLUTE)
+
 function(tcvm_auto_fetch_skia)
-  get_filename_component(TCVM_SKIA_DEP_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+  set(TCVM_SKIA_DEP_DIR "${TCVM_SKIA_AUTOFETCH_DEP_DIR}")
   set(TCVM_DEFAULT_SKIA_DIR "${TCVM_SKIA_DEP_DIR}/local")
 
   if(DEFINED SKIA_LIBRARIES)

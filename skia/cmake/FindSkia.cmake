@@ -11,40 +11,64 @@ include(FindPackageHandleStandardArgs)
 get_filename_component(SKIA_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 SET ( SKIA_DIR "${SKIA_DEPENDENCY_DIR}/local" CACHE PATH "Skia directory")
 
+foreach(SKIA_CACHED_VAR
+    SKIA_CONFIG_INCLUDE_DIR
+    SKIA_CORE_INCLUDE_DIR
+    SKIA_UTILS_INCLUDE_DIR
+    SKIA_EFFECTS_INCLUDE_DIR
+    SKIA_GPU_INCLUDE_DIR
+    SKIA_GPU2_INCLUDE_DIR
+    SKIA_LIBRARY_DIRS
+    SKIA_LIBRARIES)
+  if(DEFINED ${SKIA_CACHED_VAR})
+    string(FIND "${${SKIA_CACHED_VAR}}" "${SKIA_DIR}" SKIA_CACHED_VAR_DEPOT_INDEX)
+    if(NOT SKIA_CACHED_VAR_DEPOT_INDEX EQUAL 0)
+      unset(${SKIA_CACHED_VAR} CACHE)
+      unset(${SKIA_CACHED_VAR})
+    endif()
+  endif()
+endforeach()
+
 find_path(
   SKIA_CONFIG_INCLUDE_DIR 
   SkUserConfig.h 
   HINTS "${SKIA_DIR}/include/config"
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 find_path(
   SKIA_CORE_INCLUDE_DIR 
   SkCanvas.h 
   HINTS "${SKIA_DIR}/include/core"
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 find_path(
   SKIA_UTILS_INCLUDE_DIR 
   SkRandom.h 
   HINTS "${SKIA_DIR}/include/utils" 
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 find_path(
   SKIA_EFFECTS_INCLUDE_DIR 
   SkImageSource.h 
   HINTS "${SKIA_DIR}/include/effects" 
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 find_path(
   SKIA_GPU_INCLUDE_DIR 
   GrContext.h 
   HINTS "${SKIA_DIR}/include/gpu" 
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 find_path(
   SKIA_GPU2_INCLUDE_DIR 
   gl/GrGLDefines.h 
   HINTS "${SKIA_DIR}/src/gpu" 
+  NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH #workaround needed for Android build
   )
 
