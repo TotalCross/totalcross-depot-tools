@@ -6,7 +6,7 @@ on:
       tag:
         description: Docker image tag to publish
         required: true
-        default: v1.0.4
+        default: v1.0.7
       push_latest:
         description: Also publish the latest tag
         required: true
