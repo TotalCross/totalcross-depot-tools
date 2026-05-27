@@ -4,7 +4,7 @@ set(MBEDTLS_DIR "${MbedTLS_DEPENDENCY_DIR}/local" CACHE PATH "mbedTLS prebuilt d
 foreach(MbedTLS_CACHED_VAR MbedTLS_INCLUDE_DIR MbedTLS_LIBRARY MbedCrypto_LIBRARY MbedX509_LIBRARY)
   if(DEFINED ${MbedTLS_CACHED_VAR})
     string(FIND "${${MbedTLS_CACHED_VAR}}" "${MBEDTLS_DIR}" MbedTLS_CACHED_VAR_DEPOT_INDEX)
-    if(NOT MbedTLS_CACHED_VAR_DEPOT_INDEX EQUAL 0)
+    if("${${MbedTLS_CACHED_VAR}}" MATCHES "-NOTFOUND$" OR NOT MbedTLS_CACHED_VAR_DEPOT_INDEX EQUAL 0)
       unset(${MbedTLS_CACHED_VAR} CACHE)
       unset(${MbedTLS_CACHED_VAR})
     endif()
@@ -15,21 +15,25 @@ find_path(MbedTLS_INCLUDE_DIR
   NAMES mbedtls/ssl.h
   HINTS "${MBEDTLS_DIR}/include"
   NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
 )
 find_library(MbedTLS_LIBRARY
   NAMES mbedtls
   HINTS "${MBEDTLS_DIR}/lib"
   NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
 )
 find_library(MbedCrypto_LIBRARY
   NAMES mbedcrypto
   HINTS "${MBEDTLS_DIR}/lib"
   NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
 )
 find_library(MbedX509_LIBRARY
   NAMES mbedx509
   HINTS "${MBEDTLS_DIR}/lib"
   NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
 )
 
 include(FindPackageHandleStandardArgs)
