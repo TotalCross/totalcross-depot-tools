@@ -1,5 +1,14 @@
-find_path(SQLite3_INCLUDE_DIR NAMES sqlite3.h)
-find_library(SQLite3_LIBRARY NAMES sqlite3)
+get_filename_component(SQLite3_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(SQLITE3_DIR "${SQLite3_DEPENDENCY_DIR}/local" CACHE PATH "SQLite3 prebuilt directory")
+
+find_path(SQLite3_INCLUDE_DIR
+  NAMES sqlite3.h
+  HINTS "${SQLITE3_DIR}/include"
+)
+find_library(SQLite3_LIBRARY
+  NAMES sqlite3
+  HINTS "${SQLITE3_DIR}/lib"
+)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SQLite3
@@ -13,4 +22,3 @@ if(SQLite3_FOUND AND NOT TARGET SQLite::SQLite3)
     INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIR}"
   )
 endif()
-

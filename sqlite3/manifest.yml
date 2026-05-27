@@ -2,7 +2,7 @@ name: sqlite3
 version: 3.32.3
 release: sqlite3-3.32.3
 source:
-  type: zip
+  type: amalgamation
   url: https://www.sqlite.org/2020/sqlite-amalgamation-3320300.zip
   directory: sqlite-amalgamation-3320300
 build:
@@ -16,4 +16,11 @@ artifact:
     - sqlite3ext.h
   libraries:
     - sqlite3
-
+  archives:
+    - sqlite3-linux-x86_64.tar.gz
+    - sqlite3-linux-armv7l.tar.gz
+    - sqlite3-linux-aarch64.tar.gz
+    - sqlite3-windows-x86.tar.gz
+    - sqlite3-android-arm64-v8a.tar.gz
+    - sqlite3-ios-arm64.tar.gz
+    - sqlite3-macos-arm64.tar.gz
