@@ -1,7 +1,22 @@
-find_path(MbedTLS_INCLUDE_DIR NAMES mbedtls/ssl.h)
-find_library(MbedTLS_LIBRARY NAMES mbedtls)
-find_library(MbedCrypto_LIBRARY NAMES mbedcrypto)
-find_library(MbedX509_LIBRARY NAMES mbedx509)
+get_filename_component(MbedTLS_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(MBEDTLS_DIR "${MbedTLS_DEPENDENCY_DIR}/local" CACHE PATH "mbedTLS prebuilt directory")
+
+find_path(MbedTLS_INCLUDE_DIR
+  NAMES mbedtls/ssl.h
+  HINTS "${MBEDTLS_DIR}/include"
+)
+find_library(MbedTLS_LIBRARY
+  NAMES mbedtls
+  HINTS "${MBEDTLS_DIR}/lib"
+)
+find_library(MbedCrypto_LIBRARY
+  NAMES mbedcrypto
+  HINTS "${MBEDTLS_DIR}/lib"
+)
+find_library(MbedX509_LIBRARY
+  NAMES mbedx509
+  HINTS "${MBEDTLS_DIR}/lib"
+)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MbedTLS
@@ -15,4 +30,3 @@ if(MbedTLS_FOUND AND NOT TARGET MbedTLS::mbedtls)
     INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
   )
 endif()
-

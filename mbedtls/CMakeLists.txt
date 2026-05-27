@@ -1,9 +1,82 @@
 cmake_minimum_required(VERSION 3.16)
-project(totalcross_mbedtls C)
 
-set(MBEDTLS_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/src/mbedtls-3.5.2" CACHE PATH "Mbed TLS source directory")
+project(totalcross-mbedtls-static
+  VERSION 3.5.2
+  LANGUAGES C
+)
 
-set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+include(FetchContent)
+include(GNUInstallDirs)
+
+set(MBEDTLS_SOURCE_DIR "" CACHE PATH "Directory containing mbedTLS sources")
+set(MBEDTLS_GIT_REPOSITORY "https://github.com/Mbed-TLS/mbedtls.git" CACHE STRING "mbedTLS Git repository")
+set(MBEDTLS_GIT_TAG "v3.5.2" CACHE STRING "mbedTLS Git tag")
+
+set(CMAKE_C_FLAGS_OLD "${CMAKE_C_FLAGS}")
+
+if(DEFINED ANDROID_ABI AND ANDROID_ABI STREQUAL "armeabi-v7a")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMULADDC_CANNOT_USE_R7")
+endif()
+
 set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
-add_subdirectory("${MBEDTLS_SOURCE_DIR}" mbedtls-build)
+set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE BOOL "" FORCE)
+set(USE_STATIC_MBEDTLS_LIBRARY ON CACHE BOOL "" FORCE)
+set(DISABLE_PACKAGE_CONFIG_AND_INSTALL ON CACHE BOOL "" FORCE)
+set(INSTALL_MBEDTLS_HEADERS OFF CACHE BOOL "" FORCE)
 
+if(CMAKE_GENERATOR STREQUAL Xcode)
+  set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+endif()
+
+if(MBEDTLS_SOURCE_DIR)
+  set(mbedtls_SOURCE_DIR "${MBEDTLS_SOURCE_DIR}")
+else()
+  FetchContent_Declare(
+    mbedtls
+    GIT_REPOSITORY "${MBEDTLS_GIT_REPOSITORY}"
+    GIT_TAG "${MBEDTLS_GIT_TAG}"
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    USES_TERMINAL_DOWNLOAD TRUE
+  )
+
+  FetchContent_GetProperties(mbedtls)
+  if(NOT mbedtls_POPULATED)
+    FetchContent_Populate(mbedtls)
+  endif()
+endif()
+
+add_subdirectory("${mbedtls_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/mbedtls-build")
+
+foreach(TC_MBEDTLS_TARGET mbedtls mbedx509 mbedcrypto)
+  target_include_directories("${TC_MBEDTLS_TARGET}"
+    PUBLIC
+      "$<BUILD_INTERFACE:${mbedtls_SOURCE_DIR}/include>"
+      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+  )
+
+  set_target_properties("${TC_MBEDTLS_TARGET}"
+    PROPERTIES
+      POSITION_INDEPENDENT_CODE ON
+      XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET 13.0
+  )
+endforeach()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_OLD}")
+
+install(TARGETS mbedtls mbedx509 mbedcrypto
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+install(DIRECTORY "${mbedtls_SOURCE_DIR}/include/mbedtls"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  FILES_MATCHING PATTERN "*.h"
+)
+
+install(DIRECTORY "${mbedtls_SOURCE_DIR}/include/psa"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  FILES_MATCHING PATTERN "*.h"
+)

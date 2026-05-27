@@ -1,38 +1,81 @@
-name: Release mbedtls
+name: Release mbedTLS static libraries
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  release:
-    name: Build mbedtls
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-24.04
+    outputs:
+      mbedtls_version: ${{ steps.version.outputs.mbedtls_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
-
-      - name: Fetch sources
-        working-directory: mbedtls
-        run: ./fetch.sh
-
-      - name: Build and install
-        working-directory: mbedtls
+      - name: Read mbedTLS version
+        id: version
         run: |
-          cmake -S . -B build/cmake -G Ninja -DCMAKE_INSTALL_PREFIX="$PWD/install"
-          cmake --build build/cmake
-          cmake --install build/cmake
+          mbedtls_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' mbedtls/CMakeLists.txt)"
+          if [ -z "$mbedtls_version" ]; then
+            echo "Could not read mbedTLS version from mbedtls/CMakeLists.txt" >&2
+            exit 1
+          fi
 
-      - name: Package artifact
-        working-directory: mbedtls
-        run: ./scripts/package-artifact.sh
+          echo "mbedtls_version=${mbedtls_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=mbedtls-${mbedtls_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-mbedtls.yml
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MBEDTLS_VERSION: ${{ needs.prepare.outputs.mbedtls_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
         with:
-          name: mbedtls-3.5.2
-          path: mbedtls/dist/*.tar.gz
+          fetch-depth: 0
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "mbedTLS ${MBEDTLS_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/*.tar.gz \
+            --verify-tag \
+            --title "mbedTLS ${MBEDTLS_VERSION} static libraries" \
+            --notes "Static mbedTLS ${MBEDTLS_VERSION} libraries for TotalCross."
