@@ -1,50 +1,81 @@
-name: Release libpng
+name: Release libpng static libraries
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  release:
-    name: Build libpng
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-24.04
+    outputs:
+      libpng_version: ${{ steps.version.outputs.libpng_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
-
-      - name: Fetch zlib sources
-        working-directory: zlib
-        run: ./fetch.sh
-
-      - name: Build and install zlib
-        working-directory: zlib
+      - name: Read libpng version
+        id: version
         run: |
-          cmake -S . -B build/cmake -G Ninja -DCMAKE_INSTALL_PREFIX="$PWD/install"
-          cmake --build build/cmake
-          cmake --install build/cmake
+          libpng_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' libpng/CMakeLists.txt)"
+          if [ -z "$libpng_version" ]; then
+            echo "Could not read libpng version from libpng/CMakeLists.txt" >&2
+            exit 1
+          fi
 
-      - name: Fetch libpng sources
-        working-directory: libpng
-        run: ./fetch.sh
+          echo "libpng_version=${libpng_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=libpng-${libpng_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and install libpng
-        working-directory: libpng
-        run: |
-          cmake -S . -B build/cmake -G Ninja \
-            -DCMAKE_INSTALL_PREFIX="$PWD/install" \
-            -DZLIB_ROOT="$GITHUB_WORKSPACE/zlib/install"
-          cmake --build build/cmake
-          cmake --install build/cmake
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-libpng.yml
 
-      - name: Package artifact
-        working-directory: libpng
-        run: ./scripts/package-artifact.sh
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LIBPNG_VERSION: ${{ needs.prepare.outputs.libpng_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
         with:
-          name: libpng-1.6.43
-          path: libpng/dist/*.tar.gz
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "libpng ${LIBPNG_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/*.tar.gz \
+            --verify-tag \
+            --title "libpng ${LIBPNG_VERSION} static libraries" \
+            --notes "Static libpng ${LIBPNG_VERSION} libraries for TotalCross, built against the released zlib-ng prebuilts."

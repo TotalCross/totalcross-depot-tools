@@ -1,17 +1,22 @@
 # libpng
 
-Builds libpng against the compatible zlib package.
+Builds libpng against the prebuilt `zlib-ng` release for the target platform.
 
 ```bash
-../zlib/fetch.sh
-cmake -S ../zlib -B ../zlib/build/cmake -DCMAKE_INSTALL_PREFIX="$PWD/../zlib/install"
-cmake --build ../zlib/build/cmake
-cmake --install ../zlib/build/cmake
-
-./fetch.sh
-cmake -S . -B build/cmake -DCMAKE_INSTALL_PREFIX="$PWD/install" -DZLIB_ROOT="$PWD/../zlib/install"
+bash ../zlib-ng/fetch.sh --platform macos --arch arm64
+cmake -S . -B build/cmake -G Ninja \
+  -DCMAKE_INSTALL_PREFIX="$PWD/install" \
+  -DZLIB_DIR="$PWD/../zlib-ng/local/macos/arm64"
 cmake --build build/cmake
 cmake --install build/cmake
-./scripts/package-artifact.sh
+bash scripts/package-artifact.sh build/cmake install macos/arm64
 ```
 
+If you already have a local checkout of the libpng sources, point CMake at it:
+
+```bash
+cmake -S . -B build/cmake -G Ninja \
+  -DCMAKE_INSTALL_PREFIX="$PWD/install" \
+  -DZLIB_DIR="$PWD/../zlib-ng/local/macos/arm64" \
+  -DLIBPNG_SOURCE_DIR=/path/to/libpng
+```
