@@ -1,37 +1,81 @@
-name: Release zlib
+name: Release zlib static libraries
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  release:
-    name: Build zlib
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-24.04
+    outputs:
+      zlib_version: ${{ steps.version.outputs.zlib_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
-
-      - name: Fetch sources
-        working-directory: zlib
-        run: ./fetch.sh
-
-      - name: Build and install
-        working-directory: zlib
+      - name: Read zlib version
+        id: version
         run: |
-          cmake -S . -B build/cmake -G Ninja -DCMAKE_INSTALL_PREFIX="$PWD/install"
-          cmake --build build/cmake
-          cmake --install build/cmake
+          zlib_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' zlib/CMakeLists.txt)"
+          if [ -z "$zlib_version" ]; then
+            echo "Could not read zlib version from zlib/CMakeLists.txt" >&2
+            exit 1
+          fi
 
-      - name: Package artifact
-        working-directory: zlib
-        run: ./scripts/package-artifact.sh
+          echo "zlib_version=${zlib_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=zlib-${zlib_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-zlib.yml
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ZLIB_VERSION: ${{ needs.prepare.outputs.zlib_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
         with:
-          name: zlib-1.3.1
-          path: zlib/dist/*.tar.gz
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "zlib ${ZLIB_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/*.tar.gz \
+            --verify-tag \
+            --title "zlib ${ZLIB_VERSION} static libraries" \
+            --notes "Static zlib ${ZLIB_VERSION} libraries for TotalCross."

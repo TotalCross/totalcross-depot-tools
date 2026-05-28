@@ -1,11 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-INSTALL_DIR="${1:-${ROOT_DIR}/install}"
-OUT_DIR="${2:-${ROOT_DIR}/dist}"
-VERSION="${ZLIB_VERSION:-1.3.1}"
+if [ "$#" -ne 3 ]; then
+  echo "Usage: package-artifact.sh BUILD_DIR INSTALL_DIR PLATFORM_ARCH" >&2
+  exit 2
+fi
 
-mkdir -p "${OUT_DIR}"
-tar -C "${INSTALL_DIR}" -czf "${OUT_DIR}/zlib-${VERSION}.tar.gz" .
+build_dir="$1"
+install_dir="$2"
+platform_arch="$3"
+artifact_name_platform="${platform_arch//\//-}"
 
+artifact_dir="${build_dir}/artifact/zlib/${platform_arch}"
+rm -rf "${artifact_dir}"
+mkdir -p "${artifact_dir}/include" "${artifact_dir}/lib"
+
+for header_name in zlib.h zconf.h; do
+  if [ ! -f "${install_dir}/include/${header_name}" ]; then
+    echo "Missing ${install_dir}/include/${header_name}" >&2
+    exit 1
+  fi
+  cp "${install_dir}/include/${header_name}" "${artifact_dir}/include/"
+done
+
+library_count=0
+while IFS= read -r -d '' library_path; do
+  cp "${library_path}" "${artifact_dir}/lib/"
+  library_count=$((library_count + 1))
+done < <(find "${install_dir}/lib" -maxdepth 1 -type f \( -name "*.a" -o -name "*.lib" \) -print0)
+
+if [ "${library_count}" -eq 0 ]; then
+  echo "No static zlib libraries found under ${install_dir}/lib" >&2
+  exit 1
+fi
+
+cat > "${artifact_dir}/manifest.txt" <<EOF
+name=zlib
+platform_arch=${platform_arch}
+zlib_version=1.3.1
+EOF
+
+tar -C "${build_dir}/artifact" -czf "${build_dir}/zlib-${artifact_name_platform}.tar.gz" "zlib"
+echo "${build_dir}/zlib-${artifact_name_platform}.tar.gz"
