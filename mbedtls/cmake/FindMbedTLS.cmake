@@ -81,10 +81,35 @@ find_package_handle_standard_args(MbedTLS
   REQUIRED_VARS MbedTLS_INCLUDE_DIR MbedTLS_LIBRARY MbedCrypto_LIBRARY MbedX509_LIBRARY
 )
 
-if(MbedTLS_FOUND AND NOT TARGET MbedTLS::mbedtls)
-  add_library(MbedTLS::mbedtls UNKNOWN IMPORTED)
-  set_target_properties(MbedTLS::mbedtls PROPERTIES
-    IMPORTED_LOCATION "${MbedTLS_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
-  )
+if(MbedTLS_FOUND)
+  if(NOT TARGET MbedTLS::mbedcrypto)
+    add_library(MbedTLS::mbedcrypto UNKNOWN IMPORTED)
+    set_target_properties(MbedTLS::mbedcrypto PROPERTIES
+      IMPORTED_LOCATION "${MbedCrypto_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
+    )
+    if(WIN32)
+      set_target_properties(MbedTLS::mbedcrypto PROPERTIES
+        INTERFACE_LINK_LIBRARIES "bcrypt"
+      )
+    endif()
+  endif()
+
+  if(NOT TARGET MbedTLS::mbedx509)
+    add_library(MbedTLS::mbedx509 UNKNOWN IMPORTED)
+    set_target_properties(MbedTLS::mbedx509 PROPERTIES
+      IMPORTED_LOCATION "${MbedX509_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES MbedTLS::mbedcrypto
+    )
+  endif()
+
+  if(NOT TARGET MbedTLS::mbedtls)
+    add_library(MbedTLS::mbedtls UNKNOWN IMPORTED)
+    set_target_properties(MbedTLS::mbedtls PROPERTIES
+      IMPORTED_LOCATION "${MbedTLS_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${MbedTLS_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "MbedTLS::mbedx509;MbedTLS::mbedcrypto"
+    )
+  endif()
 endif()
