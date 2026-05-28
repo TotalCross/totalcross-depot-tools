@@ -91,6 +91,8 @@ function(tcvm_auto_fetch_libpng)
       AND EXISTS "${PNG_DIR}/include/pnglibconf.h")
     if(EXISTS "${PNG_DIR}/lib/libpng.a"
         OR EXISTS "${PNG_DIR}/lib/libpng16.a"
+        OR EXISTS "${PNG_DIR}/lib/libpng16_static.lib"
+        OR EXISTS "${PNG_DIR}/lib/png16_static.lib"
         OR EXISTS "${PNG_DIR}/lib/png.lib"
         OR EXISTS "${PNG_DIR}/lib/libpng.lib")
       return()

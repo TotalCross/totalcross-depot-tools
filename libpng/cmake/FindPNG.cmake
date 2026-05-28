@@ -66,7 +66,7 @@ find_path(PNG_INCLUDE_DIR
   NO_CMAKE_FIND_ROOT_PATH
 )
 find_library(PNG_LIBRARY
-  NAMES png png16 libpng libpng16
+  NAMES png png16 png16_static libpng libpng16 libpng16_static
   HINTS "${PNG_DIR}/lib"
   NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH
