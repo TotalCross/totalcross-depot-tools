@@ -1,0 +1,81 @@
+name: Release zlib-ng static libraries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-24.04
+    outputs:
+      zlib_ng_version: ${{ steps.version.outputs.zlib_ng_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Read zlib-ng version
+        id: version
+        run: |
+          zlib_ng_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' zlib-ng/CMakeLists.txt)"
+          if [ -z "$zlib_ng_version" ]; then
+            echo "Could not read zlib-ng version from zlib-ng/CMakeLists.txt" >&2
+            exit 1
+          fi
+
+          echo "zlib_ng_version=${zlib_ng_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=zlib-ng-${zlib_ng_version}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-zlib-ng.yml
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ZLIB_NG_VERSION: ${{ needs.prepare.outputs.zlib_ng_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "zlib-ng ${ZLIB_NG_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/*.tar.gz \
+            --verify-tag \
+            --title "zlib-ng ${ZLIB_NG_VERSION} static libraries" \
+            --notes "Static zlib-ng ${ZLIB_NG_VERSION} libraries for TotalCross."

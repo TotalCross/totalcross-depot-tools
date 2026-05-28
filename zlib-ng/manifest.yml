@@ -1,0 +1,22 @@
+name: zlib-ng
+version: 2.1.6
+release: zlib-ng-2.1.6
+source:
+  type: git
+  url: https://github.com/zlib-ng/zlib-ng.git
+  tag: 2.1.6
+artifact:
+  include:
+    - zlib.h
+    - zconf.h
+    - zlib_name_mangling.h
+  libraries:
+    - z
+  archives:
+    - zlib-ng-linux-x86_64.tar.gz
+    - zlib-ng-linux-armv7l.tar.gz
+    - zlib-ng-linux-aarch64.tar.gz
+    - zlib-ng-windows-x86.tar.gz
+    - zlib-ng-android-arm64-v8a.tar.gz
+    - zlib-ng-ios-arm64.tar.gz
+    - zlib-ng-macos-arm64.tar.gz
