@@ -8,12 +8,12 @@ Usage: fetch.sh [options]
 Options:
   --platform PLATFORM      Target platform: linux, windows, android, ios, macos
   --arch ARCH              Target architecture, e.g. x86_64, armv7l, aarch64
-  --variant VARIANT        Artifact variant, default: plain
   --release-tag TAG        GitHub release tag, default: sqlite-3.32.3
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: SQLITE3_GITHUB_TOKEN, then GITHUB_TOKEN
-  --dest DIR               Destination root, default: sqlite3/local
+  --dest DIR               Destination root, default: sqlite3/local.
+                           Artifacts install under DIR/<release-tag>-<repo-hash12>/<platform>/<arch>
 EOF
 }
 
@@ -21,7 +21,6 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 platform=""
 arch=""
-variant="plain"
 release_tag="sqlite-3.32.3"
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
@@ -35,10 +34,6 @@ while [ "$#" -gt 0 ]; do
       ;;
     --arch)
       arch="${2:-}"
-      shift 2
-      ;;
-    --variant)
-      variant="${2:-}"
       shift 2
       ;;
     --release-tag)
@@ -79,10 +74,30 @@ if [[ ! "${github_repo}" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
   exit 2
 fi
 
-if [[ "${release_tag}" == *"{"* || "${release_tag}" == *"}"* || "${release_tag}" == *" "* ]]; then
+if [[ "${release_tag}" == *"{"* ||
+      "${release_tag}" == *"}"* ||
+      "${release_tag}" == *" "* ||
+      "${release_tag}" == *"/"* ||
+      "${release_tag}" == *"\\"* ||
+      "${release_tag}" == *".."* ]]; then
   echo "Invalid SQLite3 release tag value." >&2
   exit 2
 fi
+
+repo_hash="$(
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "${github_repo}" | sha256sum | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "${github_repo}" | shasum -a 256 | awk '{print $1}'
+  elif command -v openssl >/dev/null 2>&1; then
+    printf '%s' "${github_repo}" | openssl dgst -sha256 | awk '{print $NF}'
+  else
+    echo "Unable to compute SQLite3 repository hash; sha256sum, shasum, or openssl is required." >&2
+    exit 1
+  fi
+)"
+repo_hash="${repo_hash:0:12}"
+install_namespace="${release_tag}-${repo_hash}"
 
 case "$platform" in
   linux)
@@ -190,35 +205,16 @@ download_release_asset() {
     "https://api.github.com/repos/${github_repo}/releases/assets/${asset_id}"
 }
 
-asset_name=""
-archive=""
-candidate_assets=()
-if [ "${variant}" != "plain" ]; then
-  candidate_assets+=("sqlite3-${variant}-${platform}-${arch}.tar.gz")
-else
-  candidate_assets+=("sqlite3-${platform}-${arch}.tar.gz")
-fi
+asset_name="sqlite3-${platform}-${arch}.tar.gz"
+archive="${tmp_dir}/${asset_name}"
 
-for candidate in "${candidate_assets[@]}"; do
-  archive="${tmp_dir}/${candidate}"
-  if download_release_asset "${candidate}" "${archive}"; then
-    asset_name="${candidate}"
-    break
-  fi
-done
-
-if [ -z "${asset_name}" ]; then
-  echo "Unable to download a SQLite3 artifact for ${variant}/${platform}/${arch}" >&2
+if ! download_release_asset "${asset_name}" "${archive}"; then
+  echo "Unable to download a SQLite3 artifact for ${github_repo}@${release_tag}/${platform}/${arch}" >&2
   exit 1
 fi
 
-resolved_variant="plain"
-if [ "${asset_name}" = "sqlite3-${variant}-${platform}-${arch}.tar.gz" ]; then
-  resolved_variant="${variant}"
-fi
-
-echo "SQLite3 variant requested: ${variant}"
-echo "SQLite3 variant resolved: ${resolved_variant}"
+echo "SQLite3 release: ${github_repo}@${release_tag}"
+echo "SQLite3 namespace: ${install_namespace}"
 echo "SQLite3 artifact: ${asset_name}"
 
 tar -tzf "${archive}" >/dev/null
@@ -236,9 +232,9 @@ if ! find "${artifact_root}/lib" -type f \( -name "libsqlite3.a" -o -name "sqlit
   exit 1
 fi
 
-dest="${dest_root}/${platform}/${arch}"
+dest="${dest_root}/${install_namespace}/${platform}/${arch}"
 rm -rf "${dest}"
 mkdir -p "${dest}"
 cp -a "${artifact_root}/." "${dest}/"
 
-echo "Installed SQLite3 ${resolved_variant}/${platform}/${arch} into ${dest}"
+echo "Installed SQLite3 ${github_repo}@${release_tag}/${platform}/${arch} into ${dest}"
