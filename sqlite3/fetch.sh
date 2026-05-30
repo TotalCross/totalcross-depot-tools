@@ -26,6 +26,10 @@ github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
 dest_root="${script_dir}/local"
 
+log() {
+  echo "[sqlite3-fetch] $*" >&2
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --platform)
@@ -64,7 +68,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "$platform" ] || [ -z "$arch" ]; then
+if [ -z "${platform}" ] || [ -z "${arch}" ]; then
   usage >&2
   exit 2
 fi
@@ -99,21 +103,30 @@ repo_hash="$(
 repo_hash="${repo_hash:0:12}"
 install_namespace="${release_tag}-${repo_hash}"
 
-case "$platform" in
+log "platform input: ${platform}"
+log "arch input: ${arch}"
+log "release tag: ${release_tag}"
+log "repo hash: ${repo_hash}"
+log "destination root: ${dest_root}"
+
+case "${platform}" in
   linux)
-    case "$arch" in
+    case "${arch}" in
       amd64) arch="x86_64" ;;
       arm64) arch="aarch64" ;;
       arm|armv7) arch="armv7l" ;;
     esac
     ;;
   macos|ios)
-    case "$arch" in
+    case "${arch}" in
       aarch64) arch="arm64" ;;
       amd64) arch="x86_64" ;;
     esac
     ;;
 esac
+
+log "normalized platform: ${platform}"
+log "normalized arch: ${arch}"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
@@ -125,6 +138,12 @@ elif [ -n "${SQLITE3_GITHUB_TOKEN:-}" ]; then
   github_token="${SQLITE3_GITHUB_TOKEN}"
 elif [ -n "${GITHUB_TOKEN:-}" ]; then
   github_token="${GITHUB_TOKEN}"
+fi
+
+if [ -n "${github_token}" ]; then
+  log "GitHub token: set"
+else
+  log "GitHub token: missing"
 fi
 
 github_curl() {
@@ -147,62 +166,116 @@ github_curl() {
   fi
 }
 
+find_asset_api_url() {
+  local asset_name="$1"
+  local release_json="$2"
+  local python_bin=""
+
+  if command -v python3 >/dev/null 2>&1; then
+    python_bin="python3"
+  elif command -v python >/dev/null 2>&1; then
+    python_bin="python"
+  fi
+
+  if [ -n "${python_bin}" ]; then
+    log "Parsing release JSON with ${python_bin}"
+    "${python_bin}" - "${asset_name}" "${release_json}" <<'PY'
+import json
+import sys
+
+asset_name = sys.argv[1]
+release_json = sys.argv[2]
+
+with open(release_json, "r") as fh:
+    release = json.load(fh)
+
+for asset in release.get("assets", []):
+    if asset.get("name") == asset_name and asset.get("url"):
+        print(asset["url"])
+        sys.exit(0)
+
+sys.exit(1)
+PY
+    return
+  fi
+
+  log "Parsing release JSON with awk fallback"
+  awk -v asset_name="${asset_name}" '
+    /"assets"[[:space:]]*:/ {
+      in_assets = 1
+    }
+    in_assets && /"url"[[:space:]]*:[[:space:]]*"https:\/\/api.github.com\/repos\/[^"]+\/releases\/assets\// {
+      line = $0
+      sub(/.*"url"[[:space:]]*:[[:space:]]*"/, "", line)
+      sub(/".*/, "", line)
+      current_url = line
+    }
+    in_assets && /"name"[[:space:]]*:/ {
+      line = $0
+      sub(/.*"name"[[:space:]]*:[[:space:]]*"/, "", line)
+      sub(/".*/, "", line)
+      if (line == asset_name && current_url != "") {
+        print current_url
+        exit
+      }
+    }
+  ' "${release_json}"
+}
+
+list_sqlite_assets() {
+  local release_json="$1"
+  grep '"name": "sqlite3-' "${release_json}" >&2 || true
+}
+
 download_release_asset() {
   local candidate="$1"
   local archive_path="$2"
-  local download_url="https://github.com/${github_repo}/releases/download/${release_tag}/${candidate}"
+  local direct_url="https://github.com/${github_repo}/releases/download/${release_tag}/${candidate}"
+  local release_json="${tmp_dir}/release.json"
+  local asset_api_url=""
 
+  log "candidate artifact: ${candidate}"
+  log "trying direct release download"
   echo "Downloading SQLite3 artifact ${candidate} from ${github_repo}@${release_tag}"
 
-  if github_curl -o "${archive_path}" "${download_url}"; then
+  if github_curl -o "${archive_path}" "${direct_url}"; then
+    log "direct release download succeeded"
     return 0
   fi
 
-  if [ -z "${github_token}" ]; then
-    return 1
-  fi
-
+  log "direct release download failed"
   echo "Direct SQLite3 artifact download failed; trying GitHub release asset API"
 
-  local release_json="${tmp_dir}/release.json"
-  local asset_id=""
+  log "fetching release metadata through GitHub API"
   if ! github_curl \
     -o "${release_json}" \
     "https://api.github.com/repos/${github_repo}/releases/tags/${release_tag}"; then
+    log "failed to fetch release metadata"
     return 1
   fi
 
-  asset_id="$(
-    awk -v asset_name="${candidate}" '
-      /"assets"[[:space:]]*:/ {
-        in_assets = 1
-      }
-      in_assets && /"url"[[:space:]]*:[[:space:]]*"https:\/\/api.github.com\/repos\/[^"]+\/releases\/assets\// {
-        line = $0
-        sub(/.*\/releases\/assets\//, "", line)
-        sub(/".*/, "", line)
-        current_id = line
-      }
-      in_assets && /"name"[[:space:]]*:/ {
-        line = $0
-        sub(/.*"name"[[:space:]]*:[[:space:]]*"/, "", line)
-        sub(/".*/, "", line)
-        if (line == asset_name && current_id != "") {
-          print current_id
-          exit
-        }
-      }
-    ' "${release_json}"
-  )"
+  log "release metadata downloaded"
+  log "SQLite3 assets visible in release metadata:"
+  list_sqlite_assets "${release_json}" || true
 
-  if [ -z "${asset_id}" ]; then
+  asset_api_url="$(find_asset_api_url "${candidate}" "${release_json}")"
+  if [ -z "${asset_api_url}" ]; then
+    echo "Unable to find SQLite3 release asset named ${candidate}" >&2
+    echo "SQLite3 assets listed by the release API:" >&2
+    list_sqlite_assets "${release_json}"
     return 1
   fi
 
-  github_curl \
+  log "found asset API URL for candidate"
+  log "downloading asset through GitHub asset API"
+  if ! github_curl \
     -H "Accept: application/octet-stream" \
     -o "${archive_path}" \
-    "https://api.github.com/repos/${github_repo}/releases/assets/${asset_id}"
+    "${asset_api_url}"; then
+    log "GitHub asset API download failed"
+    return 1
+  fi
+  log "GitHub asset API download completed"
 }
 
 asset_name="sqlite3-${platform}-${arch}.tar.gz"
@@ -213,6 +286,7 @@ if ! download_release_asset "${asset_name}" "${archive}"; then
   exit 1
 fi
 
+log "validating downloaded archive"
 echo "SQLite3 release: ${github_repo}@${release_tag}"
 echo "SQLite3 namespace: ${install_namespace}"
 echo "SQLite3 artifact: ${asset_name}"
@@ -225,16 +299,20 @@ if [ -z "${include_header}" ]; then
   echo "Unable to find include/sqlite3.h in ${asset_name}" >&2
   exit 1
 fi
+log "found sqlite3 header: ${include_header#${tmp_dir}/}"
 
 artifact_root="$(cd "$(dirname "${include_header}")/.." && pwd)"
 if ! find "${artifact_root}/lib" -type f \( -name "libsqlite3.a" -o -name "sqlite3.lib" \) | grep -q .; then
   echo "Unable to find sqlite3 static library under ${artifact_root}/lib" >&2
   exit 1
 fi
+log "artifact root: ${artifact_root#${tmp_dir}/}"
 
 dest="${dest_root}/${install_namespace}/${platform}/${arch}"
+log "installing artifact into ${dest}"
 rm -rf "${dest}"
 mkdir -p "${dest}"
 cp -a "${artifact_root}/." "${dest}/"
 
 echo "Installed SQLite3 ${github_repo}@${release_tag}/${platform}/${arch} into ${dest}"
+log "done"
