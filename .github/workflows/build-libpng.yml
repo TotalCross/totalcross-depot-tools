@@ -170,7 +170,7 @@ jobs:
           path: libpng/build/android-arm64-v8a/libpng-*.tar.gz
 
   build-ios:
-    name: Build ios/arm64
+    name: Build ios/xcframework
     runs-on: macos-15
 
     steps:
@@ -181,14 +181,14 @@ jobs:
         run: |
           bash zlib-ng/fetch.sh \
             --platform ios \
-            --arch arm64 \
+            --arch xcframework \
             --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
 
       - name: Build static libraries
         run: |
           cmake -S libpng -B libpng/build/ios-arm64 \
             -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/ios/arm64" \
+            -DZLIB_DIR="$PWD/zlib-ng/local/ios/xcframework" \
             -DCMAKE_SYSTEM_NAME=iOS \
             -DCMAKE_OSX_SYSROOT=iphoneos \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
@@ -196,13 +196,29 @@ jobs:
             -G Xcode
           cmake --build libpng/build/ios-arm64 --config Release
           cmake --install libpng/build/ios-arm64 --config Release --prefix libpng/build/ios-arm64/install
-          bash libpng/scripts/package-artifact.sh libpng/build/ios-arm64 libpng/build/ios-arm64/install ios/arm64
+
+          cmake -S libpng -B libpng/build/ios-simulator-arm64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DZLIB_DIR="$PWD/zlib-ng/local/ios/xcframework" \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -G Xcode
+          cmake --build libpng/build/ios-simulator-arm64 --config Release
+          cmake --install libpng/build/ios-simulator-arm64 --config Release --prefix libpng/build/ios-simulator-arm64/install
+
+          bash libpng/scripts/package-xcframework-artifact.sh \
+            libpng/build/ios-xcframework \
+            libpng/build/ios-arm64/install \
+            libpng/build/ios-simulator-arm64/install \
+            ios/xcframework
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: libpng-ios-arm64
-          path: libpng/build/ios-arm64/libpng-*.tar.gz
+          name: libpng-ios-xcframework
+          path: libpng/build/ios-xcframework/libpng-*.tar.gz
 
   build-macos:
     name: Build macos/arm64

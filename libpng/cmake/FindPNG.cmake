@@ -10,7 +10,7 @@ if(DEFINED ANDROID_ABI)
   set(PNG_ARCH "${ANDROID_ABI}")
 elseif(CMAKE_GENERATOR STREQUAL Xcode)
   set(PNG_PLATFORM "ios")
-  set(PNG_ARCH "arm64")
+  set(PNG_ARCH "xcframework")
 elseif(WIN32)
   set(PNG_PLATFORM "windows")
   if(CMAKE_GENERATOR_PLATFORM MATCHES "x64")
@@ -65,12 +65,16 @@ find_path(PNG_INCLUDE_DIR
   NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH
 )
-find_library(PNG_LIBRARY
-  NAMES png png16 png16_static libpng libpng16 libpng16_static
-  HINTS "${PNG_DIR}/lib"
-  NO_DEFAULT_PATH
-  NO_CMAKE_FIND_ROOT_PATH
-)
+if(EXISTS "${PNG_DIR}/lib/libpng.xcframework")
+  set(PNG_LIBRARY "${PNG_DIR}/lib/libpng.xcframework" CACHE PATH "libpng XCFramework" FORCE)
+else()
+  find_library(PNG_LIBRARY
+    NAMES png png16 png16_static libpng libpng16 libpng16_static
+    HINTS "${PNG_DIR}/lib"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
+  )
+endif()
 
 set(PNG_ZLIB_MODULE_DIR "${PNG_DEPENDENCY_DIR}/../zlib-ng/cmake")
 if(EXISTS "${PNG_ZLIB_MODULE_DIR}/FindZLIB.cmake")
@@ -83,7 +87,18 @@ find_package_handle_standard_args(PNG
   REQUIRED_VARS PNG_INCLUDE_DIR PNG_LIBRARY
 )
 
-if(PNG_FOUND AND NOT TARGET PNG::PNG)
+if(PNG_FOUND AND NOT TARGET PNG::PNG AND PNG_LIBRARY MATCHES "\\.xcframework$")
+  add_library(PNG::PNG INTERFACE IMPORTED)
+  set_target_properties(PNG::PNG PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${PNG_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${PNG_LIBRARY}"
+  )
+  if(TARGET ZLIB::ZLIB)
+    set_property(TARGET PNG::PNG APPEND PROPERTY
+      INTERFACE_LINK_LIBRARIES "ZLIB::ZLIB"
+    )
+  endif()
+elseif(PNG_FOUND AND NOT TARGET PNG::PNG)
   add_library(PNG::PNG UNKNOWN IMPORTED)
   set_target_properties(PNG::PNG PROPERTIES
     IMPORTED_LOCATION "${PNG_LIBRARY}"

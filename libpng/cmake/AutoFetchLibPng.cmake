@@ -38,7 +38,7 @@ function(tcvm_auto_fetch_libpng)
     set(TCVM_LIBPNG_ARCH "${ANDROID_ABI}")
   elseif(CMAKE_GENERATOR STREQUAL Xcode)
     set(TCVM_LIBPNG_PLATFORM "ios")
-    set(TCVM_LIBPNG_ARCH "arm64")
+    set(TCVM_LIBPNG_ARCH "xcframework")
   elseif(WIN32)
     set(TCVM_LIBPNG_PLATFORM "windows")
     if(CMAKE_GENERATOR_PLATFORM MATCHES "x64")
@@ -89,7 +89,8 @@ function(tcvm_auto_fetch_libpng)
   if(EXISTS "${PNG_DIR}/include/png.h"
       AND EXISTS "${PNG_DIR}/include/pngconf.h"
       AND EXISTS "${PNG_DIR}/include/pnglibconf.h")
-    if(EXISTS "${PNG_DIR}/lib/libpng.a"
+    if(EXISTS "${PNG_DIR}/lib/libpng.xcframework"
+        OR EXISTS "${PNG_DIR}/lib/libpng.a"
         OR EXISTS "${PNG_DIR}/lib/libpng16.a"
         OR EXISTS "${PNG_DIR}/lib/libpng16_static.lib"
         OR EXISTS "${PNG_DIR}/lib/png16_static.lib"

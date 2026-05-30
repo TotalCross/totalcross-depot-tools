@@ -202,7 +202,12 @@ if [ -z "${include_header}" ]; then
 fi
 
 artifact_root="$(cd "$(dirname "${include_header}")/.." && pwd)"
-if ! find "${artifact_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.lib" -o -name "libpng*.lib" \) | grep -q .; then
+if [ "${platform}/${arch}" = "ios/xcframework" ]; then
+  if [ ! -d "${artifact_root}/lib/libpng.xcframework" ]; then
+    echo "Unable to find lib/libpng.xcframework under ${artifact_root}" >&2
+    exit 1
+  fi
+elif ! find "${artifact_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.lib" -o -name "libpng*.lib" \) | grep -q .; then
   echo "Unable to find libpng static library under ${artifact_root}/lib" >&2
   exit 1
 fi

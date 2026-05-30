@@ -78,4 +78,4 @@ jobs:
           gh release create "${TAG_NAME}" release-assets/*.tar.gz \
             --verify-tag \
             --title "libpng ${LIBPNG_VERSION} static libraries" \
-            --notes "Static libpng ${LIBPNG_VERSION} libraries for TotalCross, built against the released zlib-ng prebuilts."
+            --notes "Static libpng ${LIBPNG_VERSION} libraries for TotalCross, including an iOS XCFramework for device and simulator."

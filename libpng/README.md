@@ -1,6 +1,8 @@
 # libpng
 
 Builds libpng against the prebuilt `zlib-ng` release for the target platform.
+The iOS release artifact is packaged as `libpng-ios-xcframework.tar.gz`, with
+device and simulator arm64 slices in `lib/libpng.xcframework`.
 
 ```bash
 bash ../zlib-ng/fetch.sh --platform macos --arch arm64
