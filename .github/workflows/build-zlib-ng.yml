@@ -138,7 +138,7 @@ jobs:
           path: zlib-ng/build/android-arm64-v8a/zlib-ng-*.tar.gz
 
   build-ios:
-    name: Build ios/arm64
+    name: Build ios/xcframework
     runs-on: macos-15
 
     steps:
@@ -156,13 +156,28 @@ jobs:
             -G Xcode
           cmake --build zlib-ng/build/ios-arm64 --config Release
           cmake --install zlib-ng/build/ios-arm64 --config Release --prefix zlib-ng/build/ios-arm64/install
-          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/ios-arm64 zlib-ng/build/ios-arm64/install ios/arm64
+
+          cmake -S zlib-ng -B zlib-ng/build/ios-simulator-arm64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -G Xcode
+          cmake --build zlib-ng/build/ios-simulator-arm64 --config Release
+          cmake --install zlib-ng/build/ios-simulator-arm64 --config Release --prefix zlib-ng/build/ios-simulator-arm64/install
+
+          bash zlib-ng/scripts/package-xcframework-artifact.sh \
+            zlib-ng/build/ios-xcframework \
+            zlib-ng/build/ios-arm64/install \
+            zlib-ng/build/ios-simulator-arm64/install \
+            ios/xcframework
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zlib-ng-ios-arm64
-          path: zlib-ng/build/ios-arm64/zlib-ng-*.tar.gz
+          name: zlib-ng-ios-xcframework
+          path: zlib-ng/build/ios-xcframework/zlib-ng-*.tar.gz
 
   build-macos:
     name: Build macos/arm64

@@ -78,4 +78,4 @@ jobs:
           gh release create "${TAG_NAME}" release-assets/*.tar.gz \
             --verify-tag \
             --title "zlib-ng ${ZLIB_NG_VERSION} static libraries" \
-            --notes "Static zlib-ng ${ZLIB_NG_VERSION} libraries for TotalCross."
+            --notes "Static zlib-ng ${ZLIB_NG_VERSION} libraries for TotalCross, including an iOS XCFramework for device and simulator."

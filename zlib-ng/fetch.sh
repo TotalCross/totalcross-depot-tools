@@ -202,7 +202,12 @@ if [ -z "${include_header}" ]; then
 fi
 
 artifact_root="$(cd "$(dirname "${include_header}")/.." && pwd)"
-if ! find "${artifact_root}/lib" -type f \( -name "libz.a" -o -name "zlib.lib" -o -name "zlibstatic.lib" \) | grep -q .; then
+if [ "${platform}/${arch}" = "ios/xcframework" ]; then
+  if [ ! -d "${artifact_root}/lib/libz.xcframework" ]; then
+    echo "Unable to find lib/libz.xcframework under ${artifact_root}" >&2
+    exit 1
+  fi
+elif ! find "${artifact_root}/lib" -type f \( -name "libz.a" -o -name "zlib.lib" -o -name "zlibstatic.lib" \) | grep -q .; then
   echo "Unable to find zlib-ng static library under ${artifact_root}/lib" >&2
   exit 1
 fi

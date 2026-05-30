@@ -10,7 +10,7 @@ if(DEFINED ANDROID_ABI)
   set(ZLIB_ARCH "${ANDROID_ABI}")
 elseif(CMAKE_GENERATOR STREQUAL Xcode)
   set(ZLIB_PLATFORM "ios")
-  set(ZLIB_ARCH "arm64")
+  set(ZLIB_ARCH "xcframework")
 elseif(WIN32)
   set(ZLIB_PLATFORM "windows")
   if(CMAKE_GENERATOR_PLATFORM MATCHES "x64")
@@ -65,19 +65,29 @@ find_path(ZLIB_INCLUDE_DIR
   NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH
 )
-find_library(ZLIB_LIBRARY
-  NAMES z zlib zlibstatic
-  HINTS "${ZLIB_DIR}/lib"
-  NO_DEFAULT_PATH
-  NO_CMAKE_FIND_ROOT_PATH
-)
+if(EXISTS "${ZLIB_DIR}/lib/libz.xcframework")
+  set(ZLIB_LIBRARY "${ZLIB_DIR}/lib/libz.xcframework" CACHE PATH "zlib-ng XCFramework" FORCE)
+else()
+  find_library(ZLIB_LIBRARY
+    NAMES z zlib zlibstatic
+    HINTS "${ZLIB_DIR}/lib"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
+  )
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ZLIB
   REQUIRED_VARS ZLIB_INCLUDE_DIR ZLIB_LIBRARY
 )
 
-if(ZLIB_FOUND AND NOT TARGET ZLIB::ZLIB)
+if(ZLIB_FOUND AND NOT TARGET ZLIB::ZLIB AND ZLIB_LIBRARY MATCHES "\\.xcframework$")
+  add_library(ZLIB::ZLIB INTERFACE IMPORTED)
+  set_target_properties(ZLIB::ZLIB PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${ZLIB_LIBRARY}"
+  )
+elseif(ZLIB_FOUND AND NOT TARGET ZLIB::ZLIB)
   add_library(ZLIB::ZLIB UNKNOWN IMPORTED)
   set_target_properties(ZLIB::ZLIB PROPERTIES
     IMPORTED_LOCATION "${ZLIB_LIBRARY}"

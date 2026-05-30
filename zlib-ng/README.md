@@ -1,6 +1,8 @@
 # zlib-ng
 
 Builds zlib-ng as a TotalCross native dependency in zlib compatibility mode.
+The iOS release artifact is packaged as `zlib-ng-ios-xcframework.tar.gz`, with
+device and simulator arm64 slices in `lib/libz.xcframework`.
 
 ```bash
 cmake -S . -B build/cmake -G Ninja -DCMAKE_INSTALL_PREFIX="$PWD/install"

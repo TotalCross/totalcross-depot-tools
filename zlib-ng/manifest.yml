@@ -18,5 +18,5 @@ artifact:
     - zlib-ng-linux-aarch64.tar.gz
     - zlib-ng-windows-x86.tar.gz
     - zlib-ng-android-arm64-v8a.tar.gz
-    - zlib-ng-ios-arm64.tar.gz
+    - zlib-ng-ios-xcframework.tar.gz
     - zlib-ng-macos-arm64.tar.gz

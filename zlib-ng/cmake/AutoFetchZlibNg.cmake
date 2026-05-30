@@ -32,7 +32,7 @@ function(tcvm_auto_fetch_zlibng)
     set(TCVM_ZLIB_NG_ARCH "${ANDROID_ABI}")
   elseif(CMAKE_GENERATOR STREQUAL Xcode)
     set(TCVM_ZLIB_NG_PLATFORM "ios")
-    set(TCVM_ZLIB_NG_ARCH "arm64")
+    set(TCVM_ZLIB_NG_ARCH "xcframework")
   elseif(WIN32)
     set(TCVM_ZLIB_NG_PLATFORM "windows")
     if(CMAKE_GENERATOR_PLATFORM MATCHES "x64")
@@ -81,6 +81,7 @@ function(tcvm_auto_fetch_zlibng)
   set(ZLIB_DIR "${TCVM_DEFAULT_ZLIB_NG_DIR}" CACHE PATH "zlib-ng prebuilt directory" FORCE)
 
   set(TCVM_ZLIB_NG_LIBRARY_CANDIDATES
+    "${ZLIB_DIR}/lib/libz.xcframework"
     "${ZLIB_DIR}/lib/libz.a"
     "${ZLIB_DIR}/lib/zlib.lib"
     "${ZLIB_DIR}/lib/zlibstatic.lib"
