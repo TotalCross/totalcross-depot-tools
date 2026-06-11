@@ -529,13 +529,86 @@ build_skia_ios_simulator() {
   copy_static_artifact "$build_dir" "libskia.a" "libskia-ios-simulator-arm64.a" "ios-simulator-arm64" "ios-simulator" "arm64" "libskia.a"
 }
 
+WINDOWS_COMPAT_WIN_SDK=""
+WINDOWS_COMPAT_WIN_VC=""
+
+windows_to_unix_path() {
+  local path="$1"
+
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -u "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+unix_to_gn_windows_path() {
+  local path="$1"
+
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+create_windows_toolchain_link() {
+  local source_dir="$1"
+  local link_dir="$2"
+
+  rm -rf "$link_dir"
+  mkdir -p "$(dirname "$link_dir")"
+
+  if command -v powershell.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
+    local source_win
+    local link_win
+    source_win=$(cygpath -w "$source_dir")
+    link_win=$(cygpath -w "$link_dir")
+    powershell.exe -NoProfile -Command "New-Item -ItemType Junction -Path '${link_win}' -Target '${source_win}' -Force | Out-Null" >/dev/null
+  else
+    ln -s "$source_dir" "$link_dir"
+  fi
+}
+
+prepare_windows_toolchain_compat() {
+  local compat_root="$OUT_DIR/toolchain-compat/windows"
+  local sdk_source="${WindowsSdkDir:-C:\\Program Files (x86)\\Windows Kits\\10\\}"
+  local vc_tools_source="${VCToolsInstallDir:-}"
+  local sdk_source_unix
+  local vc_tools_unix
+  local vc_source_unix
+
+  sdk_source_unix=$(windows_to_unix_path "$sdk_source")
+  [[ -d "$sdk_source_unix" ]] || die "missing Windows SDK at $sdk_source_unix"
+
+  if [[ -z "$vc_tools_source" ]]; then
+    vc_tools_source="C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Tools\\MSVC"
+    vc_tools_unix=$(windows_to_unix_path "$vc_tools_source")
+    vc_tools_unix=$(find "$vc_tools_unix" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+  else
+    vc_tools_unix=$(windows_to_unix_path "$vc_tools_source")
+  fi
+
+  [[ -n "$vc_tools_unix" && -d "$vc_tools_unix" ]] || die "missing MSVC toolchain at $vc_tools_unix"
+  vc_source_unix=$(cd "$vc_tools_unix/../../.." && pwd)
+
+  create_windows_toolchain_link "$sdk_source_unix" "$compat_root/winsdk"
+  create_windows_toolchain_link "$vc_source_unix" "$compat_root/vc"
+
+  WINDOWS_COMPAT_WIN_SDK=$(unix_to_gn_windows_path "$compat_root/winsdk")
+  WINDOWS_COMPAT_WIN_VC=$(unix_to_gn_windows_path "$compat_root/vc")
+}
+
 windows_gn_args() {
   local target_cpu="$1"
   local arch="$2"
+  prepare_windows_toolchain_compat
   configure_prebuilt_deps "windows" "$arch" "msvc"
   cat <<EOF
 $(ccache_gn_arg)target_os="win"
 target_cpu="${target_cpu}"
+win_sdk="$(gn_escape "$WINDOWS_COMPAT_WIN_SDK")"
+win_vc="$(gn_escape "$WINDOWS_COMPAT_WIN_VC")"
 is_debug=false
 is_official_build=true
 is_component_build=false
