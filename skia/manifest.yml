@@ -1,10 +1,10 @@
 name: skia
 version: 158dc9d7
-release: skia-158dc9d7-r1
+release: skia-158dc9d7-r2
 source:
   type: github_release
   repo: TotalCross/totalcross-depot-tools
-  tag: skia-158dc9d7-r1
+  tag: skia-158dc9d7-r2
 upstream:
   skia:
     url: https://skia.googlesource.com/skia.git
@@ -13,12 +13,16 @@ upstream:
     url: https://chromium.googlesource.com/chromium/tools/depot_tools.git
     commit: e868546ad82d7d25eb0a925825d033c355e28152
 artifact:
-  dev_bundle: skia-dev-158dc9d7.tar.gz
+  dev_bundle: skia-dev-headers-158dc9d7.zip
   libraries:
-    - libskia-macos-arm64.a
-    - libskia-macos-x86_64.a
+    - libskia-linux-x86_64.a
     - libskia-linux-aarch64.a
     - libskia-linux-armv7l.a
-    - libskia-linux-x86_64.a
-    - libskia-android-arm64-v8a.so
-    - libskia-android-armeabi-v7a.so
+    - libskia-android-arm64-v8a.a
+    - libskia-macos-arm64.a
+    - libskia-ios-arm64.a
+    - libskia-ios-simulator-arm64.a
+    - skia-ios.xcframework.zip
+    - libskia-windows-x86.lib
+    - libskia-windows-x64.lib
+    - libskia-windows-arm64.lib

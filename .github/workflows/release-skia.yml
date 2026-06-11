@@ -1,63 +1,83 @@
-name: Release skia
+name: Release Skia static libraries
 
 on:
   workflow_dispatch:
-    inputs:
-      target:
-        description: Skia target to build
-        required: true
-        default: linux-x86_64
-        type: choice
-        options:
-          - linux-x86_64
-          - macos-arm64
-          - macos-x86_64
-          - android-arm64
-          - android-armv7
-      upload_dev_bundle:
-        description: Package and upload the shared Skia dev bundle
-        required: true
-        default: true
-        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  release:
-    name: Build skia ${{ inputs.target }}
-    runs-on: ${{ startsWith(inputs.target, 'macos-') && 'macos-14' || 'ubuntu-24.04' }}
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-24.04
+    outputs:
+      skia_version: ${{ steps.version.outputs.skia_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Install Linux build tools
-        if: ${{ !startsWith(inputs.target, 'macos-') }}
-        run: sudo apt-get update && sudo apt-get install -y ninja-build python3 rsync
+      - name: Read Skia release metadata
+        id: version
+        run: |
+          skia_version="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["skia"]["commit"][:8])')"
+          tag_name="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["release"]["tag"])')"
 
-      - name: Install Android NDK
-        id: setup-ndk
-        if: ${{ startsWith(inputs.target, 'android-') }}
-        uses: nttld/setup-ndk@v1
+          if [ -z "$skia_version" ] || [ -z "$tag_name" ]; then
+            echo "Could not read Skia release metadata from skia/manifest.json" >&2
+            exit 1
+          fi
+
+          echo "skia_version=${skia_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-skia.yml
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SKIA_VERSION: ${{ needs.prepare.outputs.skia_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
         with:
-          ndk-version: r25c
-          add-to-path: false
+          fetch-depth: 0
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
-
-      - name: Build selected Skia target
-        working-directory: skia
-        env:
-          NDK_BUNDLE: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: ./scripts/build-${{ inputs.target }}.sh
-
-      - name: Package dev bundle
-        if: ${{ inputs.upload_dev_bundle }}
-        working-directory: skia
-        run: ./scripts/package-dev-bundle.sh
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+      - name: Download release assets
+        uses: actions/download-artifact@v7
         with:
-          name: skia-${{ inputs.target }}
-          path: skia/dist/*
+          name: skia-release-assets
+          path: release-assets
+
+      - name: Create release tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Skia ${SKIA_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/* \
+            --verify-tag \
+            --title "Skia ${SKIA_VERSION} static libraries" \
+            --notes "Static Skia ${SKIA_VERSION} libraries for TotalCross, including Android arm64-v8a with NDK ${ANDROID_NDK_VERSION:-28.2.13676358} and iOS device/simulator arm64 artifacts."

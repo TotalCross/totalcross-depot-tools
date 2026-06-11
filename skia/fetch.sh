@@ -20,9 +20,10 @@ Installs a Skia artifact outside Git tracking, either from a local file or from
 an artifact base URL or a GitHub Release.
 
 Options:
-  --platform <name>   Target platform: ios, macos, linux, android.
-  --arch <name>       Target arch/ABI: universal, arm64, x86_64, aarch64,
-                      armv7l, arm64-v8a, armeabi-v7a.
+  --platform <name>   Target platform: ios, ios-simulator, macos, linux,
+                      android, windows.
+  --arch <name>       Target arch/ABI: arm64, x86, x64, x86_64, aarch64,
+                      armv7l, arm64-v8a.
   --source <path|url> Install from a specific local file or URL.
   --base-url <url>    Base URL used with the manifest artifact_name.
   --github-repo <r>   GitHub repo in owner/name format.
@@ -36,8 +37,9 @@ Examples:
   $(basename "$0")
   $(basename "$0") --platform macos --arch arm64 --source /tmp/libskia.a
   $(basename "$0") --platform linux --arch x86_64 --base-url https://artifacts.example.com/skia/m87
-  $(basename "$0") --platform ios --arch universal
-  $(basename "$0") --github-repo TotalCross/totalcross-depot-tools --release-tag skia-158dc9d7-r1
+  $(basename "$0") --platform ios --arch arm64
+  $(basename "$0") --platform ios-simulator --arch arm64
+  $(basename "$0") --github-repo TotalCross/totalcross-depot-tools --release-tag skia-158dc9d7-r2
 EOF
 }
 
@@ -101,7 +103,7 @@ verify_sha256() {
   fi
 }
 
-install_linux_build_manifests() {
+install_build_manifests() {
   local metadata_info
 
   metadata_info=$(
@@ -111,9 +113,16 @@ import pathlib
 import sys
 
 manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
-entries = manifest.get("metadata", {}).get("linux-build-manifests", {})
-for arch, info in sorted(entries.items()):
-    print(arch)
+metadata = manifest.get("metadata", {})
+entries = metadata.get("build-manifests", {})
+for key, info in sorted(entries.items()):
+    print(key)
+    print(info["artifact_name"])
+    print(info["target_path"])
+    print(info.get("sha256", ""))
+
+for arch, info in sorted(metadata.get("linux-build-manifests", {}).items()):
+    print(f"linux-{arch}")
     print(info["artifact_name"])
     print(info["target_path"])
     print(info.get("sha256", ""))
@@ -138,15 +147,15 @@ PY
       download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${manifest_name}" "$manifest_tmp"
     else
       rm -f "$manifest_tmp"
-      die "linux build manifest installation requires a GitHub release or --base-url"
+      die "build manifest installation requires a GitHub release or --base-url"
     fi
 
-    verify_sha256 "$manifest_tmp" "$manifest_sha" "linux-build-manifest-${manifest_arch}"
+    verify_sha256 "$manifest_tmp" "$manifest_sha" "build-manifest-${manifest_arch}"
     mkdir -p "$(dirname "$manifest_target")"
     cp "$manifest_tmp" "$manifest_target"
     rm -f "$manifest_tmp"
 
-    echo "Installed Linux build manifest for ${manifest_arch} at:"
+    echo "Installed Skia build manifest for ${manifest_arch} at:"
     echo "  $manifest_target"
   done <<< "$metadata_info"
 }
@@ -154,9 +163,11 @@ PY
 normalize_platform() {
   case "$1" in
     iOS|ios) echo "ios" ;;
+    ios-simulator|iphonesimulator) echo "ios-simulator" ;;
     Darwin|darwin|macos|mac|osx) echo "macos" ;;
     Linux|linux) echo "linux" ;;
     Android|android) echo "android" ;;
+    Windows|windows|mingw*|MINGW*|msys*|MSYS*) echo "windows" ;;
     *) die "unsupported platform: $1" ;;
   esac
 }
@@ -166,9 +177,10 @@ normalize_arch() {
     universal) echo "universal" ;;
     arm64|aarch64) echo "arm64" ;;
     x86_64|amd64) echo "x86_64" ;;
+    x64) echo "x64" ;;
+    x86|i386|i686) echo "x86" ;;
     armv7l|armv7) echo "armv7l" ;;
     arm64-v8a) echo "arm64-v8a" ;;
-    armeabi-v7a) echo "armeabi-v7a" ;;
     *) die "unsupported architecture/ABI: $1" ;;
   esac
 }
@@ -244,6 +256,10 @@ require_cmd python3
 
 if [[ "$PLATFORM" == "linux" && "$ARCH" == "arm64" ]]; then
   ARCH="aarch64"
+fi
+
+if [[ "$PLATFORM" == "windows" && "$ARCH" == "x86_64" ]]; then
+  ARCH="x64"
 fi
 
 ARTIFACT_KEY="${PLATFORM}-${ARCH}"
@@ -352,9 +368,30 @@ if [[ $INSTALL_DEV_BUNDLE -eq 1 ]]; then
   fi
 
   verify_sha256 "$TMP_DEV_FILE" "$DEV_BUNDLE_SHA" "dev-bundle"
-  tar -xzf "$TMP_DEV_FILE" -C "$TMP_DEV_DIR"
-  rsync -a "$TMP_DEV_DIR/modules/skia/" "$ROOT_DIR/local/"
-  install_linux_build_manifests
+  case "$DEV_BUNDLE_NAME" in
+    *.zip)
+      python3 - "$TMP_DEV_FILE" "$TMP_DEV_DIR" <<'PY'
+import pathlib
+import sys
+import zipfile
+
+zip_path = pathlib.Path(sys.argv[1])
+dest = pathlib.Path(sys.argv[2])
+with zipfile.ZipFile(zip_path) as archive:
+    archive.extractall(dest)
+PY
+      ;;
+    *)
+      tar -xzf "$TMP_DEV_FILE" -C "$TMP_DEV_DIR"
+      ;;
+  esac
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "$TMP_DEV_DIR/modules/skia/" "$ROOT_DIR/local/"
+  else
+    mkdir -p "$ROOT_DIR/local"
+    cp -R "$TMP_DEV_DIR/modules/skia/." "$ROOT_DIR/local/"
+  fi
+  install_build_manifests
 
   echo "Installed Skia dev bundle at:"
   echo "  $ROOT_DIR/local"

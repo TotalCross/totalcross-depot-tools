@@ -12,6 +12,8 @@ describes the GitHub Release assets consumed by TotalCross.
 ./fetch.sh --platform linux --arch x86_64 --install-dev
 ./fetch.sh --platform macos --arch arm64 --install-dev
 ./fetch.sh --platform android --arch arm64-v8a
+./fetch.sh --platform ios --arch arm64 --install-dev
+./fetch.sh --platform ios-simulator --arch arm64 --install-dev
 ```
 
 The default source is the `TotalCross/totalcross-depot-tools` release declared
@@ -22,11 +24,16 @@ in `artifacts.json`. Override it with `--base-url`, `--github-repo`,
 
 ```bash
 ./scripts/build-macos-arm64.sh
-./scripts/build-macos-x86_64.sh
 ./scripts/build-linux-x86_64.sh
+./scripts/build-linux-aarch64.sh
 ./scripts/build-linux-armv7l.sh
 ./scripts/build-android-arm64.sh
-./scripts/build-android-armv7.sh
+./scripts/build-ios-arm64.sh
+./scripts/build-ios-simulator-arm64.sh
+./scripts/package-ios-xcframework.sh
+./scripts/build-windows-x86.sh
+./scripts/build-windows-x64.sh
+./scripts/build-windows-arm64.sh
 ./scripts/package-dev-bundle.sh
 ```
 

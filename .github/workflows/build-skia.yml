@@ -1,0 +1,388 @@
+name: Build Skia static libraries
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - skia/**
+      - .github/workflows/build-skia.yml
+  pull_request:
+    branches: [ master ]
+    paths:
+      - skia/**
+      - .github/workflows/build-skia.yml
+
+env:
+  ANDROID_NDK_VERSION: 28.2.13676358
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GITHUB_TOKEN: ${{ github.token }}
+  SKIA_USE_CCACHE: 1
+
+jobs:
+  build-linux:
+    name: Build ${{ matrix.platform_arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: linux-amd64
+            runner: ubuntu-22.04
+            docker_platform: linux/amd64
+            platform_arch: linux/x86_64
+            artifact_suffix: linux-x86_64
+            arch: x86_64
+            script: build-linux-x86_64.sh
+            use_qemu: false
+          - project: linux-arm64
+            runner: ubuntu-22.04-arm
+            docker_platform: linux/arm64
+            platform_arch: linux/aarch64
+            artifact_suffix: linux-aarch64
+            arch: aarch64
+            script: build-linux-aarch64.sh
+            use_qemu: false
+          - project: linux-arm32v7
+            runner: ubuntu-22.04
+            docker_platform: linux/arm/v7
+            platform_arch: linux/armv7l
+            artifact_suffix: linux-armv7l
+            arch: armv7l
+            script: build-linux-armv7l.sh
+            use_qemu: true
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache/skia-${{ matrix.project }}
+          key: skia-ccache-${{ runner.os }}-${{ matrix.project }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          restore-keys: |
+            skia-ccache-${{ runner.os }}-${{ matrix.project }}-
+
+      - name: Allow multiarch
+        if: ${{ matrix.use_qemu }}
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+      - name: Fetch optional zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-optional-deps.sh linux ${{ matrix.arch }}
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build static library
+        run: |
+          mkdir -p "${HOME}/.cache/ccache/skia-${{ matrix.project }}"
+          docker run \
+            --platform ${{ matrix.docker_platform }} \
+            -v "${PWD}:/sources" \
+            -v "${HOME}/.cache/ccache/skia-${{ matrix.project }}:/ccache" \
+            -e CCACHE_DIR=/ccache \
+            -e SKIA_USE_CCACHE=1 \
+            -w /sources \
+            -t totalcross/${{ matrix.project }}:v1.0.7 \
+            bash -lc "
+              if ! command -v ccache >/dev/null 2>&1; then
+                apt-get update && apt-get install -y ccache || true
+              fi
+              bash skia/scripts/${{ matrix.script }}
+            "
+
+      - name: Verify artifacts
+        run: |
+          test -f "skia/dist/libskia-${{ matrix.artifact_suffix }}.a"
+          test -f "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
+          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-${{ matrix.project }}
+          path: |
+            skia/dist/libskia-${{ matrix.artifact_suffix }}.a
+            skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md
+
+  build-android:
+    name: Build android/arm64-v8a
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache/skia-android-arm64-v8a
+          key: skia-ccache-${{ runner.os }}-android-arm64-v8a-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          restore-keys: |
+            skia-ccache-${{ runner.os }}-android-arm64-v8a-
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ccache ninja-build rsync
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Install Android NDK
+        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}" "cmake;3.22.1"
+
+      - name: Fetch optional zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-optional-deps.sh android arm64-v8a
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-android-arm64-v8a
+          NDK_BUNDLE: ${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}
+        run: ./scripts/build-android-arm64.sh
+
+      - name: Verify artifacts
+        run: |
+          test -f skia/dist/libskia-android-arm64-v8a.a
+          test -f skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -q 'is_component_build = false' skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -q "${ANDROID_NDK_VERSION}" skia/dist/build_config_manifest-android-arm64-v8a.md
+          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-android-arm64-v8a
+          path: |
+            skia/dist/libskia-android-arm64-v8a.a
+            skia/dist/build_config_manifest-android-arm64-v8a.md
+
+  build-macos:
+    name: Build macos/arm64
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache/skia-macos-arm64
+          key: skia-ccache-${{ runner.os }}-macos-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          restore-keys: |
+            skia-ccache-${{ runner.os }}-macos-arm64-
+
+      - name: Install build tools
+        run: brew install ccache ninja || true
+
+      - name: Fetch optional zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-optional-deps.sh macos arm64
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-macos-arm64
+        run: ./scripts/build-macos-arm64.sh
+
+      - name: Verify artifacts
+        run: |
+          test -f skia/dist/libskia-macos-arm64.a
+          test -f skia/dist/build_config_manifest-macos-arm64.md
+          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-macos-arm64
+          path: |
+            skia/dist/libskia-macos-arm64.a
+            skia/dist/build_config_manifest-macos-arm64.md
+
+  build-ios:
+    name: Build iOS arm64 and simulator arm64
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache/skia-ios-arm64
+          key: skia-ccache-${{ runner.os }}-ios-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          restore-keys: |
+            skia-ccache-${{ runner.os }}-ios-arm64-
+
+      - name: Install build tools
+        run: brew install ccache ninja || true
+
+      - name: Fetch optional zlib-ng/libpng prebuilts for device
+        run: bash skia/scripts/fetch-optional-deps.sh ios arm64
+
+      - name: Fetch optional zlib-ng/libpng prebuilts for simulator
+        run: bash skia/scripts/fetch-optional-deps.sh ios-simulator arm64
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build iOS device static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-arm64
+        run: ./scripts/build-ios-arm64.sh
+
+      - name: Build iOS simulator static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-arm64
+        run: ./scripts/build-ios-simulator-arm64.sh
+
+      - name: Package XCFramework
+        working-directory: skia
+        run: ./scripts/package-ios-xcframework.sh
+
+      - name: Package dev headers
+        working-directory: skia
+        run: ./scripts/package-dev-bundle.sh
+
+      - name: Verify artifacts
+        run: |
+          test -f skia/dist/libskia-ios-arm64.a
+          test -f skia/dist/libskia-ios-simulator-arm64.a
+          test -f skia/dist/skia-ios.xcframework.zip
+          test -f skia/dist/skia-dev-headers-158dc9d7.zip
+          test -f skia/dist/build_config_manifest-ios-arm64.md
+          test -f skia/dist/build_config_manifest-ios-simulator-arm64.md
+          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-ios-arm64
+          path: |
+            skia/dist/libskia-ios-arm64.a
+            skia/dist/libskia-ios-simulator-arm64.a
+            skia/dist/skia-ios.xcframework.zip
+            skia/dist/skia-dev-headers-158dc9d7.zip
+            skia/dist/build_config_manifest-ios-arm64.md
+            skia/dist/build_config_manifest-ios-simulator-arm64.md
+
+  build-windows:
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            script: build-windows-x86.sh
+            runner: windows-2022
+          - arch: x64
+            script: build-windows-x64.sh
+            runner: windows-2022
+          - arch: arm64
+            script: build-windows-arm64.sh
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore ccache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache/skia-windows-${{ matrix.arch }}
+          key: skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          restore-keys: |
+            skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-
+
+      - name: Install build tools
+        shell: powershell
+        run: |
+          choco install ninja -y
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          choco install ccache -y --no-progress --limit-output --ignore-checksums
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "ccache is unavailable on this runner; continuing without it"
+            $global:LASTEXITCODE = 0
+          }
+
+      - name: Fetch optional zlib-ng/libpng prebuilts
+        shell: bash
+        run: bash skia/scripts/fetch-optional-deps.sh windows ${{ matrix.arch }}
+
+      - name: Fetch pinned Skia sources
+        shell: bash
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Build static library
+        shell: bash
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
+          DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+        run: ./scripts/${{ matrix.script }}
+
+      - name: Verify artifacts
+        shell: bash
+        run: |
+          test -f skia/dist/libskia-windows-${{ matrix.arch }}.lib
+          test -f skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-windows-${{ matrix.arch }}
+          path: |
+            skia/dist/libskia-windows-${{ matrix.arch }}.lib
+            skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+
+  package-release-assets:
+    name: Package release assets
+    runs-on: ubuntu-24.04
+    needs:
+      - build-linux
+      - build-android
+      - build-macos
+      - build-ios
+      - build-windows
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
+        run: |
+          ! find release-assets -maxdepth 1 -name '*.so' | grep -q .
+          cd release-assets
+          shasum -a 256 * | sort -k 2 > SHA256SUMS
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-release-assets
+          path: release-assets/*

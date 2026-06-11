@@ -13,7 +13,7 @@ import pathlib
 import sys
 
 manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
-print(manifest.get("release", {}).get("dev_bundle", "skia-dev.tar.gz"))
+print(manifest.get("release", {}).get("dev_bundle", "skia-dev-headers.zip"))
 PY
 )
 fi
@@ -30,6 +30,28 @@ mkdir -p "$DIST_DIR"
   exit 1
 }
 
-tar -czf "$DIST_DIR/$BUNDLE_NAME" -C "$SOURCE_DIR" modules/skia
-echo "Created dev bundle:"
+python3 - "$SOURCE_DIR" "$DIST_DIR/$BUNDLE_NAME" <<'PY'
+import pathlib
+import sys
+import zipfile
+
+source_dir = pathlib.Path(sys.argv[1])
+bundle_path = pathlib.Path(sys.argv[2])
+root = source_dir / "modules" / "skia"
+included_roots = [
+    root / "include",
+    root / "src" / "gpu" / "gl",
+]
+
+if bundle_path.exists():
+    bundle_path.unlink()
+
+with zipfile.ZipFile(bundle_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    for included_root in included_roots:
+        for path in sorted(included_root.rglob("*")):
+            if path.is_file():
+                archive.write(path, path.relative_to(source_dir))
+PY
+
+echo "Created dev headers bundle:"
 echo "  $DIST_DIR/$BUNDLE_NAME"
