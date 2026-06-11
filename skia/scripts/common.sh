@@ -588,6 +588,32 @@ create_windows_toolchain_link() {
   fi
 }
 
+create_windows_sdk_compat() {
+  local source_dir="$1"
+  local compat_dir="$2"
+  local child
+
+  rm -rf "$compat_dir"
+  mkdir -p "$compat_dir/bin"
+
+  for child in Include Lib UnionMetadata References; do
+    if [[ -e "$source_dir/$child" ]]; then
+      create_windows_toolchain_link "$source_dir/$child" "$compat_dir/$child"
+    fi
+  done
+
+  if [[ -d "$source_dir/bin" ]]; then
+    while IFS= read -r -d '' child; do
+      create_windows_toolchain_link "$child" "$compat_dir/bin/$(basename "$child")"
+    done < <(find "$source_dir/bin" -mindepth 1 -maxdepth 1 -type d -print0)
+  fi
+
+  cat > "$compat_dir/bin/SetEnv.cmd" <<'EOF'
+@echo off
+exit /b 0
+EOF
+}
+
 prepare_windows_toolchain_compat() {
   local compat_root="$OUT_DIR/toolchain-compat/windows"
   local sdk_source="${WindowsSdkDir:-C:\\Program Files (x86)\\Windows Kits\\10\\}"
@@ -610,7 +636,7 @@ prepare_windows_toolchain_compat() {
   [[ -n "$vc_tools_unix" && -d "$vc_tools_unix" ]] || die "missing MSVC toolchain at $vc_tools_unix"
   vc_source_unix=$(cd "$vc_tools_unix/../../.." && pwd)
 
-  create_windows_toolchain_link "$sdk_source_unix" "$compat_root/winsdk"
+  create_windows_sdk_compat "$sdk_source_unix" "$compat_root/winsdk"
   create_windows_toolchain_link "$vc_source_unix" "$compat_root/vc"
 
   WINDOWS_COMPAT_WIN_SDK=$(unix_to_gn_windows_path "$compat_root/winsdk")
