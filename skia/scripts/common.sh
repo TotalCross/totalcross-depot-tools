@@ -206,6 +206,13 @@ prepare_android_ndk_compat() {
   fi
 }
 
+resolve_xcode_sysroot() {
+  local sdk="$1"
+
+  require_cmd xcrun
+  xcrun --sdk "$sdk" --show-sdk-path | tr -d '\r\n'
+}
+
 configure_prebuilt_deps() {
   local platform="$1"
   local arch="$2"
@@ -290,6 +297,8 @@ gn_gen_and_build() {
 
 macos_gn_args() {
   local target_cpu="$1"
+  local sysroot
+  sysroot=$(resolve_xcode_sysroot "macosx")
   configure_prebuilt_deps "macos" "$target_cpu" "unix"
   cat <<EOF
 $(ccache_gn_arg)target_os="mac"
@@ -297,6 +306,7 @@ is_debug=false
 is_official_build=true
 is_component_build=false
 target_cpu="${target_cpu}"
+xcode_sysroot="$(gn_escape "$sysroot")"
 skia_enable_gpu=true
 skia_enable_pdf=false
 skia_enable_tools=false
@@ -470,12 +480,14 @@ ios_gn_args() {
   local sdk="$1"
   local simulator="$2"
   local platform="$3"
+  local sysroot
+  sysroot=$(resolve_xcode_sysroot "$sdk")
   configure_prebuilt_deps "$platform" "arm64" "unix"
   cat <<EOF
 $(ccache_gn_arg)target_os="ios"
 target_cpu="arm64"
 ios_use_simulator=${simulator}
-xcode_sysroot="${sdk}"
+xcode_sysroot="$(gn_escape "$sysroot")"
 is_debug=false
 is_official_build=true
 is_component_build=false
