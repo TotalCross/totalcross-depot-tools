@@ -149,6 +149,49 @@ add_prebuilt_dep_flags() {
   fi
 }
 
+prepare_android_ndk_compat() {
+  [[ -n "$NDK_BUNDLE" ]] || die "NDK_BUNDLE is empty. Set NDK_BUNDLE to your Android NDK path"
+
+  local host_tag=""
+  case "$(uname -s)" in
+    Linux) host_tag="linux-x86_64" ;;
+    Darwin) host_tag="darwin-x86_64" ;;
+    MINGW*|MSYS*|CYGWIN*) host_tag="windows-x86_64" ;;
+  esac
+
+  [[ -n "$host_tag" ]] || die "unsupported Android NDK host platform: $(uname -s)"
+
+  local llvm_prebuilt="$NDK_BUNDLE/toolchains/llvm/prebuilt/$host_tag"
+  local modern_sysroot="$llvm_prebuilt/sysroot"
+  local modern_cxx_include="$modern_sysroot/usr/include/c++/v1"
+
+  [[ -d "$modern_sysroot" ]] || die "missing Android NDK sysroot at $modern_sysroot"
+  [[ -d "$modern_cxx_include" ]] || die "missing Android NDK C++ headers at $modern_cxx_include"
+
+  if [[ ! -e "$NDK_BUNDLE/sysroot" ]]; then
+    ln -s "$modern_sysroot" "$NDK_BUNDLE/sysroot" 2>/dev/null || {
+      mkdir -p "$NDK_BUNDLE/sysroot"
+      cp -R "$modern_sysroot/." "$NDK_BUNDLE/sysroot/"
+    }
+  fi
+
+  mkdir -p "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++" "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++abi"
+
+  if [[ ! -e "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++/include" ]]; then
+    ln -s "$modern_cxx_include" "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++/include" 2>/dev/null || {
+      mkdir -p "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++/include"
+      cp -R "$modern_cxx_include/." "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++/include/"
+    }
+  fi
+
+  if [[ ! -e "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++abi/include" ]]; then
+    ln -s "$modern_cxx_include" "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++abi/include" 2>/dev/null || {
+      mkdir -p "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++abi/include"
+      cp -R "$modern_cxx_include/." "$NDK_BUNDLE/sources/cxx-stl/llvm-libc++abi/include/"
+    }
+  fi
+}
+
 configure_prebuilt_deps() {
   local platform="$1"
   local arch="$2"
@@ -374,6 +417,7 @@ android_gn_args() {
   configure_prebuilt_deps "android" "arm64-v8a" "unix"
   cat <<EOF
 $(ccache_gn_arg)ndk="${NDK_BUNDLE}"
+ndk_api=23
 target_os="android"
 target_cpu="${target_cpu}"
 skia_use_icu=false
@@ -401,6 +445,7 @@ build_skia_android() {
   local abi="$2"
   local build_dir="$OUT_DIR/android-${abi}"
 
+  prepare_android_ndk_compat
   stage_dev_subset
   gn_gen_and_build "$build_dir" "$(android_gn_args "$target_cpu")" skia
   copy_static_artifact "$build_dir" "libskia.a" "libskia-android-${abi}.a" "android-${abi}" "android" "$abi" "libskia.a"
