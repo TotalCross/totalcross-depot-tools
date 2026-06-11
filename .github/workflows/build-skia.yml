@@ -36,13 +36,13 @@ jobs:
             script: build-linux-x86_64.sh
             use_qemu: false
           - project: linux-arm64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-22.04
             docker_platform: linux/arm64
             platform_arch: linux/aarch64
             artifact_suffix: linux-aarch64
             arch: aarch64
             script: build-linux-aarch64.sh
-            use_qemu: false
+            use_qemu: true
           - project: linux-arm32v7
             runner: ubuntu-22.04
             docker_platform: linux/arm/v7
