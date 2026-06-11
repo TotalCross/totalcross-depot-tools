@@ -13,6 +13,8 @@ RPI_ROOT="${RPI_ROOT:-$ROOT_DIR/linux/rpi}"
 NDK_BUNDLE="${NDK_BUNDLE:-}"
 SKIA_USE_DEPOT_PREBUILTS="${SKIA_USE_DEPOT_PREBUILTS:-auto}"
 SKIA_USE_CCACHE="${SKIA_USE_CCACHE:-auto}"
+SKIA_ONLY_GN_GEN="${SKIA_ONLY_GN_GEN:-0}"
+SKIA_SKIP_GN_GEN="${SKIA_SKIP_GN_GEN:-0}"
 
 SKIA_DEP_USE_ZLIB=false
 SKIA_DEP_USE_LIBPNG=false
@@ -264,6 +266,10 @@ copy_static_artifact() {
   local arch="$6"
   local installed_name="$7"
 
+  if [[ "$SKIA_ONLY_GN_GEN" == "1" || "$SKIA_ONLY_GN_GEN" == "true" ]]; then
+    return 0
+  fi
+
   [[ -f "$build_dir/$source_name" ]] || die "missing built Skia library at $build_dir/$source_name"
   cp "$build_dir/$source_name" "$DIST_DIR/$artifact_name"
   mkdir -p "$STAGING_DIR/modules/skia/out/Release/$platform/$arch"
@@ -284,15 +290,23 @@ gn_gen_and_build() {
   require_skia_checkout
   require_depot_tools_checkout
   prepare_dirs
-  export PATH="$DEPOT_TOOLS_DIR:$PATH"
   prepare_python_compat
-  sync_skia_deps
-  gn_bin=$(resolve_gn)
 
-  pushd "$SKIA_DIR" >/dev/null
-  "$gn_bin" gen "$build_dir" --args="$args"
+  if [[ "$SKIA_SKIP_GN_GEN" != "1" && "$SKIA_SKIP_GN_GEN" != "true" ]]; then
+    export PATH="$DEPOT_TOOLS_DIR:$PATH"
+    sync_skia_deps
+    gn_bin=$(resolve_gn)
+
+    pushd "$SKIA_DIR" >/dev/null
+    "$gn_bin" gen "$build_dir" --args="$args"
+    popd >/dev/null
+  fi
+
+  if [[ "$SKIA_ONLY_GN_GEN" == "1" || "$SKIA_ONLY_GN_GEN" == "true" ]]; then
+    return 0
+  fi
+
   ninja -C "$build_dir" "$target"
-  popd >/dev/null
 }
 
 macos_gn_args() {

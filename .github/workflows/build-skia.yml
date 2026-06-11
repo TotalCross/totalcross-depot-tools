@@ -77,26 +77,37 @@ jobs:
         working-directory: skia
         run: ./scripts/fetch-source.sh
 
+      - name: Install host GN tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache ninja-build python3 rsync
+          if ! command -v gn >/dev/null 2>&1; then
+            sudo apt-get install -y generate-ninja || sudo apt-get install -y gn
+          fi
+
+      - name: Generate Ninja files
+        env:
+          SKIA_ONLY_GN_GEN: 1
+        run: bash skia/scripts/${{ matrix.script }}
+
       - name: Build static library
         run: |
           mkdir -p "${HOME}/.cache/ccache/skia-${{ matrix.project }}"
           docker run \
             --platform ${{ matrix.docker_platform }} \
-            -v "${PWD}:/sources" \
+            -v "${PWD}:${PWD}" \
             -v "${HOME}/.cache/ccache/skia-${{ matrix.project }}:/ccache" \
             -e CCACHE_DIR=/ccache \
             -e SKIA_USE_CCACHE=1 \
-            -w /sources \
+            -e SKIA_SKIP_GN_GEN=1 \
+            -w "${PWD}" \
             -t totalcross/${{ matrix.project }}:v1.0.7 \
             bash -lc "
-              if ! command -v ccache >/dev/null 2>&1 || ! command -v gn >/dev/null 2>&1; then
+              if ! command -v ccache >/dev/null 2>&1; then
                 apt-get update
               fi
               if ! command -v ccache >/dev/null 2>&1; then
                 apt-get install -y ccache || true
-              fi
-              if ! command -v gn >/dev/null 2>&1; then
-                apt-get install -y generate-ninja || apt-get install -y gn || true
               fi
               bash skia/scripts/${{ matrix.script }}
             "
