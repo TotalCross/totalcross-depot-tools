@@ -37,6 +37,19 @@ require_depot_tools_checkout() {
   [[ -d "$DEPOT_TOOLS_DIR" ]] || die "missing depot_tools checkout at $DEPOT_TOOLS_DIR"
 }
 
+prepare_python_compat() {
+  require_cmd python3
+
+  if command -v python >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local compat_bin="$OUT_DIR/toolchain-compat/bin"
+  mkdir -p "$compat_bin"
+  ln -sf "$(command -v python3)" "$compat_bin/python"
+  export PATH="$compat_bin:$PATH"
+}
+
 resolve_gn() {
   require_depot_tools_checkout
 
@@ -264,6 +277,7 @@ gn_gen_and_build() {
   require_depot_tools_checkout
   prepare_dirs
   export PATH="$DEPOT_TOOLS_DIR:$PATH"
+  prepare_python_compat
   sync_skia_deps
   gn_bin=$(resolve_gn)
 
