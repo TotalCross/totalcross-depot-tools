@@ -300,6 +300,10 @@ gn_gen_and_build() {
     pushd "$SKIA_DIR" >/dev/null
     "$gn_bin" gen "$build_dir" --args="$args"
     popd >/dev/null
+
+    if [[ ! -f "$build_dir/build_config_manifest.md" ]]; then
+      printf '%s\n' "$args" > "$build_dir/build_config_manifest.md"
+    fi
   fi
 
   if [[ "$SKIA_ONLY_GN_GEN" == "1" || "$SKIA_ONLY_GN_GEN" == "true" ]]; then
