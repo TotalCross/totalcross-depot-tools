@@ -224,8 +224,10 @@ gn_gen_and_build() {
   sync_skia_deps
   gn_bin=$(resolve_gn)
 
+  pushd "$SKIA_DIR" >/dev/null
   "$gn_bin" gen "$build_dir" --args="$args"
   ninja -C "$build_dir" "$target"
+  popd >/dev/null
 }
 
 macos_gn_args() {
