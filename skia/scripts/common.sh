@@ -53,22 +53,23 @@ prepare_python_compat() {
 resolve_gn() {
   require_depot_tools_checkout
 
-  if [[ -x "$SKIA_DIR/bin/gn" ]]; then
-    echo "$SKIA_DIR/bin/gn"
-    return 0
-  fi
-
-  if [[ -x "$DEPOT_TOOLS_DIR/gn" ]]; then
-    echo "$DEPOT_TOOLS_DIR/gn"
-    return 0
-  fi
+  local candidate
+  local candidates=()
 
   if command -v gn >/dev/null 2>&1; then
-    command -v gn
-    return 0
+    candidates+=("$(command -v gn)")
   fi
 
-  die "could not find 'gn'. Install depot_tools or use a Skia checkout that contains bin/gn."
+  candidates+=("$DEPOT_TOOLS_DIR/gn" "$SKIA_DIR/bin/gn")
+
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]] && "$candidate" --version >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  die "could not find an executable 'gn' for this host architecture."
 }
 
 sync_skia_deps() {

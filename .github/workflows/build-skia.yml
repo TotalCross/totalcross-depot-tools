@@ -89,8 +89,14 @@ jobs:
             -w /sources \
             -t totalcross/${{ matrix.project }}:v1.0.7 \
             bash -lc "
+              if ! command -v ccache >/dev/null 2>&1 || ! command -v gn >/dev/null 2>&1; then
+                apt-get update
+              fi
               if ! command -v ccache >/dev/null 2>&1; then
-                apt-get update && apt-get install -y ccache || true
+                apt-get install -y ccache || true
+              fi
+              if ! command -v gn >/dev/null 2>&1; then
+                apt-get install -y generate-ninja || apt-get install -y gn || true
               fi
               bash skia/scripts/${{ matrix.script }}
             "
