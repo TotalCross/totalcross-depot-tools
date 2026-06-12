@@ -604,13 +604,13 @@ create_windows_sdk_compat() {
 
   for child in Include Lib UnionMetadata References; do
     if [[ -e "$source_dir/$child" ]]; then
-      create_windows_toolchain_link "$source_dir/$child" "$compat_dir/$child"
+      cp -R "$source_dir/$child" "$compat_dir/$child"
     fi
   done
 
   if [[ -d "$source_dir/bin" ]]; then
     while IFS= read -r -d '' child; do
-      create_windows_toolchain_link "$child" "$compat_dir/bin/$(basename "$child")"
+      cp -R "$child" "$compat_dir/bin/$(basename "$child")"
     done < <(find "$source_dir/bin" -mindepth 1 -maxdepth 1 -type d -print0)
   fi
 
