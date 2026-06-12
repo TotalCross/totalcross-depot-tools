@@ -9,8 +9,53 @@ function(tcvm_auto_fetch_skia)
   set(TCVM_SKIA_DEP_DIR "${TCVM_SKIA_AUTOFETCH_DEP_DIR}")
   set(TCVM_DEFAULT_SKIA_DIR "${TCVM_SKIA_DEP_DIR}/local")
 
+  if(NOT DEFINED SKIA_RELEASE_TAG AND DEFINED ENV{SKIA_RELEASE_TAG})
+    set(SKIA_RELEASE_TAG "$ENV{SKIA_RELEASE_TAG}")
+  elseif(NOT DEFINED SKIA_RELEASE_TAG)
+    set(SKIA_RELEASE_TAG "skia-158dc9d7-r2")
+  endif()
+
+  if(NOT DEFINED SKIA_GITHUB_REPO AND DEFINED ENV{SKIA_GITHUB_REPO})
+    set(SKIA_GITHUB_REPO "$ENV{SKIA_GITHUB_REPO}")
+  elseif(NOT DEFINED SKIA_GITHUB_REPO)
+    set(SKIA_GITHUB_REPO "TotalCross/totalcross-depot-tools")
+  endif()
+
+  if(NOT DEFINED SKIA_GITHUB_TOKEN_ENV AND DEFINED ENV{SKIA_GITHUB_TOKEN_ENV})
+    set(SKIA_GITHUB_TOKEN_ENV "$ENV{SKIA_GITHUB_TOKEN_ENV}")
+  elseif(NOT DEFINED SKIA_GITHUB_TOKEN_ENV)
+    set(SKIA_GITHUB_TOKEN_ENV "SKIA_GITHUB_TOKEN")
+  endif()
+
+  if(NOT DEFINED SKIA_ARTIFACT_BASE_URL AND DEFINED ENV{SKIA_ARTIFACT_BASE_URL})
+    set(SKIA_ARTIFACT_BASE_URL "$ENV{SKIA_ARTIFACT_BASE_URL}")
+  endif()
+
+  if(NOT SKIA_GITHUB_REPO MATCHES "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+    message(FATAL_ERROR "Invalid Skia GitHub repository value. Expected OWNER/REPO.")
+  endif()
+
+  foreach(TCVM_SKIA_RELEASE_TAG_FORBIDDEN " " "{" "}" "/" "\\")
+    string(FIND "${SKIA_RELEASE_TAG}" "${TCVM_SKIA_RELEASE_TAG_FORBIDDEN}" TCVM_SKIA_RELEASE_TAG_FORBIDDEN_INDEX)
+    if(NOT TCVM_SKIA_RELEASE_TAG_FORBIDDEN_INDEX EQUAL -1)
+      message(FATAL_ERROR "Invalid Skia release tag value: ${SKIA_RELEASE_TAG}")
+    endif()
+  endforeach()
+  string(FIND "${SKIA_RELEASE_TAG}" ".." TCVM_SKIA_RELEASE_TAG_PARENT_INDEX)
+  if(NOT TCVM_SKIA_RELEASE_TAG_PARENT_INDEX EQUAL -1)
+    message(FATAL_ERROR "Invalid Skia release tag value: ${SKIA_RELEASE_TAG}")
+  endif()
+
+  if(DEFINED SKIA_LIBRARY)
+    if(EXISTS "${SKIA_LIBRARY}")
+      return()
+    endif()
+    unset(SKIA_LIBRARY CACHE)
+  endif()
+
   if(DEFINED SKIA_LIBRARIES)
-    if(EXISTS "${SKIA_LIBRARIES}")
+    list(LENGTH SKIA_LIBRARIES TCVM_SKIA_LIBRARIES_LEN)
+    if(TCVM_SKIA_LIBRARIES_LEN EQUAL 1 AND EXISTS "${SKIA_LIBRARIES}")
       return()
     endif()
     unset(SKIA_LIBRARIES CACHE)
@@ -143,9 +188,17 @@ function(tcvm_auto_fetch_skia)
     list(APPEND TCVM_FETCH_ARGS --install-dev)
   endif()
 
-  message(STATUS "Skia artifacts not found locally. Fetching ${TCVM_FETCH_PLATFORM}/${TCVM_FETCH_ARCH}...")
+  if(DEFINED SKIA_ARTIFACT_BASE_URL AND NOT SKIA_ARTIFACT_BASE_URL STREQUAL "")
+    list(APPEND TCVM_FETCH_ARGS --base-url "${SKIA_ARTIFACT_BASE_URL}")
+  endif()
+
+  message(STATUS "Skia artifacts not found locally. Fetching ${SKIA_GITHUB_REPO}@${SKIA_RELEASE_TAG}/${TCVM_FETCH_PLATFORM}/${TCVM_FETCH_ARCH}...")
   execute_process(
-    COMMAND "${TCVM_BASH_EXECUTABLE}" ${TCVM_FETCH_ARGS}
+    COMMAND
+      "${TCVM_BASH_EXECUTABLE}" ${TCVM_FETCH_ARGS}
+      --release-tag "${SKIA_RELEASE_TAG}"
+      --github-repo "${SKIA_GITHUB_REPO}"
+      --github-token-env "${SKIA_GITHUB_TOKEN_ENV}"
     WORKING_DIRECTORY "${TCVM_SKIA_DEP_DIR}"
     RESULT_VARIABLE TCVM_FETCH_RESULT
     OUTPUT_VARIABLE TCVM_FETCH_STDOUT

@@ -7,6 +7,7 @@ MANIFEST_PATH="$ROOT_DIR/artifacts.json"
 BASE_URL="${SKIA_ARTIFACT_BASE_URL:-}"
 GITHUB_REPO="${SKIA_GITHUB_REPO:-}"
 RELEASE_TAG="${SKIA_RELEASE_TAG:-}"
+GITHUB_TOKEN_ENV="${SKIA_GITHUB_TOKEN_ENV:-}"
 PLATFORM=""
 ARCH=""
 SOURCE=""
@@ -28,6 +29,9 @@ Options:
   --base-url <url>    Base URL used with the manifest artifact_name.
   --github-repo <r>   GitHub repo in owner/name format.
   --release-tag <t>   GitHub release tag.
+  --github-token-env <name>
+                      Environment variable containing a GitHub token,
+                      default: SKIA_GITHUB_TOKEN, then GITHUB_TOKEN.
   --manifest <file>   Manifest file. Default: $MANIFEST_PATH
   --install-dev       Install the shared dev bundle declared in the manifest.
   --print-target      Print the resolved output path and exit.
@@ -52,6 +56,16 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
 }
 
+github_token() {
+  if [[ -n "$GITHUB_TOKEN_ENV" ]]; then
+    printf '%s' "${!GITHUB_TOKEN_ENV:-}"
+  elif [[ -n "${SKIA_GITHUB_TOKEN:-}" ]]; then
+    printf '%s' "$SKIA_GITHUB_TOKEN"
+  elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    printf '%s' "$GITHUB_TOKEN"
+  fi
+}
+
 SKIA_DOWNLOAD_RETRIES="${SKIA_DOWNLOAD_RETRIES:-5}"
 SKIA_DOWNLOAD_RETRY_DELAY="${SKIA_DOWNLOAD_RETRY_DELAY:-2}"
 
@@ -68,11 +82,20 @@ download_to_file() {
   local delay="$SKIA_DOWNLOAD_RETRY_DELAY"
   local status
   local curl_exit
+  local token
+  local curl_headers=()
 
   require_cmd curl
+  token=$(github_token)
+  if [[ -n "$token" ]]; then
+    curl_headers+=(
+      -H "Authorization: Bearer ${token}"
+      -H "X-GitHub-Api-Version: 2022-11-28"
+    )
+  fi
 
   while true; do
-    status=$(curl -w "%{http_code}" -fsSL -o "$out" "$url") && return 0
+    status=$(curl "${curl_headers[@]}" -w "%{http_code}" -fsSL -o "$out" "$url") && return 0
     curl_exit=$?
 
     if [[ $attempt -ge $max_attempts ]] || ! should_retry_download "${status:-000}"; then
@@ -226,6 +249,11 @@ while [[ $# -gt 0 ]]; do
       RELEASE_TAG="$2"
       shift 2
       ;;
+    --github-token-env)
+      [[ $# -ge 2 ]] || die "--github-token-env requires a value"
+      GITHUB_TOKEN_ENV="$2"
+      shift 2
+      ;;
     --manifest)
       [[ $# -ge 2 ]] || die "--manifest requires a value"
       MANIFEST_PATH="$2"
@@ -260,6 +288,19 @@ fi
 
 if [[ "$PLATFORM" == "windows" && "$ARCH" == "x86_64" ]]; then
   ARCH="x64"
+fi
+
+if [[ -n "$GITHUB_REPO" && ! "$GITHUB_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+  die "invalid Skia GitHub repository value. Expected OWNER/REPO."
+fi
+
+if [[ "$RELEASE_TAG" == *"{"* ||
+      "$RELEASE_TAG" == *"}"* ||
+      "$RELEASE_TAG" == *" "* ||
+      "$RELEASE_TAG" == *"/"* ||
+      "$RELEASE_TAG" == *"\\"* ||
+      "$RELEASE_TAG" == *".."* ]]; then
+  die "invalid Skia release tag value: ${RELEASE_TAG}"
 fi
 
 ARTIFACT_KEY="${PLATFORM}-${ARCH}"
