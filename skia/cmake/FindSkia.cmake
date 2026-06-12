@@ -87,6 +87,15 @@ endif()
 
 set(SKIA_LIBRARY_DIRS "${SKIA_DIR}/out/Release/${SKIA_PLATFORM}/${SKIA_ARCH}" CACHE PATH "Skia library directory" FORCE)
 
+set(SKIA_LIBPNG_MODULE_DIR "${SKIA_DEPENDENCY_DIR}/../libpng/cmake")
+set(SKIA_ZLIB_MODULE_DIR "${SKIA_DEPENDENCY_DIR}/../zlib-ng/cmake")
+if(EXISTS "${SKIA_LIBPNG_MODULE_DIR}/FindPNG.cmake")
+  list(APPEND CMAKE_MODULE_PATH "${SKIA_LIBPNG_MODULE_DIR}")
+endif()
+if(EXISTS "${SKIA_ZLIB_MODULE_DIR}/FindZLIB.cmake")
+  list(APPEND CMAKE_MODULE_PATH "${SKIA_ZLIB_MODULE_DIR}")
+endif()
+
 foreach(SKIA_CACHED_VAR
     SKIA_CONFIG_INCLUDE_DIR
     SKIA_CORE_INCLUDE_DIR
@@ -194,9 +203,13 @@ find_package_handle_standard_args(Skia
 )
 
 if(Skia_FOUND AND NOT TARGET Skia::Skia)
+  find_package(ZLIB REQUIRED MODULE)
+  find_package(PNG REQUIRED MODULE)
+
   add_library(Skia::Skia UNKNOWN IMPORTED)
   set_target_properties(Skia::Skia PROPERTIES
     IMPORTED_LOCATION "${SKIA_LIBRARY}"
     INTERFACE_INCLUDE_DIRECTORIES "${SKIA_INCLUDE_DIRS}"
+    INTERFACE_LINK_LIBRARIES "PNG::PNG;ZLIB::ZLIB"
   )
 endif()
