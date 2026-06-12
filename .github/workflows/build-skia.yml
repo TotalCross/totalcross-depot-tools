@@ -121,6 +121,11 @@ jobs:
               bash skia/scripts/${{ matrix.script }}
             "
 
+      - name: Print build summary on failure
+        if: failure()
+        run: |
+          find skia/dist/diagnostics -type f -name 'build-summary.json' -print -exec cat {} \; || true
+
       - name: Verify artifacts
         run: |
           test -f "skia/dist/libskia-${{ matrix.artifact_suffix }}.a"
@@ -184,6 +189,11 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-android-arm64-v8a
           NDK_BUNDLE: ${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}
         run: ./scripts/build-android-arm64.sh
+
+      - name: Print build summary on failure
+        if: failure()
+        run: |
+          find skia/dist/diagnostics -type f -name 'build-summary.json' -print -exec cat {} \; || true
 
       - name: Verify artifacts
         run: |
@@ -267,6 +277,11 @@ jobs:
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.artifact_suffix }}
         run: ./scripts/${{ matrix.script }}
+
+      - name: Print build summary on failure
+        if: failure()
+        run: |
+          find skia/dist/diagnostics -type f -name 'build-summary.json' -print -exec cat {} \; || true
 
       - name: Verify artifacts
         run: |
@@ -411,6 +426,12 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
           DEPOT_TOOLS_WIN_TOOLCHAIN: 0
         run: ./scripts/${{ matrix.script }}
+
+      - name: Print build summary on failure
+        if: failure()
+        shell: bash
+        run: |
+          find skia/dist/diagnostics -type f -name 'build-summary.json' -print -exec cat {} \; || true
 
       - name: Verify artifacts
         shell: bash
