@@ -79,7 +79,7 @@ jobs:
         if: steps.skia-source-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p skia/.source-cache
-          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia depot_tools
+          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
 
   build-linux:
     name: Build ${{ matrix.platform_arch }}
@@ -154,6 +154,10 @@ jobs:
         run: |
           test -f skia/.source-cache/skia-source.tar
           tar -C skia -xf skia/.source-cache/skia-source.tar
+
+      - name: Fetch native depot_tools
+        working-directory: skia
+        run: ./scripts/fetch-source.sh depot_tools
 
       - name: Install host GN tools
         if: ${{ !matrix.use_gn_container }}
@@ -289,6 +293,10 @@ jobs:
           test -f skia/.source-cache/skia-source.tar
           tar -C skia -xf skia/.source-cache/skia-source.tar
 
+      - name: Fetch native depot_tools
+        working-directory: skia
+        run: ./scripts/fetch-source.sh depot_tools
+
       - name: Build static library
         working-directory: skia
         env:
@@ -387,6 +395,10 @@ jobs:
         run: |
           test -f skia/.source-cache/skia-source.tar
           tar -C skia -xf skia/.source-cache/skia-source.tar
+
+      - name: Fetch native depot_tools
+        working-directory: skia
+        run: ./scripts/fetch-source.sh depot_tools
 
       - name: Build static library
         working-directory: skia
@@ -544,6 +556,11 @@ jobs:
         run: |
           test -f skia/.source-cache/skia-source.tar
           tar -C skia -xf skia/.source-cache/skia-source.tar
+
+      - name: Fetch native depot_tools
+        shell: bash
+        working-directory: skia
+        run: ./scripts/fetch-source.sh depot_tools
 
       - name: Build static library
         shell: bash

@@ -47,5 +47,10 @@ checkout_pinned_repo() {
   git -C "$ROOT_DIR/$path" checkout --detach -q FETCH_HEAD
 }
 
-checkout_pinned_repo skia
-checkout_pinned_repo depot_tools
+if [[ $# -eq 0 ]]; then
+  set -- skia depot_tools
+fi
+
+for repo_name in "$@"; do
+  checkout_pinned_repo "$repo_name"
+done
