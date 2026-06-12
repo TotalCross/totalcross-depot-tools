@@ -131,7 +131,14 @@ ccache_gn_arg() {
   fi
 
   if command -v ccache >/dev/null 2>&1; then
-    printf 'cc_wrapper="%s"\n' "$(gn_escape "$(command -v ccache)")"
+    local ccache_path
+    ccache_path="$(command -v ccache)"
+    if command -v cygpath >/dev/null 2>&1; then
+      case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) ccache_path="$(cygpath -m "$ccache_path")" ;;
+      esac
+    fi
+    printf 'cc_wrapper="%s"\n' "$(gn_escape "$ccache_path")"
   fi
 }
 
