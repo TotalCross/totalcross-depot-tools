@@ -7,11 +7,19 @@ on:
     branches: [ master ]
     paths:
       - skia/**
+      - zlib-ng/fetch.sh
+      - zlib-ng/manifest.yml
+      - libpng/fetch.sh
+      - libpng/manifest.yml
       - .github/workflows/build-skia.yml
   pull_request:
     branches: [ master ]
     paths:
       - skia/**
+      - zlib-ng/fetch.sh
+      - zlib-ng/manifest.yml
+      - libpng/fetch.sh
+      - libpng/manifest.yml
       - .github/workflows/build-skia.yml
 
 env:
@@ -70,8 +78,8 @@ jobs:
         if: ${{ matrix.use_qemu }}
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-      - name: Fetch optional zlib-ng/libpng prebuilts
-        run: bash skia/scripts/fetch-optional-deps.sh linux ${{ matrix.arch }}
+      - name: Fetch zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-prebuilt-deps.sh linux ${{ matrix.arch }}
 
       - name: Fetch pinned Skia sources
         working-directory: skia
@@ -116,6 +124,8 @@ jobs:
         run: |
           test -f "skia/dist/libskia-${{ matrix.artifact_suffix }}.a"
           test -f "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
+          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
+          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
       - name: Upload artifact
@@ -153,8 +163,8 @@ jobs:
       - name: Install Android NDK
         run: sdkmanager "ndk;${ANDROID_NDK_VERSION}" "cmake;3.22.1"
 
-      - name: Fetch optional zlib-ng/libpng prebuilts
-        run: bash skia/scripts/fetch-optional-deps.sh android arm64-v8a
+      - name: Fetch zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-prebuilt-deps.sh android arm64-v8a
 
       - name: Fetch pinned Skia sources
         working-directory: skia
@@ -173,6 +183,8 @@ jobs:
           test -f skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -q 'is_component_build = false' skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -q "${ANDROID_NDK_VERSION}" skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
       - name: Upload artifact
@@ -228,8 +240,8 @@ jobs:
       - name: Install build tools
         run: brew install ccache ninja || true
 
-      - name: Fetch optional zlib-ng/libpng prebuilts
-        run: bash skia/scripts/fetch-optional-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
+      - name: Fetch zlib-ng/libpng prebuilts
+        run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
 
       - name: Fetch pinned Skia sources
         working-directory: skia
@@ -245,6 +257,8 @@ jobs:
         run: |
           test -f skia/dist/${{ matrix.library }}
           test -f skia/dist/${{ matrix.manifest }}
+          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/${{ matrix.manifest }}
+          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/${{ matrix.manifest }}
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
       - name: Upload artifact
@@ -359,9 +373,9 @@ jobs:
             $global:LASTEXITCODE = 0
           }
 
-      - name: Fetch optional zlib-ng/libpng prebuilts
+      - name: Fetch zlib-ng/libpng prebuilts
         shell: bash
-        run: bash skia/scripts/fetch-optional-deps.sh windows ${{ matrix.arch }}
+        run: bash skia/scripts/fetch-prebuilt-deps.sh windows ${{ matrix.arch }}
 
       - name: Fetch pinned Skia sources
         shell: bash
@@ -381,6 +395,8 @@ jobs:
         run: |
           test -f skia/dist/libskia-windows-${{ matrix.arch }}.lib
           test -f skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
       - name: Upload artifact

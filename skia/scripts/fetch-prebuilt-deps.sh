@@ -17,15 +17,15 @@ read_release() {
   awk '/^release:[[:space:]]*/ { print $2; exit }' "$manifest"
 }
 
-fetch_optional() {
+fetch_required() {
   local dep="$1"
   local token_env="$2"
   local release_tag
 
   release_tag=$(read_release "$ROOT_DIR/$dep/manifest.yml")
   if [[ -z "$release_tag" ]]; then
-    echo "warning: could not read release tag for $dep; skipping optional Skia prebuilt dependency" >&2
-    return 0
+    echo "error: could not read release tag for $dep" >&2
+    exit 1
   fi
 
   if bash "$ROOT_DIR/$dep/fetch.sh" \
@@ -36,8 +36,9 @@ fetch_optional() {
     return 0
   fi
 
-  echo "warning: no $dep prebuilt available for $PLATFORM/$ARCH; Skia will use its internal dependency for this target" >&2
+  echo "error: no $dep prebuilt available for $PLATFORM/$ARCH at release $release_tag" >&2
+  exit 1
 }
 
-fetch_optional zlib-ng ZLIB_NG_GITHUB_TOKEN
-fetch_optional libpng LIBPNG_GITHUB_TOKEN
+fetch_required zlib-ng ZLIB_NG_GITHUB_TOKEN
+fetch_required libpng LIBPNG_GITHUB_TOKEN

@@ -221,6 +221,8 @@ configure_prebuilt_deps() {
   local linker_style="${3:-unix}"
   local zlib_root="$REPO_ROOT/zlib-ng/local/$platform/$arch"
   local libpng_root="$REPO_ROOT/libpng/local/$platform/$arch"
+  local zlib_library=""
+  local libpng_library=""
 
   SKIA_DEP_USE_ZLIB=false
   SKIA_DEP_USE_LIBPNG=false
@@ -231,17 +233,29 @@ configure_prebuilt_deps() {
     return 0
   fi
 
-  if [[ -f "$zlib_root/include/zlib.h" ]] && find_static_library "$zlib_root/lib" "libz.a" "zlib.lib" "zlibstatic.lib" >/dev/null; then
-    SKIA_DEP_USE_ZLIB=true
-    add_prebuilt_dep_flags "$zlib_root" "$linker_style"
-    echo "Using repository zlib-ng prebuilt at $zlib_root" >&2
+  if [[ ! -f "$zlib_root/include/zlib.h" ]]; then
+    die "missing repository zlib-ng prebuilt headers at $zlib_root/include"
   fi
 
-  if [[ -f "$libpng_root/include/png.h" ]] && find_static_library "$libpng_root/lib" "libpng*.a" "png*.lib" "libpng*.lib" >/dev/null; then
-    SKIA_DEP_USE_LIBPNG=true
-    add_prebuilt_dep_flags "$libpng_root" "$linker_style"
-    echo "Using repository libpng prebuilt at $libpng_root" >&2
+  if ! zlib_library=$(find_static_library "$zlib_root/lib" "libz.a" "zlib.lib" "zlibstatic.lib"); then
+    die "missing repository zlib-ng static library under $zlib_root/lib"
   fi
+
+  if [[ ! -f "$libpng_root/include/png.h" ]]; then
+    die "missing repository libpng prebuilt headers at $libpng_root/include"
+  fi
+
+  if ! libpng_library=$(find_static_library "$libpng_root/lib" "libpng*.a" "png*.lib" "libpng*.lib"); then
+    die "missing repository libpng static library under $libpng_root/lib"
+  fi
+
+  SKIA_DEP_USE_ZLIB=true
+  add_prebuilt_dep_flags "$zlib_root" "$linker_style"
+  echo "Using repository zlib-ng prebuilt at $zlib_root ($zlib_library)" >&2
+
+  SKIA_DEP_USE_LIBPNG=true
+  add_prebuilt_dep_flags "$libpng_root" "$linker_style"
+  echo "Using repository libpng prebuilt at $libpng_root ($libpng_library)" >&2
 }
 
 copy_build_manifest_if_present() {
