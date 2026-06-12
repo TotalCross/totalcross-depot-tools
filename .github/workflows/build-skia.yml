@@ -155,7 +155,7 @@ jobs:
       - name: Restore ccache
         uses: actions/cache@v5
         with:
-          path: ~/.cache/ccache/skia-android-arm64-v8a
+          path: .cache/ccache/skia-android-arm64-v8a
           key: skia-ccache-${{ runner.os }}-android-arm64-v8a-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
           restore-keys: |
             skia-ccache-${{ runner.os }}-android-arm64-v8a-
@@ -247,7 +247,7 @@ jobs:
       - name: Restore ccache
         uses: actions/cache@v5
         with:
-          path: ~/.cache/ccache/skia-${{ matrix.artifact_suffix }}
+          path: .cache/ccache/skia-${{ matrix.artifact_suffix }}
           key: skia-ccache-${{ runner.os }}-${{ matrix.artifact_suffix }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
           restore-keys: |
             skia-ccache-${{ runner.os }}-${{ matrix.artifact_suffix }}-
@@ -377,7 +377,7 @@ jobs:
       - name: Restore ccache
         uses: actions/cache@v5
         with:
-          path: ~/.cache/ccache/skia-windows-${{ matrix.arch }}
+          path: .cache/ccache/skia-windows-${{ matrix.arch }}
           key: skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
           restore-keys: |
             skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-
