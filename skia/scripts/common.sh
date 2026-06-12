@@ -15,6 +15,7 @@ SKIA_USE_DEPOT_PREBUILTS="${SKIA_USE_DEPOT_PREBUILTS:-auto}"
 SKIA_USE_CCACHE="${SKIA_USE_CCACHE:-auto}"
 SKIA_ONLY_GN_GEN="${SKIA_ONLY_GN_GEN:-0}"
 SKIA_SKIP_GN_GEN="${SKIA_SKIP_GN_GEN:-0}"
+SKIA_SKIP_DEPS_SYNC="${SKIA_SKIP_DEPS_SYNC:-0}"
 
 SKIA_DEP_USE_ZLIB=false
 SKIA_DEP_USE_LIBPNG=false
@@ -79,9 +80,13 @@ sync_skia_deps() {
   require_skia_checkout
   require_depot_tools_checkout
 
+  if [[ "$SKIA_SKIP_DEPS_SYNC" == "1" || "$SKIA_SKIP_DEPS_SYNC" == "true" ]]; then
+    return 0
+  fi
+
   pushd "$SKIA_DIR" >/dev/null
   export PATH="$DEPOT_TOOLS_DIR:$PATH"
-  python3 "$ROOT_DIR/scripts/git-sync-deps-light.py" --skia-dir "$SKIA_DIR"
+  python3 tools/git-sync-deps
   popd >/dev/null
 }
 

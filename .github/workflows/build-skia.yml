@@ -45,29 +45,41 @@ jobs:
         run: |
           key_hash=$(
             git rev-parse \
+              HEAD:.github/workflows/build-skia.yml \
               HEAD:skia/manifest.json \
               HEAD:skia/scripts/fetch-source.sh \
-              HEAD:skia/scripts/git-sync-deps-light.py |
+              HEAD:skia/scripts/common.sh |
             shasum -a 256 |
             awk '{print $1}'
           )
           echo "cache-key=skia-source-deps-${key_hash}" >> "$GITHUB_OUTPUT"
 
-      - name: Restore Skia source checkout cache
+      - name: Restore Skia source archive cache
+        id: skia-source-cache
         uses: actions/cache@v5
         with:
-          path: |
-            skia/depot_tools
-            skia/skia
+          path: skia/.source-cache
           key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
           enableCrossOsArchive: true
 
       - name: Fetch pinned Skia sources
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
         working-directory: skia
         run: ./scripts/fetch-source.sh
 
       - name: Sync Skia dependencies
-        run: python3 skia/scripts/git-sync-deps-light.py --skia-dir skia/skia
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache/bin
+          ln -sf "$(command -v python3)" skia/.source-cache/bin/python
+          cd skia/skia
+          PATH="${GITHUB_WORKSPACE}/skia/.source-cache/bin:${GITHUB_WORKSPACE}/skia/depot_tools:${PATH}" python3 tools/git-sync-deps
+
+      - name: Package Skia source archive
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache
+          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia depot_tools
 
   build-linux:
     name: Build ${{ matrix.platform_arch }}
@@ -131,18 +143,17 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh linux ${{ matrix.arch }}
 
-      - name: Restore Skia source checkout cache
+      - name: Restore Skia source archive cache
         uses: actions/cache@v5
         with:
-          path: |
-            skia/depot_tools
-            skia/skia
+          path: skia/.source-cache
           key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
+      - name: Extract Skia source archive
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
 
       - name: Install host GN tools
         if: ${{ !matrix.use_gn_container }}
@@ -160,6 +171,7 @@ jobs:
         if: ${{ !matrix.use_gn_container }}
         env:
           SKIA_ONLY_GN_GEN: 1
+          SKIA_SKIP_DEPS_SYNC: 1
         run: bash skia/scripts/${{ matrix.script }}
 
       - name: Generate Ninja files in amd64 container
@@ -176,7 +188,7 @@ jobs:
               if ! command -v gn >/dev/null 2>&1; then
                 apt-get install -y generate-ninja || apt-get install -y gn
               fi &&
-              SKIA_ONLY_GN_GEN=1 bash skia/scripts/${{ matrix.script }}
+              SKIA_SKIP_DEPS_SYNC=1 SKIA_ONLY_GN_GEN=1 bash skia/scripts/${{ matrix.script }}
             "
 
       - name: Build static library
@@ -189,6 +201,7 @@ jobs:
             -e CCACHE_DIR=/ccache \
             -e SKIA_USE_CCACHE=1 \
             -e SKIA_SKIP_GN_GEN=1 \
+            -e SKIA_SKIP_DEPS_SYNC=1 \
             -w "${PWD}" \
             -t totalcross/${{ matrix.build_project }}:v1.0.7 \
             bash -lc "
@@ -264,24 +277,24 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh android arm64-v8a
 
-      - name: Restore Skia source checkout cache
+      - name: Restore Skia source archive cache
         uses: actions/cache@v5
         with:
-          path: |
-            skia/depot_tools
-            skia/skia
+          path: skia/.source-cache
           key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
+      - name: Extract Skia source archive
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
 
       - name: Build static library
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-android-arm64-v8a
           NDK_BUNDLE: ${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}
+          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/build-android-arm64.sh
 
       - name: Print build summary on failure
@@ -363,23 +376,23 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
 
-      - name: Restore Skia source checkout cache
+      - name: Restore Skia source archive cache
         uses: actions/cache@v5
         with:
-          path: |
-            skia/depot_tools
-            skia/skia
+          path: skia/.source-cache
           key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
+      - name: Extract Skia source archive
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
 
       - name: Build static library
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.artifact_suffix }}
+          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Print build summary on failure
@@ -519,19 +532,18 @@ jobs:
         shell: bash
         run: bash skia/scripts/fetch-prebuilt-deps.sh windows ${{ matrix.arch }}
 
-      - name: Restore Skia source checkout cache
+      - name: Restore Skia source archive cache
         uses: actions/cache@v5
         with:
-          path: |
-            skia/depot_tools
-            skia/skia
+          path: skia/.source-cache
           key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
 
-      - name: Fetch pinned Skia sources
+      - name: Extract Skia source archive
         shell: bash
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
 
       - name: Build static library
         shell: bash
@@ -539,6 +551,7 @@ jobs:
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
           DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Print build summary on failure
