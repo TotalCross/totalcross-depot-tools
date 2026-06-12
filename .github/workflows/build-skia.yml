@@ -38,29 +38,35 @@ jobs:
         include:
           - project: linux-amd64
             runner: ubuntu-22.04
+            build_project: linux-amd64
             docker_platform: linux/amd64
             platform_arch: linux/x86_64
             artifact_suffix: linux-x86_64
             arch: x86_64
             script: build-linux-x86_64.sh
+            use_cross_toolchain: false
             use_gn_container: false
             use_qemu: false
           - project: linux-arm64
-            runner: ubuntu-22.04-arm
-            docker_platform: linux/arm64
+            runner: ubuntu-22.04
+            build_project: linux-amd64
+            docker_platform: linux/amd64
             platform_arch: linux/aarch64
             artifact_suffix: linux-aarch64
             arch: aarch64
             script: build-linux-aarch64.sh
-            use_gn_container: true
+            use_cross_toolchain: true
+            use_gn_container: false
             use_qemu: false
           - project: linux-arm32v7
             runner: ubuntu-22.04
+            build_project: linux-arm32v7
             docker_platform: linux/arm/v7
             platform_arch: linux/armv7l
             artifact_suffix: linux-armv7l
             arch: armv7l
             script: build-linux-armv7l.sh
+            use_cross_toolchain: false
             use_gn_container: false
             use_qemu: true
 
@@ -106,6 +112,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache ninja-build python3 rsync
+          if [ "${{ matrix.use_cross_toolchain }}" = "true" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          fi
           if ! command -v gn >/dev/null 2>&1; then
             sudo apt-get install -y generate-ninja || sudo apt-get install -y gn
           fi
@@ -144,13 +153,17 @@ jobs:
             -e SKIA_USE_CCACHE=1 \
             -e SKIA_SKIP_GN_GEN=1 \
             -w "${PWD}" \
-            -t totalcross/${{ matrix.project }}:v1.0.7 \
+            -t totalcross/${{ matrix.build_project }}:v1.0.7 \
             bash -lc "
               if ! command -v ccache >/dev/null 2>&1; then
                 apt-get update
               fi
               if ! command -v ccache >/dev/null 2>&1; then
                 apt-get install -y ccache || true
+              fi
+              if [ '${{ matrix.use_cross_toolchain }}' = 'true' ]; then
+                apt-get update &&
+                apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
               fi
               bash skia/scripts/${{ matrix.script }}
             "

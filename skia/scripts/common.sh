@@ -482,11 +482,46 @@ build_skia_linux_x86_64() {
   copy_static_artifact "$build_dir" "libskia.a" "libskia-linux-x86_64.a" "linux-x86_64" "linux" "x86_64" "libskia.a"
 }
 
+linux_aarch64_gn_args() {
+  configure_prebuilt_deps "linux" "aarch64" "unix"
+  cat <<EOF
+$(ccache_gn_arg)target_os="linux"
+target_cpu="arm64"
+cc="aarch64-linux-gnu-gcc"
+cxx="aarch64-linux-gnu-g++"
+ar="aarch64-linux-gnu-ar"
+is_debug=false
+is_official_build=true
+is_component_build=false
+skia_enable_gpu=true
+skia_use_egl=true
+skia_use_gl=true
+skia_gl_standard="gles"
+skia_use_opencl=true
+skia_use_zlib=${SKIA_DEP_USE_ZLIB}
+skia_use_system_zlib=${SKIA_DEP_USE_ZLIB}
+skia_use_libpng_decode=${SKIA_DEP_USE_LIBPNG}
+skia_use_libpng_encode=${SKIA_DEP_USE_LIBPNG}
+skia_use_system_libpng=${SKIA_DEP_USE_LIBPNG}
+skia_use_libwebp_decode=false
+skia_use_libwebp_encode=false
+skia_use_libjpeg_turbo_decode=false
+skia_use_libjpeg_turbo_encode=false
+skia_use_harfbuzz=false
+skia_use_expat=false
+skia_use_icu=false
+skia_enable_pdf=false
+skia_enable_tools=false
+extra_cflags=[$(gn_array "-O3" "-Wno-error" "-DNDEBUG" "-DMESA_EGL_NO_X11_HEADERS" "${SKIA_DEP_CFLAGS[@]}")]
+extra_ldflags=[$(gn_array "-L/usr/aarch64-linux-gnu/lib" "-L/usr/lib/aarch64-linux-gnu" "${SKIA_DEP_LDFLAGS[@]}")]
+EOF
+}
+
 build_skia_linux_aarch64() {
   local build_dir="$OUT_DIR/linux-aarch64"
 
   stage_dev_subset
-  gn_gen_and_build "$build_dir" "$(linux_common_gn_args "arm64" "aarch64" "gles")" skia
+  gn_gen_and_build "$build_dir" "$(linux_aarch64_gn_args)" skia
   copy_static_artifact "$build_dir" "libskia.a" "libskia-linux-aarch64.a" "linux-aarch64" "linux" "aarch64" "libskia.a"
 }
 
