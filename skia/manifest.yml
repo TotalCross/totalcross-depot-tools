@@ -26,3 +26,4 @@ artifact:
     - libskia-windows-x86.lib
     - libskia-windows-x64.lib
     - libskia-windows-arm64.lib
+  diagnostics: skia-build-diagnostics-158dc9d7.tar.gz

@@ -36,6 +36,7 @@
       "build_config_manifest-windows-x64.md",
       "build_config_manifest-windows-arm64.md",
       "skia-dev-headers-158dc9d7.zip",
+      "skia-build-diagnostics-158dc9d7.tar.gz",
       "SHA256SUMS"
     ]
   }

@@ -63,6 +63,10 @@ Skia is different from the CMake-built dependencies:
 - Do not reintroduce a separate `scripts/fetch-skia.sh` wrapper.
 - References should point to `TotalCross/totalcross-depot-tools`, not the old
   `TotalCross/totalcross-skia-build` repository.
+- GN/Ninja builds must run Ninja through the repository log wrapper instead of
+  invoking `ninja` directly. Preserve complete raw logs and structured
+  summaries as CI artifacts, keep console output compact, and publish full
+  diagnostics as a separate release archive when release assets are produced.
 
 ## Workflows
 

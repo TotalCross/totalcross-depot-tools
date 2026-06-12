@@ -294,11 +294,53 @@ copy_static_artifact() {
   echo "  $DIST_DIR/$artifact_name"
 }
 
+build_key_from_dir() {
+  basename "$1"
+}
+
+generate_gn_diagnostics() {
+  local build_dir="$1"
+  local target="$2"
+  local gn_bin="$3"
+  local logs_dir="$build_dir/logs"
+  local gn_target="//:${target}"
+
+  mkdir -p "$logs_dir"
+
+  "$gn_bin" args "$build_dir" --list > "$logs_dir/gn-args-list.txt" 2>&1 || true
+  "$gn_bin" desc "$build_dir" "$gn_target" > "$logs_dir/gn-target.txt" 2>&1 || true
+  "$gn_bin" desc "$build_dir" "$gn_target" deps --all > "$logs_dir/gn-deps.txt" 2>&1 || true
+
+  ninja -C "$build_dir" -t compdb cc cxx objc objcxx > "$build_dir/compile_commands.json" 2>/dev/null || true
+}
+
+collect_build_diagnostics() {
+  local build_dir="$1"
+  local diagnostic_key
+  local diagnostics_dir
+  local file_name
+
+  diagnostic_key=$(build_key_from_dir "$build_dir")
+  diagnostics_dir="$DIST_DIR/diagnostics/$diagnostic_key"
+  mkdir -p "$diagnostics_dir"
+
+  if [[ -d "$build_dir/logs" ]]; then
+    cp -R "$build_dir/logs/." "$diagnostics_dir/"
+  fi
+
+  for file_name in args.gn build.ninja .ninja_log .ninja_deps compile_commands.json build_config_manifest.md; do
+    if [[ -f "$build_dir/$file_name" ]]; then
+      cp "$build_dir/$file_name" "$diagnostics_dir/$file_name"
+    fi
+  done
+}
+
 gn_gen_and_build() {
   local build_dir="$1"
   local args="$2"
   local target="${3:-skia}"
   local gn_bin
+  local ninja_status=0
 
   require_cmd ninja
   require_skia_checkout
@@ -318,13 +360,23 @@ gn_gen_and_build() {
     if [[ ! -f "$build_dir/build_config_manifest.md" ]]; then
       printf '%s\n' "$args" > "$build_dir/build_config_manifest.md"
     fi
+
+    generate_gn_diagnostics "$build_dir" "$target" "$gn_bin"
   fi
 
   if [[ "$SKIA_ONLY_GN_GEN" == "1" || "$SKIA_ONLY_GN_GEN" == "true" ]]; then
+    collect_build_diagnostics "$build_dir"
     return 0
   fi
 
-  ninja -C "$build_dir" "$target"
+  python3 "$ROOT_DIR/scripts/run-ninja-with-summary.py" \
+    --build-dir "$build_dir" \
+    --logs-dir "$build_dir/logs" \
+    --target "$target" \
+    -- ninja -C "$build_dir" "$target" || ninja_status=$?
+
+  collect_build_diagnostics "$build_dir"
+  return "$ninja_status"
 }
 
 macos_gn_args() {

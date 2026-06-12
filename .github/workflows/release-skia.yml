@@ -80,4 +80,4 @@ jobs:
           gh release create "${TAG_NAME}" release-assets/* \
             --verify-tag \
             --title "Skia ${SKIA_VERSION} static libraries" \
-            --notes "Static Skia ${SKIA_VERSION} libraries for TotalCross, including Android arm64-v8a with NDK ${ANDROID_NDK_VERSION:-28.2.13676358} and iOS device/simulator arm64 artifacts."
+            --notes "Static Skia ${SKIA_VERSION} libraries for TotalCross, including Android arm64-v8a with NDK ${ANDROID_NDK_VERSION:-28.2.13676358}, iOS device/simulator arm64 artifacts, and a separate diagnostics archive with full GN/Ninja logs."

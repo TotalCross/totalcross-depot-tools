@@ -26,6 +26,7 @@ env:
   ANDROID_NDK_VERSION: 28.2.13676358
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GITHUB_TOKEN: ${{ github.token }}
+  SKIA_DIAGNOSTICS_ARCHIVE: skia-build-diagnostics-158dc9d7.tar.gz
   SKIA_USE_CCACHE: 1
 
 jobs:
@@ -136,6 +137,13 @@ jobs:
             skia/dist/libskia-${{ matrix.artifact_suffix }}.a
             skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md
 
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-${{ matrix.artifact_suffix }}
+          path: skia/dist/diagnostics
+
   build-android:
     name: Build android/arm64-v8a
     runs-on: ubuntu-24.04
@@ -194,6 +202,13 @@ jobs:
           path: |
             skia/dist/libskia-android-arm64-v8a.a
             skia/dist/build_config_manifest-android-arm64-v8a.md
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-android-arm64-v8a
+          path: skia/dist/diagnostics
 
   build-apple:
     name: Build ${{ matrix.platform_arch }}
@@ -268,6 +283,13 @@ jobs:
           path: |
             skia/dist/${{ matrix.library }}
             skia/dist/${{ matrix.manifest }}
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-${{ matrix.artifact_suffix }}
+          path: skia/dist/diagnostics
 
   package-ios:
     name: Package iOS XCFramework and headers
@@ -407,6 +429,13 @@ jobs:
             skia/dist/libskia-windows-${{ matrix.arch }}.lib
             skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
 
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-windows-${{ matrix.arch }}
+          path: skia/dist/diagnostics
+
   package-release-assets:
     name: Package release assets
     runs-on: ubuntu-24.04
@@ -427,8 +456,12 @@ jobs:
       - name: Generate SHA256SUMS
         run: |
           ! find release-assets -maxdepth 1 -name '*.so' | grep -q .
+          if [ -d release-assets/diagnostics ]; then
+            tar -C release-assets -czf "release-assets/${SKIA_DIAGNOSTICS_ARCHIVE}" diagnostics
+            rm -rf release-assets/diagnostics
+          fi
           cd release-assets
-          shasum -a 256 * | sort -k 2 > SHA256SUMS
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | xargs -0 shasum -a 256 | sed 's#  \./#  #' | sort -k 2 > SHA256SUMS
 
       - name: Upload release assets
         uses: actions/upload-artifact@v7
