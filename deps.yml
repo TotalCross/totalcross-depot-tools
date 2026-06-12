@@ -15,11 +15,11 @@ dependencies:
     path: zlib
   zlib-ng:
     version: 2.1.6
-    release: zlib-ng-2.1.6
+    release: zlib-ng-2.1.6-r2
     path: zlib-ng
   libpng:
     version: 1.6.48
-    release: libpng-1.6.48
+    release: libpng-1.6.48-r2
     path: libpng
   skia:
     version: 158dc9d7

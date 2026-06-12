@@ -30,8 +30,10 @@ jobs:
             exit 1
           fi
 
+          tag_name="$(.github/scripts/next-release-tag.sh zlib-ng "${zlib_ng_version}")"
+
           echo "zlib_ng_version=${zlib_ng_version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=zlib-ng-${zlib_ng_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build release assets
@@ -63,11 +65,6 @@ jobs:
 
       - name: Create release tag
         run: |
-          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
-            echo "Tag ${TAG_NAME} already exists" >&2
-            exit 1
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "${TAG_NAME}" -m "zlib-ng ${ZLIB_NG_VERSION}"
@@ -75,7 +72,7 @@ jobs:
 
       - name: Publish GitHub Release
         run: |
-          gh release create "${TAG_NAME}" release-assets/*.tar.gz \
+          gh release create "${TAG_NAME}" release-assets/* \
             --verify-tag \
             --title "zlib-ng ${ZLIB_NG_VERSION} static libraries" \
             --notes "Static zlib-ng ${ZLIB_NG_VERSION} libraries for TotalCross."

@@ -78,8 +78,22 @@ jobs:
           path: zlib-ng/build/${{ matrix.project }}/zlib-ng-*.tar.gz
 
   build-windows:
-    name: Build windows/x86
-    runs-on: windows-2022
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -88,19 +102,19 @@ jobs:
       - name: Build static libraries
         shell: bash
         run: |
-          cmake -S zlib-ng -B zlib-ng/build/windows-x86 \
+          cmake -S zlib-ng -B zlib-ng/build/windows-${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=Release \
             -G "Visual Studio 17 2022" \
-            -A Win32
-          cmake --build zlib-ng/build/windows-x86 --config Release
-          cmake --install zlib-ng/build/windows-x86 --config Release --prefix zlib-ng/build/windows-x86/install
-          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/windows-x86 zlib-ng/build/windows-x86/install windows/x86
+            -A ${{ matrix.cmake_platform }}
+          cmake --build zlib-ng/build/windows-${{ matrix.arch }} --config Release
+          cmake --install zlib-ng/build/windows-${{ matrix.arch }} --config Release --prefix zlib-ng/build/windows-${{ matrix.arch }}/install
+          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/windows-${{ matrix.arch }} zlib-ng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zlib-ng-windows-x86
-          path: zlib-ng/build/windows-x86/zlib-ng-*.tar.gz
+          name: zlib-ng-windows-${{ matrix.arch }}
+          path: zlib-ng/build/windows-${{ matrix.arch }}/zlib-ng-*.tar.gz
 
   build-android:
     name: Build android/arm64-v8a
@@ -137,8 +151,28 @@ jobs:
           name: zlib-ng-android-arm64-v8a
           path: zlib-ng/build/android-arm64-v8a/zlib-ng-*.tar.gz
 
-  build-ios:
-    name: Build ios/arm64
+  build-apple:
+    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            build_dir: macos-arm64
+            cmake_generator: Ninja
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          - platform: ios
+            arch: arm64
+            build_dir: ios-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          - platform: ios-simulator
+            arch: arm64
+            build_dir: ios-simulator-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+
     runs-on: macos-15
 
     steps:
@@ -147,43 +181,64 @@ jobs:
 
       - name: Build static libraries
         run: |
-          cmake -S zlib-ng -B zlib-ng/build/ios-arm64 \
+          cmake -S zlib-ng -B zlib-ng/build/${{ matrix.build_dir }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -G Xcode
-          cmake --build zlib-ng/build/ios-arm64 --config Release
-          cmake --install zlib-ng/build/ios-arm64 --config Release --prefix zlib-ng/build/ios-arm64/install
-          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/ios-arm64 zlib-ng/build/ios-arm64/install ios/arm64
+            ${{ matrix.cmake_args }} \
+            -G "${{ matrix.cmake_generator }}"
+          cmake --build zlib-ng/build/${{ matrix.build_dir }} --config Release
+          cmake --install zlib-ng/build/${{ matrix.build_dir }} --config Release --prefix zlib-ng/build/${{ matrix.build_dir }}/install
+          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/${{ matrix.build_dir }} zlib-ng/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
+        with:
+          name: zlib-ng-${{ matrix.build_dir }}
+          path: zlib-ng/build/${{ matrix.build_dir }}/zlib-ng-*.tar.gz
+
+  package-ios:
+    name: Package iOS XCFramework
+    needs: build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
         with:
           name: zlib-ng-ios-arm64
-          path: zlib-ng/build/ios-arm64/zlib-ng-*.tar.gz
+          path: package-input/ios
 
-  build-macos:
-    name: Build macos/arm64
-    runs-on: macos-15
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: zlib-ng-ios-simulator-arm64
+          path: package-input/ios-simulator
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build static libraries
+      - name: Create XCFramework
         run: |
-          cmake -S zlib-ng -B zlib-ng/build/macos-arm64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -G Ninja
-          cmake --build zlib-ng/build/macos-arm64
-          cmake --install zlib-ng/build/macos-arm64 --prefix zlib-ng/build/macos-arm64/install
-          bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/macos-arm64 zlib-ng/build/macos-arm64/install macos/arm64
+          mkdir -p package-work package-output
+          tar -xzf package-input/ios/zlib-ng-ios-arm64.tar.gz -C package-work
+          tar -xzf package-input/ios-simulator/zlib-ng-ios-simulator-arm64.tar.gz -C package-work
 
-      - name: Upload artifact
+          device_root="${PWD}/package-work/zlib-ng/ios/arm64"
+          simulator_root="${PWD}/package-work/zlib-ng/ios-simulator/arm64"
+          device_lib="$(find "${device_root}/lib" -type f -name "libz.a" | head -n 1)"
+          simulator_lib="$(find "${simulator_root}/lib" -type f -name "libz.a" | head -n 1)"
+
+          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
+            echo "Unable to locate zlib-ng iOS static libraries" >&2
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            -library "${device_lib}" -headers "${device_root}/include" \
+            -library "${simulator_lib}" -headers "${simulator_root}/include" \
+            -output package-output/zlib-ng-ios.xcframework
+
+          cd package-output
+          ditto -c -k --sequesterRsrc --keepParent zlib-ng-ios.xcframework zlib-ng-ios.xcframework.zip
+
+      - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zlib-ng-macos-arm64
-          path: zlib-ng/build/macos-arm64/zlib-ng-*.tar.gz
+          name: zlib-ng-ios-xcframework
+          path: package-output/zlib-ng-ios.xcframework.zip

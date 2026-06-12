@@ -1,6 +1,6 @@
 name: libpng
 version: 1.6.48
-release: libpng-1.6.48
+release: libpng-1.6.48-r2
 source:
   type: git
   url: https://github.com/glennrp/libpng.git
@@ -20,6 +20,10 @@ artifact:
     - libpng-linux-armv7l.tar.gz
     - libpng-linux-aarch64.tar.gz
     - libpng-windows-x86.tar.gz
+    - libpng-windows-x64.tar.gz
+    - libpng-windows-arm64.tar.gz
     - libpng-android-arm64-v8a.tar.gz
     - libpng-ios-arm64.tar.gz
+    - libpng-ios-simulator-arm64.tar.gz
+    - libpng-ios.xcframework.zip
     - libpng-macos-arm64.tar.gz

@@ -2,16 +2,29 @@ name: Build libpng static libraries
 
 on:
   workflow_call:
+    inputs:
+      zlib_ng_release_tag:
+        required: false
+        type: string
   workflow_dispatch:
+    inputs:
+      zlib_ng_release_tag:
+        description: Optional zlib-ng release tag to use
+        required: false
+        type: string
   push:
     branches: [ master ]
     paths:
       - libpng/**
+      - zlib-ng/fetch.sh
+      - .github/scripts/latest-release-tag.sh
       - .github/workflows/build-libpng.yml
   pull_request:
     branches: [ master ]
     paths:
       - libpng/**
+      - zlib-ng/fetch.sh
+      - .github/scripts/latest-release-tag.sh
       - .github/workflows/build-libpng.yml
 
 env:
@@ -20,8 +33,33 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  prepare:
+    name: Resolve zlib-ng release
+    runs-on: ubuntu-24.04
+    outputs:
+      zlib_ng_release_tag: ${{ steps.release.outputs.zlib_ng_release_tag }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Resolve zlib-ng release tag
+        id: release
+        env:
+          REQUESTED_ZLIB_NG_RELEASE_TAG: ${{ inputs.zlib_ng_release_tag }}
+        run: |
+          if [ -n "${REQUESTED_ZLIB_NG_RELEASE_TAG}" ]; then
+            zlib_ng_release_tag="${REQUESTED_ZLIB_NG_RELEASE_TAG}"
+          else
+            zlib_ng_release_tag="$(.github/scripts/latest-release-tag.sh zlib-ng "${ZLIB_NG_VERSION}")"
+          fi
+
+          echo "Using zlib-ng release ${zlib_ng_release_tag}"
+          echo "zlib_ng_release_tag=${zlib_ng_release_tag}" >> "$GITHUB_OUTPUT"
+
   build-linux:
     name: Build ${{ matrix.platform_arch }}
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +101,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform "${{ matrix.zlib_platform }}" \
             --arch "${{ matrix.zlib_arch }}" \
-            --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
+            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
 
       - name: Build static libraries
         run: |
@@ -93,8 +131,23 @@ jobs:
           path: libpng/build/${{ matrix.project }}/libpng-*.tar.gz
 
   build-windows:
-    name: Build windows/x86
-    runs-on: windows-2022
+    name: Build windows/${{ matrix.arch }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -105,29 +158,30 @@ jobs:
         run: |
           bash zlib-ng/fetch.sh \
             --platform windows \
-            --arch x86 \
-            --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
+            --arch ${{ matrix.arch }} \
+            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
 
       - name: Build static libraries
         shell: bash
         run: |
-          cmake -S libpng -B libpng/build/windows-x86 \
+          cmake -S libpng -B libpng/build/windows-${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/windows/x86" \
+            -DZLIB_DIR="$PWD/zlib-ng/local/windows/${{ matrix.arch }}" \
             -G "Visual Studio 17 2022" \
-            -A Win32
-          cmake --build libpng/build/windows-x86 --config Release
-          cmake --install libpng/build/windows-x86 --config Release --prefix libpng/build/windows-x86/install
-          bash libpng/scripts/package-artifact.sh libpng/build/windows-x86 libpng/build/windows-x86/install windows/x86
+            -A ${{ matrix.cmake_platform }}
+          cmake --build libpng/build/windows-${{ matrix.arch }} --config Release
+          cmake --install libpng/build/windows-${{ matrix.arch }} --config Release --prefix libpng/build/windows-${{ matrix.arch }}/install
+          bash libpng/scripts/package-artifact.sh libpng/build/windows-${{ matrix.arch }} libpng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: libpng-windows-x86
-          path: libpng/build/windows-x86/libpng-*.tar.gz
+          name: libpng-windows-${{ matrix.arch }}
+          path: libpng/build/windows-${{ matrix.arch }}/libpng-*.tar.gz
 
   build-android:
     name: Build android/arm64-v8a
+    needs: prepare
     runs-on: ubuntu-24.04
 
     steps:
@@ -147,7 +201,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform android \
             --arch arm64-v8a \
-            --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
+            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
 
       - name: Build static libraries
         run: |
@@ -169,8 +223,29 @@ jobs:
           name: libpng-android-arm64-v8a
           path: libpng/build/android-arm64-v8a/libpng-*.tar.gz
 
-  build-ios:
-    name: Build ios/arm64
+  build-apple:
+    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            build_dir: macos-arm64
+            cmake_generator: Ninja
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          - platform: ios
+            arch: arm64
+            build_dir: ios-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          - platform: ios-simulator
+            arch: arm64
+            build_dir: ios-simulator-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+
     runs-on: macos-15
 
     steps:
@@ -180,58 +255,71 @@ jobs:
       - name: Fetch zlib-ng prebuilts
         run: |
           bash zlib-ng/fetch.sh \
-            --platform ios \
-            --arch arm64 \
-            --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
+            --platform "${{ matrix.platform }}" \
+            --arch "${{ matrix.arch }}" \
+            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
 
       - name: Build static libraries
         run: |
-          cmake -S libpng -B libpng/build/ios-arm64 \
+          cmake -S libpng -B libpng/build/${{ matrix.build_dir }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/ios/arm64" \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -G Xcode
-          cmake --build libpng/build/ios-arm64 --config Release
-          cmake --install libpng/build/ios-arm64 --config Release --prefix libpng/build/ios-arm64/install
-          bash libpng/scripts/package-artifact.sh libpng/build/ios-arm64 libpng/build/ios-arm64/install ios/arm64
+            -DZLIB_DIR="$PWD/zlib-ng/local/${{ matrix.platform }}/${{ matrix.arch }}" \
+            ${{ matrix.cmake_args }} \
+            -G "${{ matrix.cmake_generator }}"
+          cmake --build libpng/build/${{ matrix.build_dir }} --config Release
+          cmake --install libpng/build/${{ matrix.build_dir }} --config Release --prefix libpng/build/${{ matrix.build_dir }}/install
+          bash libpng/scripts/package-artifact.sh libpng/build/${{ matrix.build_dir }} libpng/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
+        with:
+          name: libpng-${{ matrix.build_dir }}
+          path: libpng/build/${{ matrix.build_dir }}/libpng-*.tar.gz
+
+  package-ios:
+    name: Package iOS XCFramework
+    needs: build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
         with:
           name: libpng-ios-arm64
-          path: libpng/build/ios-arm64/libpng-*.tar.gz
+          path: package-input/ios
 
-  build-macos:
-    name: Build macos/arm64
-    runs-on: macos-15
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: libpng-ios-simulator-arm64
+          path: package-input/ios-simulator
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Fetch zlib-ng prebuilts
+      - name: Create XCFramework
         run: |
-          bash zlib-ng/fetch.sh \
-            --platform macos \
-            --arch arm64 \
-            --release-tag "zlib-ng-${ZLIB_NG_VERSION}"
+          mkdir -p package-work package-output
+          tar -xzf package-input/ios/libpng-ios-arm64.tar.gz -C package-work
+          tar -xzf package-input/ios-simulator/libpng-ios-simulator-arm64.tar.gz -C package-work
 
-      - name: Build static libraries
-        run: |
-          cmake -S libpng -B libpng/build/macos-arm64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/macos/arm64" \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -G Ninja
-          cmake --build libpng/build/macos-arm64
-          cmake --install libpng/build/macos-arm64 --prefix libpng/build/macos-arm64/install
-          bash libpng/scripts/package-artifact.sh libpng/build/macos-arm64 libpng/build/macos-arm64/install macos/arm64
+          device_root="${PWD}/package-work/libpng/ios/arm64"
+          simulator_root="${PWD}/package-work/libpng/ios-simulator/arm64"
+          device_lib="$(find "${device_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.a" \) | head -n 1)"
+          simulator_lib="$(find "${simulator_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.a" \) | head -n 1)"
 
-      - name: Upload artifact
+          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
+            echo "Unable to locate libpng iOS static libraries" >&2
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            -library "${device_lib}" -headers "${device_root}/include" \
+            -library "${simulator_lib}" -headers "${simulator_root}/include" \
+            -output package-output/libpng-ios.xcframework
+
+          cd package-output
+          ditto -c -k --sequesterRsrc --keepParent libpng-ios.xcframework libpng-ios.xcframework.zip
+
+      - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
-          name: libpng-macos-arm64
-          path: libpng/build/macos-arm64/libpng-*.tar.gz
+          name: libpng-ios-xcframework
+          path: package-output/libpng-ios.xcframework.zip

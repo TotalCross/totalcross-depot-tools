@@ -6,9 +6,9 @@ usage() {
 Usage: fetch.sh [options]
 
 Options:
-  --platform PLATFORM      Target platform: linux, windows, android, ios, macos
+  --platform PLATFORM      Target platform: linux, windows, android, ios, ios-simulator, macos
   --arch ARCH              Target architecture, e.g. x86_64, armv7l, aarch64
-  --release-tag TAG        GitHub release tag, default: zlib-ng-2.1.6
+  --release-tag TAG        GitHub release tag, default: zlib-ng-2.1.6-r2
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: ZLIB_NG_GITHUB_TOKEN, then GITHUB_TOKEN
@@ -20,7 +20,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 platform=""
 arch=""
-release_tag="zlib-ng-2.1.6"
+release_tag="zlib-ng-2.1.6-r2"
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
 dest_root="${script_dir}/local"
@@ -86,7 +86,13 @@ case "$platform" in
       arm|armv7) arch="armv7l" ;;
     esac
     ;;
-  macos|ios)
+  windows)
+    case "$arch" in
+      amd64|x86_64) arch="x64" ;;
+      i386|i686) arch="x86" ;;
+    esac
+    ;;
+  macos|ios|ios-simulator)
     case "$arch" in
       aarch64) arch="arm64" ;;
       amd64) arch="x86_64" ;;

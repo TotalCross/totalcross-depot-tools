@@ -1,6 +1,6 @@
 name: zlib-ng
 version: 2.1.6
-release: zlib-ng-2.1.6
+release: zlib-ng-2.1.6-r2
 source:
   type: git
   url: https://github.com/zlib-ng/zlib-ng.git
@@ -17,6 +17,10 @@ artifact:
     - zlib-ng-linux-armv7l.tar.gz
     - zlib-ng-linux-aarch64.tar.gz
     - zlib-ng-windows-x86.tar.gz
+    - zlib-ng-windows-x64.tar.gz
+    - zlib-ng-windows-arm64.tar.gz
     - zlib-ng-android-arm64-v8a.tar.gz
     - zlib-ng-ios-arm64.tar.gz
+    - zlib-ng-ios-simulator-arm64.tar.gz
+    - zlib-ng-ios.xcframework.zip
     - zlib-ng-macos-arm64.tar.gz
