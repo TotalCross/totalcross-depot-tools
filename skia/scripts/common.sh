@@ -163,12 +163,17 @@ find_static_library() {
 add_prebuilt_dep_flags() {
   local dep_root="$1"
   local linker_style="$2"
+  local include_dir="${dep_root}/include"
+  local lib_dir="${dep_root}/lib"
 
-  SKIA_DEP_CFLAGS+=("-I${dep_root}/include")
   if [[ "$linker_style" == "msvc" ]]; then
-    SKIA_DEP_LDFLAGS+=("/LIBPATH:${dep_root}/lib")
+    include_dir="$(unix_to_gn_windows_path "$include_dir")"
+    lib_dir="$(unix_to_gn_windows_path "$lib_dir")"
+    SKIA_DEP_CFLAGS+=("-I${include_dir}")
+    SKIA_DEP_LDFLAGS+=("/LIBPATH:${lib_dir}")
   else
-    SKIA_DEP_LDFLAGS+=("-L${dep_root}/lib")
+    SKIA_DEP_CFLAGS+=("-I${include_dir}")
+    SKIA_DEP_LDFLAGS+=("-L${lib_dir}")
   fi
 }
 
