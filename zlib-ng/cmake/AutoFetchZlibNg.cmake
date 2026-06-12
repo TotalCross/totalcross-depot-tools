@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_ZLIB_NG_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_ZLIB_NG_AUTOFETCH_DEP_DIR "${TCVM_ZLIB_NG_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_ZLIB_NG_RELEASE_HELPER "${TCVM_ZLIB_NG_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_ZLIB_NG_RELEASE_HELPER}")
+  include("${TCVM_ZLIB_NG_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_zlibng)
   set(TCVM_ZLIB_NG_DEP_DIR "${TCVM_ZLIB_NG_AUTOFETCH_DEP_DIR}")
@@ -12,7 +16,11 @@ function(tcvm_auto_fetch_zlibng)
   if(NOT DEFINED ZLIB_NG_RELEASE_TAG AND DEFINED ENV{ZLIB_NG_RELEASE_TAG})
     set(ZLIB_NG_RELEASE_TAG "$ENV{ZLIB_NG_RELEASE_TAG}")
   elseif(NOT DEFINED ZLIB_NG_RELEASE_TAG)
-    set(ZLIB_NG_RELEASE_TAG "zlib-ng-2.1.6-r2")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(zlib-ng ZLIB_NG_RELEASE_TAG "zlib-ng-2.1.6-r2")
+    else()
+      set(ZLIB_NG_RELEASE_TAG "zlib-ng-2.1.6-r2")
+    endif()
   endif()
 
   if(NOT DEFINED ZLIB_NG_GITHUB_REPO AND DEFINED ENV{ZLIB_NG_GITHUB_REPO})

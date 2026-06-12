@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_MBEDTLS_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_MBEDTLS_AUTOFETCH_DEP_DIR "${TCVM_MBEDTLS_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_MBEDTLS_RELEASE_HELPER "${TCVM_MBEDTLS_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_MBEDTLS_RELEASE_HELPER}")
+  include("${TCVM_MBEDTLS_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_mbedtls)
   set(TCVM_MBEDTLS_DEP_DIR "${TCVM_MBEDTLS_AUTOFETCH_DEP_DIR}")
@@ -12,7 +16,11 @@ function(tcvm_auto_fetch_mbedtls)
   if(NOT DEFINED MBEDTLS_RELEASE_TAG AND DEFINED ENV{MBEDTLS_RELEASE_TAG})
     set(MBEDTLS_RELEASE_TAG "$ENV{MBEDTLS_RELEASE_TAG}")
   elseif(NOT DEFINED MBEDTLS_RELEASE_TAG)
-    set(MBEDTLS_RELEASE_TAG "mbedtls-3.5.2-r2")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(mbedtls MBEDTLS_RELEASE_TAG "mbedtls-3.5.2-r2")
+    else()
+      set(MBEDTLS_RELEASE_TAG "mbedtls-3.5.2-r2")
+    endif()
   endif()
 
   if(NOT DEFINED MBEDTLS_GITHUB_REPO AND DEFINED ENV{MBEDTLS_GITHUB_REPO})

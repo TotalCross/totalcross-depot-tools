@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_ZLIB_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_ZLIB_AUTOFETCH_DEP_DIR "${TCVM_ZLIB_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_ZLIB_RELEASE_HELPER "${TCVM_ZLIB_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_ZLIB_RELEASE_HELPER}")
+  include("${TCVM_ZLIB_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_zlib)
   set(TCVM_ZLIB_DEP_DIR "${TCVM_ZLIB_AUTOFETCH_DEP_DIR}")
@@ -12,7 +16,11 @@ function(tcvm_auto_fetch_zlib)
   if(NOT DEFINED ZLIB_RELEASE_TAG AND DEFINED ENV{ZLIB_RELEASE_TAG})
     set(ZLIB_RELEASE_TAG "$ENV{ZLIB_RELEASE_TAG}")
   elseif(NOT DEFINED ZLIB_RELEASE_TAG)
-    set(ZLIB_RELEASE_TAG "zlib-1.3.1-r2")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(zlib ZLIB_RELEASE_TAG "zlib-1.3.1-r2")
+    else()
+      set(ZLIB_RELEASE_TAG "zlib-1.3.1-r2")
+    endif()
   endif()
 
   if(NOT DEFINED ZLIB_GITHUB_REPO AND DEFINED ENV{ZLIB_GITHUB_REPO})

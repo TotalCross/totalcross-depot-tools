@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_LIBPNG_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_LIBPNG_AUTOFETCH_DEP_DIR "${TCVM_LIBPNG_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_LIBPNG_RELEASE_HELPER "${TCVM_LIBPNG_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_LIBPNG_RELEASE_HELPER}")
+  include("${TCVM_LIBPNG_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_libpng)
   set(TCVM_LIBPNG_DEP_DIR "${TCVM_LIBPNG_AUTOFETCH_DEP_DIR}")
@@ -12,7 +16,11 @@ function(tcvm_auto_fetch_libpng)
   if(NOT DEFINED LIBPNG_RELEASE_TAG AND DEFINED ENV{LIBPNG_RELEASE_TAG})
     set(LIBPNG_RELEASE_TAG "$ENV{LIBPNG_RELEASE_TAG}")
   elseif(NOT DEFINED LIBPNG_RELEASE_TAG)
-    set(LIBPNG_RELEASE_TAG "libpng-1.6.48-r2")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(libpng LIBPNG_RELEASE_TAG "libpng-1.6.48-r2")
+    else()
+      set(LIBPNG_RELEASE_TAG "libpng-1.6.48-r2")
+    endif()
   endif()
 
   if(NOT DEFINED LIBPNG_GITHUB_REPO AND DEFINED ENV{LIBPNG_GITHUB_REPO})

@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_SQLITE3_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_SQLITE3_AUTOFETCH_DEP_DIR "${TCVM_SQLITE3_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_SQLITE3_RELEASE_HELPER "${TCVM_SQLITE3_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_SQLITE3_RELEASE_HELPER}")
+  include("${TCVM_SQLITE3_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_sqlite3)
   set(TCVM_SQLITE3_DEP_DIR "${TCVM_SQLITE3_AUTOFETCH_DEP_DIR}")
@@ -12,7 +16,11 @@ function(tcvm_auto_fetch_sqlite3)
   if(NOT DEFINED SQLITE3_RELEASE_TAG AND DEFINED ENV{SQLITE3_RELEASE_TAG})
     set(SQLITE3_RELEASE_TAG "$ENV{SQLITE3_RELEASE_TAG}")
   elseif(NOT DEFINED SQLITE3_RELEASE_TAG)
-    set(SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(sqlite3 SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+    else()
+      set(SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+    endif()
   endif()
 
   if(NOT DEFINED SQLITE3_GITHUB_REPO AND DEFINED ENV{SQLITE3_GITHUB_REPO})

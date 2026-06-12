@@ -4,6 +4,10 @@
 
 get_filename_component(TCVM_SKIA_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_SKIA_AUTOFETCH_DEP_DIR "${TCVM_SKIA_AUTOFETCH_DIR}/.." ABSOLUTE)
+set(TCVM_SKIA_RELEASE_HELPER "${TCVM_SKIA_AUTOFETCH_DEP_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${TCVM_SKIA_RELEASE_HELPER}")
+  include("${TCVM_SKIA_RELEASE_HELPER}")
+endif()
 
 function(tcvm_auto_fetch_skia_dependencies)
   set(TCVM_SKIA_LIBPNG_AUTOFETCH_SCRIPT "${TCVM_SKIA_AUTOFETCH_DEP_DIR}/../libpng/cmake/AutoFetchLibPng.cmake")
@@ -25,7 +29,11 @@ function(tcvm_auto_fetch_skia)
   if(NOT DEFINED SKIA_RELEASE_TAG AND DEFINED ENV{SKIA_RELEASE_TAG})
     set(SKIA_RELEASE_TAG "$ENV{SKIA_RELEASE_TAG}")
   elseif(NOT DEFINED SKIA_RELEASE_TAG)
-    set(SKIA_RELEASE_TAG "skia-158dc9d7-r2")
+    if(COMMAND tcvm_get_dependency_release)
+      tcvm_get_dependency_release(skia SKIA_RELEASE_TAG "skia-158dc9d7-r2")
+    else()
+      set(SKIA_RELEASE_TAG "skia-158dc9d7-r2")
+    endif()
   endif()
 
   if(NOT DEFINED SKIA_GITHUB_REPO AND DEFINED ENV{SKIA_GITHUB_REPO})
