@@ -33,25 +33,38 @@ jobs:
   prepare-skia-sources:
     name: Prepare Skia source dependencies
     runs-on: ubuntu-24.04
+    outputs:
+      cache-key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
+      - name: Compute Skia source cache key
+        id: skia-source-cache-key
+        run: |
+          key_hash=$(
+            git rev-parse \
+              HEAD:skia/manifest.json \
+              HEAD:skia/scripts/fetch-source.sh \
+              HEAD:skia/scripts/git-sync-deps-light.py |
+            shasum -a 256 |
+            awk '{print $1}'
+          )
+          echo "cache-key=skia-source-deps-${key_hash}" >> "$GITHUB_OUTPUT"
 
-      - name: Restore Skia dependency checkout cache
+      - name: Restore Skia source checkout cache
         uses: actions/cache@v5
         with:
           path: |
-            skia/skia/third_party/externals
-            skia/skia/buildtools
-            skia/skia/common
-            skia/skia/platform_tools
-          key: skia-deps-${{ hashFiles('skia/manifest.json', 'skia/scripts/git-sync-deps-light.py') }}
+            skia/depot_tools
+            skia/skia
+          key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
           enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
 
       - name: Sync Skia dependencies
         run: python3 skia/scripts/git-sync-deps-light.py --skia-dir skia/skia
@@ -118,20 +131,18 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh linux ${{ matrix.arch }}
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
-
-      - name: Restore Skia dependency checkout cache
+      - name: Restore Skia source checkout cache
         uses: actions/cache@v5
         with:
           path: |
-            skia/skia/third_party/externals
-            skia/skia/buildtools
-            skia/skia/common
-            skia/skia/platform_tools
-          key: skia-deps-${{ hashFiles('skia/manifest.json', 'skia/scripts/git-sync-deps-light.py') }}
+            skia/depot_tools
+            skia/skia
+          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
 
       - name: Install host GN tools
         if: ${{ !matrix.use_gn_container }}
@@ -253,20 +264,18 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh android arm64-v8a
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
-
-      - name: Restore Skia dependency checkout cache
+      - name: Restore Skia source checkout cache
         uses: actions/cache@v5
         with:
           path: |
-            skia/skia/third_party/externals
-            skia/skia/buildtools
-            skia/skia/common
-            skia/skia/platform_tools
-          key: skia-deps-${{ hashFiles('skia/manifest.json', 'skia/scripts/git-sync-deps-light.py') }}
+            skia/depot_tools
+            skia/skia
+          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
 
       - name: Build static library
         working-directory: skia
@@ -354,20 +363,18 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
 
-      - name: Fetch pinned Skia sources
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
-
-      - name: Restore Skia dependency checkout cache
+      - name: Restore Skia source checkout cache
         uses: actions/cache@v5
         with:
           path: |
-            skia/skia/third_party/externals
-            skia/skia/buildtools
-            skia/skia/common
-            skia/skia/platform_tools
-          key: skia-deps-${{ hashFiles('skia/manifest.json', 'skia/scripts/git-sync-deps-light.py') }}
+            skia/depot_tools
+            skia/skia
+          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
           enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
 
       - name: Build static library
         working-directory: skia
@@ -512,21 +519,19 @@ jobs:
         shell: bash
         run: bash skia/scripts/fetch-prebuilt-deps.sh windows ${{ matrix.arch }}
 
+      - name: Restore Skia source checkout cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            skia/depot_tools
+            skia/skia
+          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
+          enableCrossOsArchive: true
+
       - name: Fetch pinned Skia sources
         shell: bash
         working-directory: skia
         run: ./scripts/fetch-source.sh
-
-      - name: Restore Skia dependency checkout cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            skia/skia/third_party/externals
-            skia/skia/buildtools
-            skia/skia/common
-            skia/skia/platform_tools
-          key: skia-deps-${{ hashFiles('skia/manifest.json', 'skia/scripts/git-sync-deps-light.py') }}
-          enableCrossOsArchive: true
 
       - name: Build static library
         shell: bash
