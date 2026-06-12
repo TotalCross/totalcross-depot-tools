@@ -200,10 +200,7 @@ def run_command(command, build_dir, logs_dir):
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1,
+                bufsize=0,
             )
         except OSError as exc:
             line = f"error: failed to start build command: {exc}"
@@ -212,7 +209,8 @@ def run_command(command, build_dir, logs_dir):
             lines.append(line)
         else:
             assert process.stdout is not None
-            for raw_line in process.stdout:
+            for raw_line_bytes in process.stdout:
+                raw_line = raw_line_bytes.decode("utf-8", errors="replace")
                 line = raw_line.rstrip("\r\n")
                 full_log.write(raw_line)
                 lines.append(line)
