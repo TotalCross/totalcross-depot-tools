@@ -78,8 +78,22 @@ jobs:
           path: mbedtls/build/${{ matrix.project }}/mbedtls-*.tar.gz
 
   build-windows:
-    name: Build windows/x86
-    runs-on: windows-2022
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -88,19 +102,19 @@ jobs:
       - name: Build static libraries
         shell: bash
         run: |
-          cmake -S mbedtls -B mbedtls/build/windows-x86 \
+          cmake -S mbedtls -B mbedtls/build/windows-${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=Release \
             -G "Visual Studio 17 2022" \
-            -A Win32
-          cmake --build mbedtls/build/windows-x86 --config Release
-          cmake --install mbedtls/build/windows-x86 --config Release --prefix mbedtls/build/windows-x86/install
-          bash mbedtls/scripts/package-artifact.sh mbedtls/build/windows-x86 mbedtls/build/windows-x86/install windows/x86
+            -A ${{ matrix.cmake_platform }}
+          cmake --build mbedtls/build/windows-${{ matrix.arch }} --config Release
+          cmake --install mbedtls/build/windows-${{ matrix.arch }} --config Release --prefix mbedtls/build/windows-${{ matrix.arch }}/install
+          bash mbedtls/scripts/package-artifact.sh mbedtls/build/windows-${{ matrix.arch }} mbedtls/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mbedtls-windows-x86
-          path: mbedtls/build/windows-x86/mbedtls-*.tar.gz
+          name: mbedtls-windows-${{ matrix.arch }}
+          path: mbedtls/build/windows-${{ matrix.arch }}/mbedtls-*.tar.gz
 
   build-android:
     name: Build android/arm64-v8a
@@ -137,8 +151,28 @@ jobs:
           name: mbedtls-android-arm64-v8a
           path: mbedtls/build/android-arm64-v8a/mbedtls-*.tar.gz
 
-  build-ios:
-    name: Build ios/arm64
+  build-apple:
+    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            build_dir: macos-arm64
+            cmake_generator: Ninja
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          - platform: ios
+            arch: arm64
+            build_dir: ios-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          - platform: ios-simulator
+            arch: arm64
+            build_dir: ios-simulator-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+
     runs-on: macos-15
 
     steps:
@@ -147,43 +181,80 @@ jobs:
 
       - name: Build static libraries
         run: |
-          cmake -S mbedtls -B mbedtls/build/ios-arm64 \
+          cmake -S mbedtls -B mbedtls/build/${{ matrix.build_dir }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -G Xcode
-          cmake --build mbedtls/build/ios-arm64 --config Release
-          cmake --install mbedtls/build/ios-arm64 --config Release --prefix mbedtls/build/ios-arm64/install
-          bash mbedtls/scripts/package-artifact.sh mbedtls/build/ios-arm64 mbedtls/build/ios-arm64/install ios/arm64
+            ${{ matrix.cmake_args }} \
+            -G "${{ matrix.cmake_generator }}"
+          cmake --build mbedtls/build/${{ matrix.build_dir }} --config Release
+          cmake --install mbedtls/build/${{ matrix.build_dir }} --config Release --prefix mbedtls/build/${{ matrix.build_dir }}/install
+          bash mbedtls/scripts/package-artifact.sh mbedtls/build/${{ matrix.build_dir }} mbedtls/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
+        with:
+          name: mbedtls-${{ matrix.build_dir }}
+          path: mbedtls/build/${{ matrix.build_dir }}/mbedtls-*.tar.gz
+
+  package-ios:
+    name: Package iOS XCFramework
+    needs: build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
         with:
           name: mbedtls-ios-arm64
-          path: mbedtls/build/ios-arm64/mbedtls-*.tar.gz
+          path: package-input/ios
 
-  build-macos:
-    name: Build macos/arm64
-    runs-on: macos-15
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: mbedtls-ios-simulator-arm64
+          path: package-input/ios-simulator
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build static libraries
+      - name: Create XCFramework
         run: |
-          cmake -S mbedtls -B mbedtls/build/macos-arm64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -G Ninja
-          cmake --build mbedtls/build/macos-arm64
-          cmake --install mbedtls/build/macos-arm64 --prefix mbedtls/build/macos-arm64/install
-          bash mbedtls/scripts/package-artifact.sh mbedtls/build/macos-arm64 mbedtls/build/macos-arm64/install macos/arm64
+          mkdir -p package-work package-output
+          tar -xzf package-input/ios/mbedtls-ios-arm64.tar.gz -C package-work
+          tar -xzf package-input/ios-simulator/mbedtls-ios-simulator-arm64.tar.gz -C package-work
 
-      - name: Upload artifact
+          device_root="${PWD}/package-work/mbedtls/ios/arm64"
+          simulator_root="${PWD}/package-work/mbedtls/ios-simulator/arm64"
+          for library_name in libmbedtls.a libmbedx509.a libmbedcrypto.a; do
+            if [ ! -f "${device_root}/lib/${library_name}" ] || [ ! -f "${simulator_root}/lib/${library_name}" ]; then
+              echo "Unable to locate ${library_name} in mbedTLS iOS artifacts" >&2
+              exit 1
+            fi
+          done
+
+          mkdir -p package-output/ios package-output/ios-simulator
+          device_lib="${PWD}/package-output/ios/libmbedtls.a"
+          simulator_lib="${PWD}/package-output/ios-simulator/libmbedtls.a"
+          libtool -static -o "${device_lib}" \
+            "${device_root}/lib/libmbedtls.a" \
+            "${device_root}/lib/libmbedx509.a" \
+            "${device_root}/lib/libmbedcrypto.a"
+          libtool -static -o "${simulator_lib}" \
+            "${simulator_root}/lib/libmbedtls.a" \
+            "${simulator_root}/lib/libmbedx509.a" \
+            "${simulator_root}/lib/libmbedcrypto.a"
+
+          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
+            echo "Unable to locate mbedTLS iOS static libraries" >&2
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            -library "${device_lib}" -headers "${device_root}/include" \
+            -library "${simulator_lib}" -headers "${simulator_root}/include" \
+            -output package-output/mbedtls-ios.xcframework
+
+          cd package-output
+          ditto -c -k --sequesterRsrc --keepParent mbedtls-ios.xcframework mbedtls-ios.xcframework.zip
+
+      - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mbedtls-macos-arm64
-          path: mbedtls/build/macos-arm64/mbedtls-*.tar.gz
+          name: mbedtls-ios-xcframework
+          path: package-output/mbedtls-ios.xcframework.zip

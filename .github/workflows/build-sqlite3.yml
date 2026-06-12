@@ -78,8 +78,22 @@ jobs:
           path: sqlite3/build/${{ matrix.project }}/sqlite3-*.tar.gz
 
   build-windows:
-    name: Build windows/x86
-    runs-on: windows-2022
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -88,19 +102,19 @@ jobs:
       - name: Build static library
         shell: bash
         run: |
-          cmake -S sqlite3 -B sqlite3/build/windows-x86 \
+          cmake -S sqlite3 -B sqlite3/build/windows-${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=Release \
             -G "Visual Studio 17 2022" \
-            -A Win32
-          cmake --build sqlite3/build/windows-x86 --config Release
-          cmake --install sqlite3/build/windows-x86 --config Release --prefix sqlite3/build/windows-x86/install
-          bash sqlite3/scripts/package-artifact.sh sqlite3/build/windows-x86 sqlite3/build/windows-x86/install windows/x86
+            -A ${{ matrix.cmake_platform }}
+          cmake --build sqlite3/build/windows-${{ matrix.arch }} --config Release
+          cmake --install sqlite3/build/windows-${{ matrix.arch }} --config Release --prefix sqlite3/build/windows-${{ matrix.arch }}/install
+          bash sqlite3/scripts/package-artifact.sh sqlite3/build/windows-${{ matrix.arch }} sqlite3/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: sqlite3-windows-x86
-          path: sqlite3/build/windows-x86/sqlite3-*.tar.gz
+          name: sqlite3-windows-${{ matrix.arch }}
+          path: sqlite3/build/windows-${{ matrix.arch }}/sqlite3-*.tar.gz
 
   build-android:
     name: Build android/arm64-v8a
@@ -137,8 +151,28 @@ jobs:
           name: sqlite3-android-arm64-v8a
           path: sqlite3/build/android-arm64-v8a/sqlite3-*.tar.gz
 
-  build-ios:
-    name: Build ios/arm64
+  build-apple:
+    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            build_dir: macos-arm64
+            cmake_generator: Ninja
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          - platform: ios
+            arch: arm64
+            build_dir: ios-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          - platform: ios-simulator
+            arch: arm64
+            build_dir: ios-simulator-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+
     runs-on: macos-15
 
     steps:
@@ -147,44 +181,64 @@ jobs:
 
       - name: Build static library
         run: |
-          cmake -S sqlite3 -B sqlite3/build/ios-arm64 \
+          cmake -S sqlite3 -B sqlite3/build/${{ matrix.build_dir }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -G Xcode
-          cmake --build sqlite3/build/ios-arm64 --config Release
-          cmake --install sqlite3/build/ios-arm64 --config Release --prefix sqlite3/build/ios-arm64/install
-          bash sqlite3/scripts/package-artifact.sh sqlite3/build/ios-arm64 sqlite3/build/ios-arm64/install ios/arm64
+            ${{ matrix.cmake_args }} \
+            -G "${{ matrix.cmake_generator }}"
+          cmake --build sqlite3/build/${{ matrix.build_dir }} --config Release
+          cmake --install sqlite3/build/${{ matrix.build_dir }} --config Release --prefix sqlite3/build/${{ matrix.build_dir }}/install
+          bash sqlite3/scripts/package-artifact.sh sqlite3/build/${{ matrix.build_dir }} sqlite3/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
+        with:
+          name: sqlite3-${{ matrix.build_dir }}
+          path: sqlite3/build/${{ matrix.build_dir }}/sqlite3-*.tar.gz
+
+  package-ios:
+    name: Package iOS XCFramework
+    needs: build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
         with:
           name: sqlite3-ios-arm64
-          path: sqlite3/build/ios-arm64/sqlite3-*.tar.gz
+          path: package-input/ios
 
-  build-macos:
-    name: Build macos/arm64
-    runs-on: macos-15
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: sqlite3-ios-simulator-arm64
+          path: package-input/ios-simulator
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build static library
+      - name: Create XCFramework
         run: |
-          cmake -S sqlite3 -B sqlite3/build/macos-arm64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -G Ninja
-          cmake --build sqlite3/build/macos-arm64
-          cmake --install sqlite3/build/macos-arm64 --prefix sqlite3/build/macos-arm64/install
-          bash sqlite3/scripts/package-artifact.sh sqlite3/build/macos-arm64 sqlite3/build/macos-arm64/install macos/arm64
+          mkdir -p package-work package-output
+          tar -xzf package-input/ios/sqlite3-ios-arm64.tar.gz -C package-work
+          tar -xzf package-input/ios-simulator/sqlite3-ios-simulator-arm64.tar.gz -C package-work
 
-      - name: Upload artifact
+          device_root="${PWD}/package-work/sqlite3/ios/arm64"
+          simulator_root="${PWD}/package-work/sqlite3/ios-simulator/arm64"
+          device_lib="$(find "${device_root}/lib" -type f -name "libsqlite3.a" | head -n 1)"
+          simulator_lib="$(find "${simulator_root}/lib" -type f -name "libsqlite3.a" | head -n 1)"
+
+          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
+            echo "Unable to locate SQLite3 iOS static libraries" >&2
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            -library "${device_lib}" -headers "${device_root}/include" \
+            -library "${simulator_lib}" -headers "${simulator_root}/include" \
+            -output package-output/sqlite3-ios.xcframework
+
+          cd package-output
+          ditto -c -k --sequesterRsrc --keepParent sqlite3-ios.xcframework sqlite3-ios.xcframework.zip
+
+      - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
-          name: sqlite3-macos-arm64
-          path: sqlite3/build/macos-arm64/sqlite3-*.tar.gz
-
+          name: sqlite3-ios-xcframework
+          path: package-output/sqlite3-ios.xcframework.zip

@@ -78,8 +78,22 @@ jobs:
           path: zlib/build/${{ matrix.project }}/zlib-*.tar.gz
 
   build-windows:
-    name: Build windows/x86
-    runs-on: windows-2022
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -88,19 +102,19 @@ jobs:
       - name: Build static libraries
         shell: bash
         run: |
-          cmake -S zlib -B zlib/build/windows-x86 \
+          cmake -S zlib -B zlib/build/windows-${{ matrix.arch }} \
             -DCMAKE_BUILD_TYPE=Release \
             -G "Visual Studio 17 2022" \
-            -A Win32
-          cmake --build zlib/build/windows-x86 --config Release
-          cmake --install zlib/build/windows-x86 --config Release --prefix zlib/build/windows-x86/install
-          bash zlib/scripts/package-artifact.sh zlib/build/windows-x86 zlib/build/windows-x86/install windows/x86
+            -A ${{ matrix.cmake_platform }}
+          cmake --build zlib/build/windows-${{ matrix.arch }} --config Release
+          cmake --install zlib/build/windows-${{ matrix.arch }} --config Release --prefix zlib/build/windows-${{ matrix.arch }}/install
+          bash zlib/scripts/package-artifact.sh zlib/build/windows-${{ matrix.arch }} zlib/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zlib-windows-x86
-          path: zlib/build/windows-x86/zlib-*.tar.gz
+          name: zlib-windows-${{ matrix.arch }}
+          path: zlib/build/windows-${{ matrix.arch }}/zlib-*.tar.gz
 
   build-android:
     name: Build android/arm64-v8a
@@ -137,8 +151,28 @@ jobs:
           name: zlib-android-arm64-v8a
           path: zlib/build/android-arm64-v8a/zlib-*.tar.gz
 
-  build-ios:
-    name: Build ios/arm64
+  build-apple:
+    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            build_dir: macos-arm64
+            cmake_generator: Ninja
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          - platform: ios
+            arch: arm64
+            build_dir: ios-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          - platform: ios-simulator
+            arch: arm64
+            build_dir: ios-simulator-arm64
+            cmake_generator: Xcode
+            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+
     runs-on: macos-15
 
     steps:
@@ -147,43 +181,64 @@ jobs:
 
       - name: Build static libraries
         run: |
-          cmake -S zlib -B zlib/build/ios-arm64 \
+          cmake -S zlib -B zlib/build/${{ matrix.build_dir }} \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_SYSROOT=iphoneos \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -G Xcode
-          cmake --build zlib/build/ios-arm64 --config Release
-          cmake --install zlib/build/ios-arm64 --config Release --prefix zlib/build/ios-arm64/install
-          bash zlib/scripts/package-artifact.sh zlib/build/ios-arm64 zlib/build/ios-arm64/install ios/arm64
+            ${{ matrix.cmake_args }} \
+            -G "${{ matrix.cmake_generator }}"
+          cmake --build zlib/build/${{ matrix.build_dir }} --config Release
+          cmake --install zlib/build/${{ matrix.build_dir }} --config Release --prefix zlib/build/${{ matrix.build_dir }}/install
+          bash zlib/scripts/package-artifact.sh zlib/build/${{ matrix.build_dir }} zlib/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
+        with:
+          name: zlib-${{ matrix.build_dir }}
+          path: zlib/build/${{ matrix.build_dir }}/zlib-*.tar.gz
+
+  package-ios:
+    name: Package iOS XCFramework
+    needs: build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
         with:
           name: zlib-ios-arm64
-          path: zlib/build/ios-arm64/zlib-*.tar.gz
+          path: package-input/ios
 
-  build-macos:
-    name: Build macos/arm64
-    runs-on: macos-15
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: zlib-ios-simulator-arm64
+          path: package-input/ios-simulator
 
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Build static libraries
+      - name: Create XCFramework
         run: |
-          cmake -S zlib -B zlib/build/macos-arm64 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -G Ninja
-          cmake --build zlib/build/macos-arm64
-          cmake --install zlib/build/macos-arm64 --prefix zlib/build/macos-arm64/install
-          bash zlib/scripts/package-artifact.sh zlib/build/macos-arm64 zlib/build/macos-arm64/install macos/arm64
+          mkdir -p package-work package-output
+          tar -xzf package-input/ios/zlib-ios-arm64.tar.gz -C package-work
+          tar -xzf package-input/ios-simulator/zlib-ios-simulator-arm64.tar.gz -C package-work
 
-      - name: Upload artifact
+          device_root="${PWD}/package-work/zlib/ios/arm64"
+          simulator_root="${PWD}/package-work/zlib/ios-simulator/arm64"
+          device_lib="$(find "${device_root}/lib" -type f -name "libz.a" | head -n 1)"
+          simulator_lib="$(find "${simulator_root}/lib" -type f -name "libz.a" | head -n 1)"
+
+          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
+            echo "Unable to locate zlib iOS static libraries" >&2
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            -library "${device_lib}" -headers "${device_root}/include" \
+            -library "${simulator_lib}" -headers "${simulator_root}/include" \
+            -output package-output/zlib-ios.xcframework
+
+          cd package-output
+          ditto -c -k --sequesterRsrc --keepParent zlib-ios.xcframework zlib-ios.xcframework.zip
+
+      - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zlib-macos-arm64
-          path: zlib/build/macos-arm64/zlib-*.tar.gz
+          name: zlib-ios-xcframework
+          path: package-output/zlib-ios.xcframework.zip

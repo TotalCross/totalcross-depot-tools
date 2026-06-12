@@ -1,6 +1,6 @@
 name: mbedtls
 version: 3.5.2
-release: mbedtls-3.5.2
+release: mbedtls-3.5.2-r2
 source:
   type: git
   url: https://github.com/Mbed-TLS/mbedtls.git
@@ -22,6 +22,10 @@ artifact:
     - mbedtls-linux-armv7l.tar.gz
     - mbedtls-linux-aarch64.tar.gz
     - mbedtls-windows-x86.tar.gz
+    - mbedtls-windows-x64.tar.gz
+    - mbedtls-windows-arm64.tar.gz
     - mbedtls-android-arm64-v8a.tar.gz
     - mbedtls-ios-arm64.tar.gz
+    - mbedtls-ios-simulator-arm64.tar.gz
+    - mbedtls-ios.xcframework.zip
     - mbedtls-macos-arm64.tar.gz

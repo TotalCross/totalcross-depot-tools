@@ -37,7 +37,7 @@ default TotalCross copy:
 ./fetch.sh \
   --platform linux \
   --arch x86_64 \
-  --release-tag sqlite-3.32.3 \
+  --release-tag sqlite3-3.32.3-r2 \
   --github-repo Example/sqlite-builds
 ```
 
