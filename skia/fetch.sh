@@ -66,6 +66,20 @@ github_token() {
   fi
 }
 
+github_curl() {
+  local token
+  token=$(github_token)
+
+  if [[ -n "$token" ]]; then
+    curl \
+      -H "Authorization: Bearer ${token}" \
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      "$@"
+  else
+    curl "$@"
+  fi
+}
+
 SKIA_DOWNLOAD_RETRIES="${SKIA_DOWNLOAD_RETRIES:-5}"
 SKIA_DOWNLOAD_RETRY_DELAY="${SKIA_DOWNLOAD_RETRY_DELAY:-2}"
 
@@ -82,20 +96,11 @@ download_to_file() {
   local delay="$SKIA_DOWNLOAD_RETRY_DELAY"
   local status
   local curl_exit
-  local token
-  local curl_headers=()
 
   require_cmd curl
-  token=$(github_token)
-  if [[ -n "$token" ]]; then
-    curl_headers+=(
-      -H "Authorization: Bearer ${token}"
-      -H "X-GitHub-Api-Version: 2022-11-28"
-    )
-  fi
 
   while true; do
-    status=$(curl "${curl_headers[@]}" -w "%{http_code}" -fsSL -o "$out" "$url") && return 0
+    status=$(github_curl -w "%{http_code}" -fsSL -o "$out" "$url") && return 0
     curl_exit=$?
 
     if [[ $attempt -ge $max_attempts ]] || ! should_retry_download "${status:-000}"; then
