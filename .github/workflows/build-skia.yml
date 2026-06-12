@@ -89,6 +89,18 @@ jobs:
         working-directory: skia
         run: ./scripts/fetch-source.sh
 
+      - name: Restore Skia dependency checkout cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            skia/skia/third_party/externals
+            skia/skia/buildtools
+            skia/skia/common
+            skia/skia/platform_tools
+          key: skia-deps-${{ runner.os }}-${{ hashFiles('skia/manifest.json') }}
+          restore-keys: |
+            skia-deps-${{ runner.os }}-
+
       - name: Install host GN tools
         if: ${{ !matrix.use_gn_container }}
         run: |
@@ -205,6 +217,18 @@ jobs:
         working-directory: skia
         run: ./scripts/fetch-source.sh
 
+      - name: Restore Skia dependency checkout cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            skia/skia/third_party/externals
+            skia/skia/buildtools
+            skia/skia/common
+            skia/skia/platform_tools
+          key: skia-deps-${{ runner.os }}-${{ hashFiles('skia/manifest.json') }}
+          restore-keys: |
+            skia-deps-${{ runner.os }}-
+
       - name: Build static library
         working-directory: skia
         env:
@@ -293,6 +317,18 @@ jobs:
       - name: Fetch pinned Skia sources
         working-directory: skia
         run: ./scripts/fetch-source.sh
+
+      - name: Restore Skia dependency checkout cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            skia/skia/third_party/externals
+            skia/skia/buildtools
+            skia/skia/common
+            skia/skia/platform_tools
+          key: skia-deps-${{ runner.os }}-${{ hashFiles('skia/manifest.json') }}
+          restore-keys: |
+            skia-deps-${{ runner.os }}-
 
       - name: Build static library
         working-directory: skia
@@ -440,6 +476,18 @@ jobs:
         shell: bash
         working-directory: skia
         run: ./scripts/fetch-source.sh
+
+      - name: Restore Skia dependency checkout cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            skia/skia/third_party/externals
+            skia/skia/buildtools
+            skia/skia/common
+            skia/skia/platform_tools
+          key: skia-deps-${{ runner.os }}-${{ hashFiles('skia/manifest.json') }}
+          restore-keys: |
+            skia-deps-${{ runner.os }}-
 
       - name: Build static library
         shell: bash
