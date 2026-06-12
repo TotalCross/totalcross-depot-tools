@@ -43,6 +43,7 @@ jobs:
             artifact_suffix: linux-x86_64
             arch: x86_64
             script: build-linux-x86_64.sh
+            use_gn_container: false
             use_qemu: false
           - project: linux-arm64
             runner: ubuntu-22.04-arm
@@ -51,6 +52,7 @@ jobs:
             artifact_suffix: linux-aarch64
             arch: aarch64
             script: build-linux-aarch64.sh
+            use_gn_container: true
             use_qemu: false
           - project: linux-arm32v7
             runner: ubuntu-22.04
@@ -59,6 +61,7 @@ jobs:
             artifact_suffix: linux-armv7l
             arch: armv7l
             script: build-linux-armv7l.sh
+            use_gn_container: false
             use_qemu: true
 
     runs-on: ${{ matrix.runner }}
@@ -76,7 +79,7 @@ jobs:
             skia-ccache-${{ runner.os }}-${{ matrix.project }}-
 
       - name: Allow multiarch
-        if: ${{ matrix.use_qemu }}
+        if: ${{ matrix.use_qemu || matrix.use_gn_container }}
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Fetch zlib-ng/libpng prebuilts
@@ -87,6 +90,7 @@ jobs:
         run: ./scripts/fetch-source.sh
 
       - name: Install host GN tools
+        if: ${{ !matrix.use_gn_container }}
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache ninja-build python3 rsync
@@ -95,9 +99,27 @@ jobs:
           fi
 
       - name: Generate Ninja files
+        if: ${{ !matrix.use_gn_container }}
         env:
           SKIA_ONLY_GN_GEN: 1
         run: bash skia/scripts/${{ matrix.script }}
+
+      - name: Generate Ninja files in amd64 container
+        if: ${{ matrix.use_gn_container }}
+        run: |
+          docker run \
+            --platform linux/amd64 \
+            -v "${PWD}:${PWD}" \
+            -w "${PWD}" \
+            -t totalcross/linux-amd64:v1.0.7 \
+            bash -lc "
+              apt-get update &&
+              apt-get install -y ccache ninja-build python3 rsync &&
+              if ! command -v gn >/dev/null 2>&1; then
+                apt-get install -y generate-ninja || apt-get install -y gn
+              fi &&
+              SKIA_ONLY_GN_GEN=1 bash skia/scripts/${{ matrix.script }}
+            "
 
       - name: Build static library
         run: |
