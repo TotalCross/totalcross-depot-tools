@@ -39,5 +39,101 @@
             "skia-build-diagnostics-158dc9d7.tar.gz",
             "SHA256SUMS"
         ]
+    },
+    "defaults": {
+        "source": {
+            "type": "github_release",
+            "repo": "TotalCross/totalcross-depot-tools",
+            "tag": "skia-158dc9d7-r2"
+        },
+        "dev_bundle": {
+            "artifact_name": "skia-dev-headers-158dc9d7.zip"
+        }
+    },
+    "artifacts": {
+        "linux-x86_64": {
+            "artifact_name": "libskia-linux-x86_64.a",
+            "target_path": "local/out/Release/linux/x86_64/libskia.a"
+        },
+        "linux-aarch64": {
+            "artifact_name": "libskia-linux-aarch64.a",
+            "target_path": "local/out/Release/linux/aarch64/libskia.a"
+        },
+        "linux-armv7l": {
+            "artifact_name": "libskia-linux-armv7l.a",
+            "target_path": "local/out/Release/linux/armv7l/libskia.a"
+        },
+        "android-arm64-v8a": {
+            "artifact_name": "libskia-android-arm64-v8a.a",
+            "target_path": "local/out/Release/android/arm64-v8a/libskia.a"
+        },
+        "macos-arm64": {
+            "artifact_name": "libskia-macos-arm64.a",
+            "target_path": "local/out/Release/macos/arm64/libskia.a"
+        },
+        "ios-arm64": {
+            "artifact_name": "libskia-ios-arm64.a",
+            "target_path": "local/out/Release/ios/arm64/libskia.a"
+        },
+        "ios-simulator-arm64": {
+            "artifact_name": "libskia-ios-simulator-arm64.a",
+            "target_path": "local/out/Release/ios-simulator/arm64/libskia.a"
+        },
+        "windows-x86": {
+            "artifact_name": "libskia-windows-x86.lib",
+            "target_path": "local/out/Release/windows/x86/libskia.lib"
+        },
+        "windows-x64": {
+            "artifact_name": "libskia-windows-x64.lib",
+            "target_path": "local/out/Release/windows/x64/libskia.lib"
+        },
+        "windows-arm64": {
+            "artifact_name": "libskia-windows-arm64.lib",
+            "target_path": "local/out/Release/windows/arm64/libskia.lib"
+        }
+    },
+    "metadata": {
+        "build-manifests": {
+            "linux-x86_64": {
+                "artifact_name": "build_config_manifest-linux-x86_64.md",
+                "target_path": "local/out/Release/linux/x86_64/build_config_manifest.md"
+            },
+            "linux-aarch64": {
+                "artifact_name": "build_config_manifest-linux-aarch64.md",
+                "target_path": "local/out/Release/linux/aarch64/build_config_manifest.md"
+            },
+            "linux-armv7l": {
+                "artifact_name": "build_config_manifest-linux-armv7l.md",
+                "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md"
+            },
+            "android-arm64-v8a": {
+                "artifact_name": "build_config_manifest-android-arm64-v8a.md",
+                "target_path": "local/out/Release/android/arm64-v8a/build_config_manifest.md"
+            },
+            "macos-arm64": {
+                "artifact_name": "build_config_manifest-macos-arm64.md",
+                "target_path": "local/out/Release/macos/arm64/build_config_manifest.md"
+            },
+            "ios-arm64": {
+                "artifact_name": "build_config_manifest-ios-arm64.md",
+                "target_path": "local/out/Release/ios/arm64/build_config_manifest.md"
+            },
+            "ios-simulator-arm64": {
+                "artifact_name": "build_config_manifest-ios-simulator-arm64.md",
+                "target_path": "local/out/Release/ios-simulator/arm64/build_config_manifest.md"
+            },
+            "windows-x86": {
+                "artifact_name": "build_config_manifest-windows-x86.md",
+                "target_path": "local/out/Release/windows/x86/build_config_manifest.md"
+            },
+            "windows-x64": {
+                "artifact_name": "build_config_manifest-windows-x64.md",
+                "target_path": "local/out/Release/windows/x64/build_config_manifest.md"
+            },
+            "windows-arm64": {
+                "artifact_name": "build_config_manifest-windows-arm64.md",
+                "target_path": "local/out/Release/windows/arm64/build_config_manifest.md"
+            }
+        }
     }
 }
