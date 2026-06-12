@@ -81,7 +81,7 @@ sync_skia_deps() {
 
   pushd "$SKIA_DIR" >/dev/null
   export PATH="$DEPOT_TOOLS_DIR:$PATH"
-  python3 tools/git-sync-deps
+  python3 "$ROOT_DIR/scripts/git-sync-deps-light.py" --skia-dir "$SKIA_DIR"
   popd >/dev/null
 }
 
