@@ -8,7 +8,7 @@ Usage: fetch.sh [options]
 Options:
   --platform PLATFORM      Target platform: linux, windows, android, ios, ios-simulator, macos
   --arch ARCH              Target architecture, e.g. x86_64, armv7l, aarch64
-  --release-tag TAG        GitHub release tag, default: sqlite3-3.32.3-r2
+  --release-tag TAG        GitHub release tag, default: sqlite3-3.32.3
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: SQLITE3_GITHUB_TOKEN, then GITHUB_TOKEN
@@ -21,7 +21,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 platform=""
 arch=""
-release_tag="sqlite3-3.32.3-r2"
+release_tag="sqlite3-3.32.3"
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
 dest_root="${script_dir}/local"

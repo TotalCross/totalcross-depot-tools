@@ -3,7 +3,7 @@ bundle: native-deps-totalcross-7.2.0
 dependencies:
   sqlite3:
     version: 3.32.3
-    release: sqlite3-3.32.3-r2
+    release: sqlite3-3.32.3
     path: sqlite3
   mbedtls:
     version: 3.5.2
