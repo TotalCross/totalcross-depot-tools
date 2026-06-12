@@ -337,7 +337,6 @@ jobs:
 
   build-apple:
     name: Build ${{ matrix.platform_arch }}
-    needs: prepare-skia-sources
     runs-on: macos-15
 
     strategy:
@@ -384,27 +383,14 @@ jobs:
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
 
-      - name: Restore Skia source archive cache
-        uses: actions/cache@v5
-        with:
-          path: skia/.source-cache
-          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
-          enableCrossOsArchive: true
-
-      - name: Extract Skia source archive
-        run: |
-          test -f skia/.source-cache/skia-source.tar
-          tar -C skia -xf skia/.source-cache/skia-source.tar
-
-      - name: Fetch native depot_tools
+      - name: Fetch pinned Skia sources
         working-directory: skia
-        run: ./scripts/fetch-source.sh depot_tools
+        run: ./scripts/fetch-source.sh
 
       - name: Build static library
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.artifact_suffix }}
-          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Print build summary on failure
@@ -498,7 +484,6 @@ jobs:
 
   build-windows:
     name: Build windows/${{ matrix.arch }}
-    needs: prepare-skia-sources
     strategy:
       fail-fast: false
       matrix:
@@ -544,23 +529,10 @@ jobs:
         shell: bash
         run: bash skia/scripts/fetch-prebuilt-deps.sh windows ${{ matrix.arch }}
 
-      - name: Restore Skia source archive cache
-        uses: actions/cache@v5
-        with:
-          path: skia/.source-cache
-          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
-          enableCrossOsArchive: true
-
-      - name: Extract Skia source archive
-        shell: bash
-        run: |
-          test -f skia/.source-cache/skia-source.tar
-          tar -C skia -xf skia/.source-cache/skia-source.tar
-
-      - name: Fetch native depot_tools
+      - name: Fetch pinned Skia sources
         shell: bash
         working-directory: skia
-        run: ./scripts/fetch-source.sh depot_tools
+        run: ./scripts/fetch-source.sh
 
       - name: Build static library
         shell: bash
@@ -568,7 +540,6 @@ jobs:
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
           DEPOT_TOOLS_WIN_TOOLCHAIN: 0
-          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Print build summary on failure
