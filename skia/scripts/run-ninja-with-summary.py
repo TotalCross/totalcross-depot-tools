@@ -89,17 +89,19 @@ def is_linker_diagnostic(line):
 
 
 def should_print_line(line, failure_context_remaining):
+    diagnostic = normalized_diagnostic(line)
+
     if PROGRESS_RE.match(line):
         return True
     if FAILED_RE.match(line):
         return True
     if "ninja: error:" in line:
         return True
-    if normalized_diagnostic(line):
-        return True
     if is_linker_diagnostic(line):
         return True
     if failure_context_remaining > 0 and line.strip():
+        return True
+    if diagnostic and diagnostic["severity"] == "error":
         return True
     return False
 

@@ -9,6 +9,7 @@ from pathlib import Path
 MODULE = runpy.run_path(str(Path(__file__).with_name("run-ninja-with-summary.py")))
 normalized_diagnostic = MODULE["normalized_diagnostic"]
 process_lines = MODULE["process_lines"]
+should_print_line = MODULE["should_print_line"]
 
 
 class NinjaSummaryTests(unittest.TestCase):
@@ -51,6 +52,16 @@ class NinjaSummaryTests(unittest.TestCase):
         self.assertEqual(len(summary["errors"]), 2)
         self.assertEqual(len(summary["linker_diagnostics"]), 2)
         self.assertEqual(summary["contexts"][0]["trigger"], "FAILED: obj/foo.o")
+
+    def test_console_filter_suppresses_non_failure_warnings(self):
+        warning = "../../skia/include/private/SkTemplates.h:435:20: warning: 'result_of_t' is deprecated"
+        note = "result_of.h:32:19: note: 'result_of_t' has been explicitly marked deprecated here"
+        error = "src/foo.cc:12:7: fatal error: 'bar.h' file not found"
+
+        self.assertFalse(should_print_line(warning, 0))
+        self.assertFalse(should_print_line(note, 0))
+        self.assertTrue(should_print_line(error, 0))
+        self.assertTrue(should_print_line(warning, 3))
 
 
 if __name__ == "__main__":
