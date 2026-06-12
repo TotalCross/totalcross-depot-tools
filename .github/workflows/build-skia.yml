@@ -592,10 +592,22 @@ jobs:
       - name: Generate SHA256SUMS
         run: |
           ! find release-assets -maxdepth 1 -name '*.so' | grep -q .
+
+          mkdir -p release-assets/.diagnostics
           if [ -d release-assets/diagnostics ]; then
-            tar -C release-assets -czf "release-assets/${SKIA_DIAGNOSTICS_ARCHIVE}" diagnostics
+            find release-assets/diagnostics -mindepth 1 -maxdepth 1 -exec mv {} release-assets/.diagnostics/ \;
             rm -rf release-assets/diagnostics
           fi
+
+          while IFS= read -r -d '' diagnostics_dir; do
+            mv "${diagnostics_dir}" release-assets/.diagnostics/
+          done < <(find release-assets -mindepth 1 -maxdepth 1 -type d ! -name '.diagnostics' -print0)
+
+          if find release-assets/.diagnostics -mindepth 1 -print -quit | grep -q .; then
+            tar -C release-assets/.diagnostics -czf "release-assets/${SKIA_DIAGNOSTICS_ARCHIVE}" .
+          fi
+          rm -rf release-assets/.diagnostics
+
           cd release-assets
           find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | xargs -0 shasum -a 256 | sed 's#  \./#  #' | sort -k 2 > SHA256SUMS
 

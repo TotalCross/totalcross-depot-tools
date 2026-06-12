@@ -77,7 +77,13 @@ jobs:
 
       - name: Publish GitHub Release
         run: |
-          gh release create "${TAG_NAME}" release-assets/* \
+          mapfile -d '' release_files < <(find release-assets -maxdepth 1 -type f -print0 | sort -z)
+          if [ "${#release_files[@]}" -eq 0 ]; then
+            echo "No release asset files found under release-assets" >&2
+            exit 1
+          fi
+
+          gh release create "${TAG_NAME}" "${release_files[@]}" \
             --verify-tag \
             --title "Skia ${SKIA_VERSION} static libraries" \
             --notes "Static Skia ${SKIA_VERSION} libraries for TotalCross, including Android arm64-v8a with NDK ${ANDROID_NDK_VERSION:-28.2.13676358}, iOS device/simulator arm64 artifacts, and a separate diagnostics archive with full GN/Ninja logs."
