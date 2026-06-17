@@ -25,9 +25,19 @@ jobs:
         id: version
         run: |
           skia_version="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["skia"]["commit"][:8])')"
-          tag_name="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["release"]["tag"])')"
+          current_tag="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["release"]["tag"])')"
+          if [ -z "$skia_version" ] || [ -z "$current_tag" ]; then
+            echo "Could not read Skia release metadata from skia/manifest.json" >&2
+            exit 1
+          fi
 
-          if [ -z "$skia_version" ] || [ -z "$tag_name" ]; then
+          if git ls-remote --exit-code --tags origin "refs/tags/${current_tag}" >/dev/null; then
+            tag_name="$(.github/scripts/next-release-tag.sh skia "${skia_version}")"
+          else
+            tag_name="${current_tag}"
+          fi
+
+          if [ -z "$tag_name" ]; then
             echo "Could not read Skia release metadata from skia/manifest.json" >&2
             exit 1
           fi
@@ -49,7 +59,6 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       SKIA_VERSION: ${{ needs.prepare.outputs.skia_version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
@@ -63,6 +72,35 @@ jobs:
           name: skia-release-assets
           path: release-assets
 
+      - name: Update release metadata
+        run: |
+          current_tag="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["release"]["tag"])')"
+          if [ -z "$current_tag" ]; then
+            echo "Could not read Skia release tag from skia/manifest.json" >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${current_tag}" >/dev/null; then
+            tag_name="$(.github/scripts/next-release-tag.sh skia "${SKIA_VERSION}")"
+          else
+            tag_name="${current_tag}"
+          fi
+          python3 .github/scripts/update-skia-release-tag.py "${tag_name}"
+          echo "TAG_NAME=${tag_name}" >> "$GITHUB_ENV"
+
+      - name: Commit release metadata
+        run: |
+          if git diff --quiet -- deps.yml skia/manifest.yml skia/manifest.json skia/artifacts.json skia/fetch.sh skia/cmake/AutoFetchSkia.cmake; then
+            echo "Skia release metadata already points to ${TAG_NAME}"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deps.yml skia/manifest.yml skia/manifest.json skia/artifacts.json skia/fetch.sh skia/cmake/AutoFetchSkia.cmake
+          git commit -m "Update Skia release metadata to ${TAG_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
       - name: Create release tag
         run: |
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
@@ -70,8 +108,6 @@ jobs:
             exit 1
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "${TAG_NAME}" -m "Skia ${SKIA_VERSION}"
           git push origin "refs/tags/${TAG_NAME}"
 
