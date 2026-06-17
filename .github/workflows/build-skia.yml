@@ -318,6 +318,9 @@ jobs:
           grep -q "${ANDROID_NDK_VERSION}" skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -Eq 'skia_use_freetype[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -Eq 'skia_enable_fontmgr_android[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
+          grep -Eq 'skia_fontmgr_factory[[:space:]]*=[[:space:]]*":fontmgr_android_factory"' skia/dist/build_config_manifest-android-arm64-v8a.md
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
       - name: Upload artifact
