@@ -98,5 +98,9 @@ that includes the changed modules. Verify it resolves dependencies from
 - Do not commit generated build directories.
 - Treat `dist` assets intentionally: include them only when the task is to
   publish or prepare release assets.
+- When asked for a commit message, write it in English. Use an imperative,
+  concise subject line without a trailing period, then a body explaining the
+  cause, the fix, and compatibility or workflow impact when relevant. Mention
+  concrete error messages or platform details when they motivated the change.
 - Never revert unrelated local changes. This repository is often edited in
   parallel with the TotalCross consumer repository.
