@@ -1,0 +1,37 @@
+name: libjpeg-turbo
+version: 3.1.4.1
+release: libjpeg-turbo-3.1.4.1
+source:
+  type: git
+  url: https://github.com/libjpeg-turbo/libjpeg-turbo.git
+  tag: 3.1.4.1
+build:
+  cmake_options:
+    ENABLE_SHARED: OFF
+    ENABLE_STATIC: ON
+    WITH_TOOLS: OFF
+    WITH_TESTS: OFF
+    WITH_JAVA: OFF
+    WITH_TURBOJPEG: ON
+artifact:
+  include:
+    - jconfig.h
+    - jerror.h
+    - jmorecfg.h
+    - jpeglib.h
+    - turbojpeg.h
+  libraries:
+    - jpeg
+    - turbojpeg
+  archives:
+    - libjpeg-turbo-linux-x86_64.tar.gz
+    - libjpeg-turbo-linux-armv7l.tar.gz
+    - libjpeg-turbo-linux-aarch64.tar.gz
+    - libjpeg-turbo-windows-x86.tar.gz
+    - libjpeg-turbo-windows-x64.tar.gz
+    - libjpeg-turbo-windows-arm64.tar.gz
+    - libjpeg-turbo-android-arm64-v8a.tar.gz
+    - libjpeg-turbo-ios-arm64.tar.gz
+    - libjpeg-turbo-ios-simulator-arm64.tar.gz
+    - libjpeg-turbo-ios.xcframework.zip
+    - libjpeg-turbo-macos-arm64.tar.gz

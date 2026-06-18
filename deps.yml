@@ -25,6 +25,10 @@ dependencies:
     version: 10
     release: libjpeg-10
     path: libjpeg
+  libjpeg-turbo:
+    version: 3.1.4.1
+    release: libjpeg-turbo-3.1.4.1
+    path: libjpeg-turbo
   skia:
     version: 158dc9d7
     release: skia-158dc9d7-r3
