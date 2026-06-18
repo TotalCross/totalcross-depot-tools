@@ -1,0 +1,30 @@
+name: libjpeg
+version: 10
+release: libjpeg-10
+source:
+  type: archive
+  url: https://ijg.org/files/jpegsrc.v10.tar.gz
+  directory: jpeg-10
+build:
+  cmake_options:
+    BUILD_SHARED_LIBS: OFF
+artifact:
+  include:
+    - jconfig.h
+    - jerror.h
+    - jmorecfg.h
+    - jpeglib.h
+  libraries:
+    - jpeg
+  archives:
+    - libjpeg-linux-x86_64.tar.gz
+    - libjpeg-linux-armv7l.tar.gz
+    - libjpeg-linux-aarch64.tar.gz
+    - libjpeg-windows-x86.tar.gz
+    - libjpeg-windows-x64.tar.gz
+    - libjpeg-windows-arm64.tar.gz
+    - libjpeg-android-arm64-v8a.tar.gz
+    - libjpeg-ios-arm64.tar.gz
+    - libjpeg-ios-simulator-arm64.tar.gz
+    - libjpeg-ios.xcframework.zip
+    - libjpeg-macos-arm64.tar.gz

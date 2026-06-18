@@ -21,6 +21,10 @@ dependencies:
     version: 1.6.48
     release: libpng-1.6.48-r2
     path: libpng
+  libjpeg:
+    version: 10
+    release: libjpeg-10
+    path: libjpeg
   skia:
     version: 158dc9d7
     release: skia-158dc9d7-r3
