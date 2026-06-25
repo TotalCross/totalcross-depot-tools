@@ -33,3 +33,7 @@ dependencies:
     version: 158dc9d7
     release: skia-158dc9d7-r3
     path: skia
+  vcruntime:
+    version: 14
+    release: vcruntime-14
+    path: vcruntime

@@ -1,0 +1,122 @@
+name: Build Visual C++ runtime DLLs
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - vcruntime/**
+      - .github/workflows/build-vcruntime.yml
+  pull_request:
+    branches: [ master ]
+    paths:
+      - vcruntime/**
+      - .github/workflows/build-vcruntime.yml
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-windows:
+    name: Build windows/${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            redist_url: https://aka.ms/vc14/vc_redist.x86.exe
+            registry_arch: x86
+          - arch: x64
+            runner: windows-2022
+            redist_url: https://aka.ms/vc14/vc_redist.x64.exe
+            registry_arch: x64
+          - arch: arm64
+            runner: windows-11-arm
+            redist_url: https://aka.ms/vc14/vc_redist.arm64.exe
+            registry_arch: ARM64
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Download and install redistributable
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Join-Path $env:RUNNER_TEMP "vc_redist-${{ matrix.arch }}.exe"
+          Invoke-WebRequest -Uri "${{ matrix.redist_url }}" -OutFile $installer
+
+          $process = Start-Process `
+            -FilePath $installer `
+            -ArgumentList @("/install", "/quiet", "/norestart") `
+            -Wait `
+            -PassThru
+
+          if ($process.ExitCode -notin @(0, 1638, 3010)) {
+            throw "VC++ redistributable installer failed with exit code $($process.ExitCode)"
+          }
+
+      - name: Read installed redistributable version
+        id: version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $registryArch = "${{ matrix.registry_arch }}"
+          $registryPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\$registryArch"
+          )
+
+          if ("${{ matrix.arch }}" -eq "x86") {
+            $registryPaths = @(
+              "HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x86",
+              "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86"
+            )
+          }
+
+          $runtime = $null
+          foreach ($path in $registryPaths) {
+            if (Test-Path -LiteralPath $path) {
+              $runtime = Get-ItemProperty -LiteralPath $path
+              break
+            }
+          }
+
+          if ($null -eq $runtime) {
+            throw "Unable to find Visual C++ runtime registry key for $registryArch"
+          }
+
+          $version = $runtime.Version
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $versionParts = @($runtime.Major, $runtime.Minor, $runtime.Bld, $runtime.Rbld) |
+              Where-Object { $null -ne $_ -and $_ -ne "" }
+            $version = $versionParts -join "."
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Unable to determine Visual C++ runtime version for $registryArch"
+          }
+
+          $version = $version.TrimStart("v")
+          "redist_version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Package runtime DLLs
+        shell: pwsh
+        run: |
+          $outputDir = "vcruntime/build/windows-${{ matrix.arch }}"
+          New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+          ./vcruntime/scripts/package-artifact.ps1 `
+            -Arch "${{ matrix.arch }}" `
+            -OutputDir $outputDir `
+            -RedistVersion "${{ steps.version.outputs.redist_version }}" `
+            -SourceUrl "${{ matrix.redist_url }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vcruntime-windows-${{ matrix.arch }}
+          path: vcruntime/build/windows-${{ matrix.arch }}/vcruntime-*.tar.gz
