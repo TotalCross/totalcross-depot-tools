@@ -155,6 +155,14 @@ set(MINIZIP_SRCS
 
 add_library(minizipstatic STATIC ${MINIZIP_SRCS} ${MINIZIP_PUBLIC_HDRS})
 
+if(DEFINED ANDROID_ABI)
+  target_compile_definitions(minizipstatic
+    PRIVATE
+      IOAPI_NO_64
+      _FILE_OFFSET_BITS=64
+  )
+endif()
+
 target_include_directories(minizipstatic
   PUBLIC
     "$<BUILD_INTERFACE:${MINIZIP_CONTRIB_DIR}>"
