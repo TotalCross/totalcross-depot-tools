@@ -1,0 +1,44 @@
+name: minizip-ng
+version: 4.2.2
+release: minizip-ng-4.2.2
+source:
+  type: git
+  url: https://github.com/zlib-ng/minizip-ng.git
+  tag: 4.2.2
+dependencies:
+  zlib-ng:
+    version: 2.1.6
+    release: zlib-ng-2.1.6-r2
+artifact:
+  include:
+    - crypt.h
+    - ioapi.h
+    - mz.h
+    - mz_config.h
+    - mz_crypt.h
+    - mz_os.h
+    - mz_strm.h
+    - mz_strm_buf.h
+    - mz_strm_mem.h
+    - mz_strm_os.h
+    - mz_strm_pkcrypt.h
+    - mz_strm_split.h
+    - mz_strm_zlib.h
+    - mz_zip.h
+    - mz_zip_rw.h
+    - unzip.h
+    - zip.h
+  libraries:
+    - minizip
+  archives:
+    - minizip-ng-linux-x86_64.tar.gz
+    - minizip-ng-linux-armv7l.tar.gz
+    - minizip-ng-linux-aarch64.tar.gz
+    - minizip-ng-windows-x86.tar.gz
+    - minizip-ng-windows-x64.tar.gz
+    - minizip-ng-windows-arm64.tar.gz
+    - minizip-ng-android-arm64-v8a.tar.gz
+    - minizip-ng-ios-arm64.tar.gz
+    - minizip-ng-ios-simulator-arm64.tar.gz
+    - minizip-ng-ios.xcframework.zip
+    - minizip-ng-macos-arm64.tar.gz

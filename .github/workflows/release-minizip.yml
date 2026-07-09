@@ -1,0 +1,78 @@
+name: Release minizip static libraries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-24.04
+    outputs:
+      minizip_version: ${{ steps.version.outputs.minizip_version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Read minizip version
+        id: version
+        run: |
+          minizip_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' minizip/CMakeLists.txt)"
+          if [ -z "$minizip_version" ]; then
+            echo "Could not read minizip version from minizip/CMakeLists.txt" >&2
+            exit 1
+          fi
+
+          tag_name="$(.github/scripts/next-release-tag.sh minizip "${minizip_version}")"
+
+          echo "minizip_version=${minizip_version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build release assets
+    needs: prepare
+    uses: ./.github/workflows/build-minizip.yml
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MINIZIP_VERSION: ${{ needs.prepare.outputs.minizip_version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "minizip ${MINIZIP_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/* \
+            --verify-tag \
+            --title "minizip ${MINIZIP_VERSION} static libraries" \
+            --notes "Static minizip ${MINIZIP_VERSION} libraries for TotalCross, built against the released zlib prebuilts."
