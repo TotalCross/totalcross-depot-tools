@@ -1,0 +1,74 @@
+name: Tag repository by date
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  tag:
+    name: Create date tag
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute date tag
+        id: version
+        run: |
+          tag_date="$(date -u +'%Y.%m.%d')"
+          base_tag="repo-${tag_date}"
+          base_tag_regex="$(printf '%s' "${base_tag}" | sed 's/[][(){}.^$*+?|\\]/\\&/g')"
+
+          tags="$(
+            git ls-remote --tags origin "refs/tags/${base_tag}*" |
+              awk '{print $2}' |
+              sed 's#refs/tags/##; s#\\^{}##' |
+              sort -u
+          )"
+
+          highest_revision=0
+          while IFS= read -r tag; do
+            [ -n "${tag}" ] || continue
+            if [ "${tag}" = "${base_tag}" ]; then
+              if [ "${highest_revision}" -lt 1 ]; then
+                highest_revision=1
+              fi
+            elif [[ "${tag}" =~ ^${base_tag_regex}-r([0-9]+)$ ]]; then
+              revision="${BASH_REMATCH[1]}"
+              if [ "${revision}" -gt "${highest_revision}" ]; then
+                highest_revision="${revision}"
+              fi
+            fi
+          done <<< "${tags}"
+
+          if [ "${highest_revision}" -eq 0 ]; then
+            tag_name="${base_tag}"
+          else
+            tag_name="${base_tag}-r$((highest_revision + 1))"
+          fi
+
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+          echo "tag_date=${tag_date}" >> "$GITHUB_OUTPUT"
+
+      - name: Create date tag
+        env:
+          TAG_NAME: ${{ steps.version.outputs.tag_name }}
+          TAG_DATE: ${{ steps.version.outputs.tag_date }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
+            echo "Tag ${TAG_NAME} already exists" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Repository version ${TAG_DATE}"
+          git push origin "refs/tags/${TAG_NAME}"
