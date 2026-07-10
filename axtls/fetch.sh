@@ -8,7 +8,7 @@ usage() {
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 platform=""
 arch=""
-release_tag="axtls-2.1.5"
+release_tag="axtls-2.1.5-tc.1"
 github_repo="TotalCross/totalcross-depot-tools"
 token_env="AXTLS_GITHUB_TOKEN"
 dest_root="${script_dir}/local"

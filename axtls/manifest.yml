@@ -1,6 +1,7 @@
 name: axtls
-version: 2.1.5
-release: axtls-2.1.5
+version: 2.1.5-tc.1
+release: axtls-2.1.5-tc.1
+upstream_version: 2.1.5
 source:
   type: archive
   url: https://sourceforge.net/projects/axtls/files/2.1.5/axTLS-2.1.5.tar.gz/download

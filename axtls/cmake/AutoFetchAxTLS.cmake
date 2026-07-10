@@ -3,7 +3,7 @@ get_filename_component(TCVM_AXTLS_DEP_DIR "${TCVM_AXTLS_AUTOFETCH_DIR}/.." ABSOL
 
 function(tcvm_auto_fetch_axtls)
   if(NOT DEFINED AXTLS_RELEASE_TAG)
-    set(AXTLS_RELEASE_TAG "axtls-2.1.5")
+    set(AXTLS_RELEASE_TAG "axtls-2.1.5-tc.1")
   endif()
   if(NOT DEFINED AXTLS_GITHUB_REPO)
     set(AXTLS_GITHUB_REPO "TotalCross/totalcross-depot-tools")

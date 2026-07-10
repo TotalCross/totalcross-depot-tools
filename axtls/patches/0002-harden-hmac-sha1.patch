@@ -1,0 +1,41 @@
+diff -ruN a/crypto/hmac.c b/crypto/hmac.c
+--- a/crypto/hmac.c	2016-06-12 07:39:34
++++ b/crypto/hmac.c	2026-07-10 12:00:00
+@@ -75,10 +75,29 @@
+ void hmac_sha1(const uint8_t *msg, int length, const uint8_t *key,
+         int key_len, uint8_t *digest)
+ {
+     SHA1_CTX context;
+     uint8_t k_ipad[64];
+     uint8_t k_opad[64];
++    uint8_t key_digest[SHA1_SIZE];
+     int i;
+
++    if (!digest || length < 0 || key_len < 0 ||
++            (length > 0 && !msg) || (key_len > 0 && !key))
++    {
++        if (digest)
++            memset(digest, 0, SHA1_SIZE);
++        return;
++    }
++
++    /* RFC 2104: hash keys longer than the SHA-1 block before padding. */
++    if (key_len > (int)sizeof(k_ipad))
++    {
++        SHA1_Init(&context);
++        SHA1_Update(&context, key, key_len);
++        SHA1_Final(key_digest, &context);
++        key = key_digest;
++        key_len = SHA1_SIZE;
++    }
++
+     memset(k_ipad, 0, sizeof k_ipad);
+     memset(k_opad, 0, sizeof k_opad);
+@@ -100,3 +119,7 @@
+     SHA1_Update(&context, digest, SHA1_SIZE);
+     SHA1_Final(digest, &context);
++
++    memset(key_digest, 0, sizeof key_digest);
++    memset(k_ipad, 0, sizeof k_ipad);
++    memset(k_opad, 0, sizeof k_opad);
+ }

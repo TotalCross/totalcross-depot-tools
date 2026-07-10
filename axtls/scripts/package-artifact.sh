@@ -9,6 +9,8 @@ fi
 build_dir="$1"
 install_dir="$2"
 platform_arch="$3"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+distribution_version="$(awk '/^version:/{print $2; exit}' "${script_dir}/../manifest.yml")"
 artifact_name_platform="${platform_arch//\//-}"
 artifact_dir="${build_dir}/artifact/axtls/${platform_arch}"
 
@@ -19,7 +21,8 @@ cp -R "${install_dir}/lib/." "${artifact_dir}/lib/"
 
 cat > "${artifact_dir}/manifest.txt" <<EOF
 name=axtls
-version=2.1.5
+upstream_version=2.1.5
+distribution_version=${distribution_version}
 platform_arch=${platform_arch}
 port_hooks=per-ssl-context
 EOF

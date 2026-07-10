@@ -1,8 +1,12 @@
-# axTLS 2.1.5
+# axTLS 2.1.5-tc.1
 
-This package builds the axTLS 2.1.5 static library from the official source
-archive and publishes repository-local prebuilts under
+This TotalCross distribution builds upstream axTLS 2.1.5 from the official
+source archive and publishes repository-local prebuilts under
 `local/<platform>/<arch>`.
+
+`2.1.5-tc.1` is the first TotalCross distribution revision; it is not an
+upstream axTLS release. See [CHANGELOG.md](CHANGELOG.md) for the maintained
+compatibility and security changes.
 
 ## Port hooks
 
