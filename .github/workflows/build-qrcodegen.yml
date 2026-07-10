@@ -16,3 +16,4 @@ jobs:
     with:
       dependency: qrcodegen
       library: qrcodegen
+      build_windows: true

@@ -16,3 +16,4 @@ jobs:
     with:
       dependency: qrcode
       library: qrcode
+      build_windows: false

@@ -5,6 +5,10 @@ project(totalcross-qrcode-static VERSION 20200519 LANGUAGES C)
 include(GNUInstallDirs)
 include(CTest)
 
+if(WIN32)
+  message(FATAL_ERROR "ricmoo QRCode cannot be built on Windows because its C implementation requires variable-length arrays; use QRCodeGen instead")
+endif()
+
 set(QRCODE_UPSTREAM_COMMIT "eafbde494979abc2445c363cc2602230bcbe299c")
 set(QRCODE_SOURCE_DIR "" CACHE PATH "Directory containing ricmoo QRCode sources")
 set(QRCODE_SOURCE_ARCHIVE "" CACHE FILEPATH "ricmoo QRCode source archive")

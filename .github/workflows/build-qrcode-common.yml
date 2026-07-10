@@ -9,6 +9,9 @@ on:
       library:
         required: true
         type: string
+      build_windows:
+        required: true
+        type: boolean
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -55,6 +58,7 @@ jobs:
 
   build-windows:
     name: Build ${{ inputs.dependency }} windows/${{ matrix.arch }}
+    if: ${{ inputs.build_windows }}
     strategy:
       fail-fast: false
       matrix:
