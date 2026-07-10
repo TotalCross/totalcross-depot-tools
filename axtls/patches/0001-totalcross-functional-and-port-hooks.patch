@@ -255,13 +255,6 @@ diff -ruN -U0 a/ssl/asn1.c b/ssl/asn1.c
 +#if !defined(_WIN32_WCE)
 @@ -38,0 +40 @@
 +#endif
-diff -ruN -U0 a/ssl/crypto_misc.h b/ssl/crypto_misc.h
---- a/ssl/crypto_misc.h	2017-02-18 19:16:05
-+++ b/ssl/crypto_misc.h	2026-07-09 19:51:59
-@@ -41,0 +42 @@
-+#ifndef WIN32
-@@ -42,0 +44 @@
-+#endif
 diff -ruN -U0 a/ssl/loader.c b/ssl/loader.c
 --- a/ssl/loader.c	2016-12-18 17:13:04
 +++ b/ssl/loader.c	2026-07-09 19:51:59
@@ -825,4 +818,3 @@ diff -ruN -U0 a/ssl/x509.c b/ssl/x509.c
 +        bool has_started = false;
 @@ -699 +701,0 @@
 -        bool has_started = false;
-

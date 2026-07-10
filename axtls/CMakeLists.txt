@@ -117,6 +117,9 @@ target_include_directories(AxTLS
 )
 
 if(WIN32)
+  # MSVC does not provide the C99 <stdbool.h> header used by axTLS.
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/extensions/windows/stdbool.h"
+    "${TC_AXTLS_SOURCE_DIR}/ssl/stdbool.h" COPYONLY)
   target_compile_definitions(AxTLS PRIVATE WIN32)
   target_link_libraries(AxTLS PRIVATE ws2_32)
 endif()
