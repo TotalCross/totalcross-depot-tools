@@ -1,0 +1,828 @@
+diff -ruN -U0 a/crypto/bigint.c b/crypto/bigint.c
+--- a/crypto/bigint.c	2016-06-12 07:39:34
++++ b/crypto/bigint.c	2026-07-09 19:51:59
+@@ -63,0 +64 @@
++#if !defined(_WIN32_WCE)
+@@ -64,0 +66 @@
++#endif
+@@ -66,0 +69 @@
++#if !defined(_WIN32_WCE)
+@@ -67,0 +71 @@
++#endif
+diff -ruN -U0 a/crypto/crypto.h b/crypto/crypto.h
+--- a/crypto/crypto.h	2016-07-24 04:31:34
++++ b/crypto/crypto.h	2026-07-09 19:58:24
+@@ -42,0 +43 @@
++#include "axtls_port.h"
+@@ -196,0 +198,23 @@
++ * MD2 declarations
++ **************************************************************************/
++
++/* MD2 context. */
++
++#define MD2_SIZE    16
++#define MD2_BLOCK   16
++
++#define MD2_INT uint32_t
++
++typedef struct MD2state_st
++{
++  int num;
++  unsigned char data[MD2_BLOCK];
++  MD2_INT cksm[MD2_BLOCK];
++  MD2_INT state[MD2_BLOCK];
++} MD2_CTX;
++
++EXP_FUNC int STDCALL MD2Init(MD2_CTX *);
++EXP_FUNC int STDCALL MD2Update(MD2_CTX *, const uint8_t *msg, int len);
++EXP_FUNC int STDCALL MD2Final(MD2_CTX *, uint8_t *digest);
++
++/**************************************************************************
+@@ -237,0 +262,12 @@
++void RSA_priv_key_new_external(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len,
++        const uint8_t *priv_exp, int priv_len
++#ifdef CONFIG_BIGINT_CRT
++      , const uint8_t *p, int p_len,
++        const uint8_t *q, int q_len,
++        const uint8_t *dP, int dP_len,
++        const uint8_t *dQ, int dQ_len,
++        const uint8_t *qInv, int qInv_len
++#endif
++        );
+@@ -240,0 +277,5 @@
++void RSA_pub_key_new_external(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len);
++void RSA_pub_key_new_external_with_port(RSA_CTX *rsa_ctx, const uint8_t *modulus, int mod_len, const uint8_t *pub_exp, int pub_len, const AXTLS_PORT_HOOKS *hooks);
++void RSA_priv_key_new_external_with_port(RSA_CTX *rsa_ctx, const uint8_t *modulus, int mod_len, const uint8_t *pub_exp, int pub_len, const uint8_t *priv_exp, int priv_len, const AXTLS_PORT_HOOKS *hooks);
+@@ -241,0 +283,2 @@
++void RSA_free_external(RSA_CTX *ctx);
++void RSA_free_external_with_port(RSA_CTX *ctx, const AXTLS_PORT_HOOKS *hooks);
+diff -ruN -U0 a/crypto/crypto_misc.c b/crypto/crypto_misc.c
+--- a/crypto/crypto_misc.c	2019-03-15 08:16:05
++++ b/crypto/crypto_misc.c	2026-07-09 19:51:59
+@@ -34,0 +35,3 @@
++#ifdef WIN32
++#define _CRT_RAND_S
++#endif
+@@ -43,0 +47,3 @@
++#if defined WIN32 && !defined WINCE
++#define rand_r(x) rand_s(x)
++#endif
+@@ -127 +133,5 @@
+-    rand_r((unsigned int *)entropy_pool);
++#if defined rand_r
++    rand_r((unsigned int *)entropy_pool);
++#else
++    srand((unsigned int)*entropy_pool);
++#endif
+diff -ruN -U0 a/crypto/os_int.h b/crypto/os_int.h
+--- a/crypto/os_int.h	2017-02-18 19:15:20
++++ b/crypto/os_int.h	2026-07-09 19:51:59
+@@ -45,8 +45,8 @@
+-typedef UINT8 uint8_t;
+-typedef INT8 int8_t;
+-typedef UINT16 uint16_t;
+-typedef INT16 int16_t;
+-typedef UINT32 uint32_t;
+-typedef INT32 int32_t;
+-typedef UINT64 uint64_t;
+-typedef INT64 int64_t;
++typedef unsigned char uint8_t;
++typedef char int8_t;
++typedef unsigned short uint16_t;
++typedef short int16_t;
++typedef unsigned int uint32_t;
++typedef int int32_t;
++typedef unsigned __int64 uint64_t;
++typedef __int64 int64_t;
+@@ -58,0 +59,6 @@
++
++#if !defined(linux) && !defined(ANDROID)
++typedef long long int64_t;
++typedef unsigned long long uint64_t;
++#endif
++
+diff -ruN -U0 a/crypto/rsa.c b/crypto/rsa.c
+--- a/crypto/rsa.c	2016-06-12 07:39:34
++++ b/crypto/rsa.c	2026-07-09 19:58:24
+@@ -38 +37,0 @@
+-#include <time.h>
+@@ -43 +42 @@
+-void RSA_priv_key_new(RSA_CTX **ctx,
++static void RSA_priv_key_new_common(RSA_CTX *rsa_ctx,
+@@ -56,5 +55 @@
+-    RSA_CTX *rsa_ctx;
+-    BI_CTX *bi_ctx;
+-    RSA_pub_key_new(ctx, modulus, mod_len, pub_exp, pub_len);
+-    rsa_ctx = *ctx;
+-    bi_ctx = rsa_ctx->bi_ctx;
++    BI_CTX *bi_ctx = rsa_ctx->bi_ctx;
+@@ -78 +73 @@
+-void RSA_pub_key_new(RSA_CTX **ctx,
++void RSA_priv_key_new(RSA_CTX **ctx,
+@@ -80 +75,10 @@
+-        const uint8_t *pub_exp, int pub_len)
++        const uint8_t *pub_exp, int pub_len,
++        const uint8_t *priv_exp, int priv_len
++#if CONFIG_BIGINT_CRT
++      , const uint8_t *p, int p_len,
++        const uint8_t *q, int q_len,
++        const uint8_t *dP, int dP_len,
++        const uint8_t *dQ, int dQ_len,
++        const uint8_t *qInv, int qInv_len
++#endif
++    )
+@@ -82,2 +86,7 @@
+-    RSA_CTX *rsa_ctx;
+-    BI_CTX *bi_ctx;
++    RSA_pub_key_new(ctx, modulus, mod_len, pub_exp, pub_len);
++    RSA_priv_key_new_common(*ctx, modulus, mod_len, pub_exp, pub_len, priv_exp, priv_len
++#if CONFIG_BIGINT_CRT
++       , p, p_len, q, q_len, dP, dP_len, dQ, dQ_len, qInv, qInv_len
++#endif
++    );
++}
+@@ -84,0 +94,25 @@
++void RSA_priv_key_new_external(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len,
++        const uint8_t *priv_exp, int priv_len
++#if CONFIG_BIGINT_CRT
++      , const uint8_t *p, int p_len,
++        const uint8_t *q, int q_len,
++        const uint8_t *dP, int dP_len,
++        const uint8_t *dQ, int dQ_len,
++        const uint8_t *qInv, int qInv_len
++#endif
++    )
++{
++    RSA_pub_key_new_external(rsa_ctx, modulus, mod_len, pub_exp, pub_len);
++    RSA_priv_key_new_common(rsa_ctx, modulus, mod_len, pub_exp, pub_len, priv_exp, priv_len
++#if CONFIG_BIGINT_CRT
++       , p, p_len, q, q_len, dP, dP_len, dQ, dQ_len, qInv, qInv_len
++#endif
++    );
++}
++
++void RSA_pub_key_new(RSA_CTX **ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len)
++{
+@@ -87,2 +120,0 @@
+-
+-    bi_ctx = bi_initialize();
+@@ -90,7 +122 @@
+-    rsa_ctx = *ctx;
+-    rsa_ctx->bi_ctx = bi_ctx;
+-    rsa_ctx->num_octets = mod_len;
+-    rsa_ctx->m = bi_import(bi_ctx, modulus, mod_len);
+-    bi_set_mod(bi_ctx, rsa_ctx->m, BIGINT_M_OFFSET);
+-    rsa_ctx->e = bi_import(bi_ctx, pub_exp, pub_len);
+-    bi_permanent(rsa_ctx->e);
++    RSA_pub_key_new_external(*ctx, modulus, mod_len, pub_exp, pub_len);
+@@ -98,0 +125,13 @@
++void RSA_pub_key_new_external(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len)
++{
++   BI_CTX *bi_ctx = bi_initialize();
++   rsa_ctx->bi_ctx = bi_ctx;
++    rsa_ctx->num_octets = (mod_len & 0xFFF0);
++   rsa_ctx->m = bi_import(bi_ctx, modulus, mod_len);
++   bi_set_mod(bi_ctx, rsa_ctx->m, BIGINT_M_OFFSET);
++   rsa_ctx->e = bi_import(bi_ctx, pub_exp, pub_len);
++   bi_permanent(rsa_ctx->e);
++}
++
+@@ -103,0 +143,9 @@
++   if (rsa_ctx == NULL)                /* deal with ptrs that are null */
++        return;
++
++   RSA_free_external(rsa_ctx);
++   free(rsa_ctx);
++}
++
++void RSA_free_external(RSA_CTX *rsa_ctx)
++{
+@@ -131 +178,0 @@
+-    free(rsa_ctx);
+@@ -284,0 +332,30 @@
++
++void RSA_pub_key_new_external_with_port(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len,
++        const AXTLS_PORT_HOOKS *hooks)
++{
++    const AXTLS_PORT_HOOKS *previous = axtls_port_scope_push(hooks);
++    RSA_pub_key_new_external(rsa_ctx, modulus, mod_len, pub_exp, pub_len);
++    axtls_port_scope_pop(previous);
++}
++
++void RSA_priv_key_new_external_with_port(RSA_CTX *rsa_ctx,
++        const uint8_t *modulus, int mod_len,
++        const uint8_t *pub_exp, int pub_len,
++        const uint8_t *priv_exp, int priv_len,
++        const AXTLS_PORT_HOOKS *hooks)
++{
++    const AXTLS_PORT_HOOKS *previous = axtls_port_scope_push(hooks);
++    RSA_priv_key_new_external(rsa_ctx, modulus, mod_len, pub_exp, pub_len,
++            priv_exp, priv_len);
++    axtls_port_scope_pop(previous);
++}
++
++void RSA_free_external_with_port(RSA_CTX *rsa_ctx,
++        const AXTLS_PORT_HOOKS *hooks)
++{
++    const AXTLS_PORT_HOOKS *previous = axtls_port_scope_push(hooks);
++    RSA_free_external(rsa_ctx);
++    axtls_port_scope_pop(previous);
++}
+diff -ruN -U0 a/crypto/sha512.c b/crypto/sha512.c
+--- a/crypto/sha512.c	2016-06-12 07:39:34
++++ b/crypto/sha512.c	2026-07-09 19:55:18
+@@ -43 +43,3 @@
+-#define MIN(x, y) ((x) < (y) ? x : y)
++#ifndef MIN
++#define MIN(x, y) ((x) < (y) ? (x) : (y))
++#endif
+diff -ruN -U0 a/ssl/asn1.c b/ssl/asn1.c
+--- a/ssl/asn1.c	2019-03-13 00:03:58
++++ b/ssl/asn1.c	2026-07-09 19:51:59
+@@ -37,0 +38 @@
++#if !defined(_WIN32_WCE)
+@@ -38,0 +40 @@
++#endif
+diff -ruN -U0 a/ssl/crypto_misc.h b/ssl/crypto_misc.h
+--- a/ssl/crypto_misc.h	2017-02-18 19:16:05
++++ b/ssl/crypto_misc.h	2026-07-09 19:51:59
+@@ -41,0 +42 @@
++#ifndef WIN32
+@@ -42,0 +44 @@
++#endif
+diff -ruN -U0 a/ssl/loader.c b/ssl/loader.c
+--- a/ssl/loader.c	2016-12-18 17:13:04
++++ b/ssl/loader.c	2026-07-09 19:51:59
+@@ -59,0 +60 @@
++    if (ssl_ctx) axtls_port_scope_push(&ssl_ctx->port_hooks);
+@@ -110,0 +112,2 @@
++    if (ssl_ctx) axtls_port_scope_push(&ssl_ctx->port_hooks);
++    static const char * const begin = "-----BEGIN";
+@@ -117,0 +121,15 @@
++
++    /* is the file a PEM file? */
++    if (strstr((char *)ssl_obj->buf, begin) != NULL)
++    {
++#ifdef CONFIG_SSL_HAS_PEM
++        ret = ssl_obj_PEM_load(ssl_ctx, mem_type, ssl_obj, password);
++#else
++#ifdef CONFIG_SSL_FULL_MODE
++        printf("%s", unsupported_str);
++#endif
++        ret = SSL_ERROR_NOT_SUPPORTED;
++#endif
++    }
++    else
++    {
+@@ -118,0 +137,2 @@
++    }
++
+diff -ruN -U0 a/ssl/os_port.c b/ssl/os_port.c
+--- a/ssl/os_port.c	2016-07-05 16:31:16
++++ b/ssl/os_port.c	2026-07-09 20:01:53
+@@ -35,0 +36 @@
++#if !defined(_WIN32_WCE)
+@@ -36,0 +38 @@
++#endif
+@@ -37,0 +40 @@
++#if !defined(_WIN32_WCE)
+@@ -38,0 +42 @@
++#endif
+@@ -61,0 +66 @@
++#ifndef __clang__
+@@ -73,0 +79,9 @@
++#endif
++#ifdef _WIN32_WCE
++EXP_FUNC size_t strnlen(const char *str, size_t max)
++{
++    const char *end = memchr (str, 0, max);
++    return end ? (size_t)(end - str) : max;
++}
++#endif
++#endif
+@@ -74,0 +89,16 @@
++//+fdie@20090325 support certificate expiration dates beyond 2050
++EXP_FUNC time_h *getNowUTC(time_h *t)
++{
++#if defined(WIN32)
++   SYSTEMTIME tLocalTime;
++   GetSystemTime(&tLocalTime);
++   mk_time_h(t, tLocalTime.wYear, tLocalTime.wMonth, tLocalTime.wDay, tLocalTime.wHour, tLocalTime.wMinute, tLocalTime.wSecond, tLocalTime.wMilliseconds);
++#else
++   struct timeval tv;
++   struct tm *tm;
++   gettimeofday(&tv, NULL);
++   tm = gmtime(&tv.tv_sec);
++   mk_time_h(t, tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, tv.tv_usec);
++#endif
++   return t;
++}
+@@ -76 +106 @@
+-EXP_FUNC int STDCALL getdomainname(char *buf, int buf_size)
++EXP_FUNC const char *asc_time_h(const time_h *t, char *buffer)
+@@ -78,3 +108,2 @@
+-    HKEY hKey;
+-    unsigned long datatype;
+-    unsigned long bufferlength = buf_size;
++   int hour, day, month, year, min, sec;
++   uint32_t v;
+@@ -82,4 +111,11 @@
+-    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+-            TEXT("SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters"),
+-                        0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
+-        return -1;
++   v = t->high;
++   hour = v % 24;
++   v = (v - hour) / 24;
++   day = v % 31;
++   v = (v - day) / 31;
++   month = v % 12;
++   year = (v - month) / 12;
++   v = t->low / 1000000;
++   min = v / 60;
++   sec = v % 60;
++   sprintf(buffer, "%04d/%02d/%02d %02d:%02d:%02d", year, month, day, hour, min, sec);
+@@ -87,3 +123 @@
+-    RegQueryValueEx(hKey, "Domain", NULL, &datatype, buf, &bufferlength);
+-    RegCloseKey(hKey);
+-    return 0;
++   return buffer;
+@@ -90,0 +125,8 @@
++//-fdie@20090325
++
++#if !defined _INC_TIME_INL && !defined _INC_TIME
++char* ctime(const time_t* timer)
++{
++	static char ascbuf[ASC_BUFF_SIZE];
++	return asc_time_h((time_h*) timer, ascbuf);
++}
+@@ -92,0 +135,205 @@
++#undef open
++#undef fopen
++
++#if 1
++
++#undef malloc
++#undef realloc
++#undef calloc
++
++static const char * out_of_mem_str = "out of memory";
++
++/*
++ * Some functions that call display some error trace and then call abort().
++ * This just makes life much easier on embedded systems, since we're
++ * suffering major trauma...
++ */
++EXP_FUNC void * STDCALL ax_malloc(size_t s)
++{
++    void *x;
++
++    if ((x = malloc(s)) == NULL)
++        exit_now(out_of_mem_str);
++
++    return x;
++}
++
++EXP_FUNC void * STDCALL ax_realloc(void *y, size_t s)
++{
++    void *x;
++
++    if ((x = realloc(y, s)) == NULL)
++        exit_now(out_of_mem_str);
++
++    return x;
++}
++
++#if defined (WINCE) && _WIN32_WCE < 300
++EXP_FUNC void * STDCALL ax_calloc(size_t n, size_t s)
++{
++    void *x;
++
++    if ((x = malloc(n*s)) == NULL)
++        exit_now(out_of_mem_str);
++
++    return x;
++}
++#else
++EXP_FUNC void * STDCALL ax_calloc(size_t n, size_t s)
++{
++    void *x;
++
++    if ((x = calloc(n, s)) == NULL)
++        exit_now(out_of_mem_str);
++
++    return x;
++}
++#endif
++
++#endif
++
++#if 1
++
++static const char * file_open_str = "Could not open file \"%s\"";
++
++EXP_FUNC FILE * STDCALL ax_fopen(const char *pathname, const char *type)
++{
++    FILE *f;
++
++    if ((f = fopen(pathname, type)) == NULL)
++        exit_now(file_open_str, pathname);
++
++    return  f;
++}
++
++EXP_FUNC int STDCALL ax_open(const char *pathname, int flags)
++{
++    int x;
++
++    if ((x = open(pathname, flags)) < 0)
++        exit_now(file_open_str, pathname);
++
++    return x;
++}
++
++/**
++ * This is a call which will deliberately exit an application, but will
++ * display some information before dying.
++ */
++void exit_now(const char *format, ...)
++{
++    va_list argp;
++    va_start(argp, format);
++    vfprintf(stderr, format, argp);
++    va_end(argp);
++}
++
++#endif
++
++#if defined(_WIN32_WCE)
++
++static const __int64 sec_in100ns = (__int64)10000000;
++
++static __int64 fileTime2int64(FILETIME f)
++{
++   __int64 t;
++
++   t = f.dwHighDateTime;
++   t <<= 32;
++   t |= f.dwLowDateTime;
++   return t;
++}
++
++static FILETIME yearToFileTime(WORD year)
++{
++   SYSTEMTIME s = {0};
++   FILETIME f;
++
++   s.wYear      = year;
++   s.wMonth     = 1;
++   s.wDayOfWeek = 1;
++   s.wDay       = 1;
++
++   SystemTimeToFileTime(&s, &f);
++   return f;
++}
++
++static time_t fileTime2time_t(const FILETIME* f)
++{
++   FILETIME f1601, f1970;
++   __int64 t, offset;
++
++   f1601 = yearToFileTime(1601);
++   f1970 = yearToFileTime(1970);
++
++   offset = fileTime2int64(f1970) - fileTime2int64(f1601);
++   t = fileTime2int64(*f);
++   t -= offset;
++
++   return (time_t)(t / sec_in100ns);
++}
++
++time_t time(time_t *timer)
++{
++   SYSTEMTIME s;
++   FILETIME   f;
++   static time_t t;
++
++   if (timer == NULL) timer = &t;
++
++   GetSystemTime( &s );
++   SystemTimeToFileTime(&s, &f);
++   *timer = fileTime2time_t(&f);
++
++   return *timer;
++}
++
++static int m_to_d[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
++
++static time_t mkgmtime(struct tm *t)
++{
++   short month, year;
++   time_t result;
++
++   month = t->tm_mon;
++   year = t->tm_year + month / 12 + 1900;
++   month %= 12;
++   if (month < 0)
++   {
++      year -= 1;
++      month += 12;
++   }
++   result = (year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month];
++   result = (year - 1970) * 365 + m_to_d[month];
++   if (month <= 1)
++      year -= 1;
++   result += (year - 1968) / 4;
++   result -= (year - 1900) / 100;
++   result += (year - 1600) / 400;
++   result += t->tm_mday;
++   result -= 1;
++   result *= 24;
++   result += t->tm_hour;
++   result *= 60;
++   result += t->tm_min;
++   result *= 60;
++   result += t->tm_sec;
++   return result;
++}
++
++time_t mktime (struct tm *tp)
++{
++   /*
++    * This field describes the time zone that was used to compute this broken-down time value,
++    * including any adjustment for daylight saving; it is the number of seconds that you must
++    * add to UTC to get local time.
++    */
++   return mkgmtime(tp) - tp->tm_gmtoff;
++}
++
++int _isatty(int fd)
++{
++   return (fd==(int)_fileno(stdin) || fd==(int)_fileno(stdout)|| fd==(int)_fileno(stderr)) ? 1 : 0;
++}
++
++#endif
+diff -ruN -U0 a/ssl/os_port.h b/ssl/os_port.h
+--- a/ssl/os_port.h	2016-07-05 04:33:37
++++ b/ssl/os_port.h	2026-07-09 19:52:31
+@@ -58,0 +59,19 @@
++
++struct tm
++{
++  int   tm_sec;
++  int   tm_min;
++  int   tm_hour;
++  int   tm_mday;
++  int   tm_mon;
++  int   tm_year;
++  int   tm_wday;
++  int   tm_yday;
++  int   tm_isdst;
++  int   tm_gmtoff;
++};
++
++time_t time( time_t *timer );
++time_t mktime (struct tm *tp);
++int _isatty(int fd);
++
+@@ -66 +85 @@
+-#define abort()                 exit(1)
++#define abort() axtls_port_abort("abort", __FILE__, __LINE__)
+@@ -74 +93,2 @@
+-#include <winsock.h>
++#include <winsock2.h>
++#if !defined(_WIN32_WCE)
+@@ -75,0 +96 @@
++#endif
+@@ -101,0 +123 @@
++#ifndef alloca
+@@ -102,0 +125 @@
++#endif
+@@ -115,0 +139,3 @@
++#if defined(WINCE)
++#pragma comment(lib, "winsock.lib")
++#else
+@@ -116,0 +143,3 @@
++#endif
++
++#ifdef CONFIG_WIN32_USE_CRYPTO_LIB
+@@ -117,0 +147 @@
++#endif
+@@ -121,0 +152 @@
++#ifndef __clang__
+@@ -123,0 +155 @@
++#endif
+@@ -124,0 +157,4 @@
++#ifdef _WIN32_WCE
++EXP_FUNC size_t strnlen(const char *str, size_t max);
++#endif
++
+@@ -138,0 +175 @@
++#ifndef __APPLE__
+@@ -139,0 +177 @@
++#endif
+@@ -145,0 +184,2 @@
++#endif  /* Not Win32 */
++
+@@ -147 +187,8 @@
+-#define be64toh(x) __be64_to_cpu(x)
++ #if defined __APPLE__ || BYTE_ORDER == LITTLE_ENDIAN
++  #define be64toh(x) ntohll(x)
++ #elif BYTE_ORDER == BIG_ENDIAN
++  /* that would be xbox 360 */
++  #define be64toh(x) (x)
++ #else
++  #define be64toh(x) __be64_to_cpu(x)
++ #endif
+@@ -150 +197 @@
+-#endif  /* Not Win32 */
++#include "axtls_port.h"
+@@ -152,2 +199,18 @@
+-/* some functions to mutate the way these work */
+-EXP_FUNC int STDCALL ax_open(const char *pathname, int flags);
++#undef free
++#undef malloc
++#undef calloc
++#undef realloc
++#undef printf
++#undef SOCKET_READ
++#undef SOCKET_WRITE
++#undef SOCKET_CLOSE
++#undef TTY_FLUSH
++#define free(A) axtls_port_free((A), __FILE__, __LINE__)
++#define malloc(A) axtls_port_malloc((A), __FILE__, __LINE__)
++#define calloc(A,B) axtls_port_calloc((A), (B), __FILE__, __LINE__)
++#define realloc(A,B) axtls_port_realloc((A), (B), __FILE__, __LINE__)
++#define printf axtls_port_printf
++#define SOCKET_READ(A,B,C) axtls_port_read((A), (B), (C))
++#define SOCKET_WRITE(A,B,C) axtls_port_write((A), (B), (C))
++#define SOCKET_CLOSE(A) ((A) >= 0 ? axtls_port_close((A)) : 0)
++#define TTY_FLUSH()
+@@ -154,0 +218,31 @@
++// private time type - fdie@20090325 support certificate expiration dates beyond 2050
++typedef struct
++{
++   uint32_t high; // approx number of hours since year 0 (non decreasing function useful for date comparison)
++   uint32_t low;  // number of microsecs in the current hour
++} time_h;
++
++#define mk_time_h(pth, year, month, day, hour, min, sec, usec) \
++{ \
++   (pth)->high = (((year)*12+(month))*31+(day))*24+(hour); \
++   (pth)->low  = ((min)*60+(sec))*1000000+(usec); \
++}
++#define isBefore(t1, t2) ((t1)->high < (t2)->high || ((t1)->high == (t2)->high && (t1)->low < (t2)->low))
++#define TIME_H_STR_MAXLEN 19 // 2008/10/25 19:27:36
++
++EXP_FUNC const char *asc_time_h(const time_h *t, char *buffer);
++EXP_FUNC time_h *getNowUTC(time_h *t);
++
++#if !defined _INC_TIME_INL
++#define ASC_BUFF_SIZE	26  // Ascii buffer size is 26 bytes, (24 chars and CR+LF)
++
++char* ctime(const time_t* timer);
++#endif
++
++//typedef int FILE;
++#if 1
++EXP_FUNC FILE * STDCALL ax_fopen(const char *name, const char *type);
++EXP_FUNC int STDCALL ax_open(const char *pathname, int flags);
++#endif
++
++#if 1
+@@ -159,0 +254 @@
++#endif
+@@ -169 +264 @@
+-#else
++#elif HAVE_PTHREAD
+@@ -175,0 +271,2 @@
++#else
++#undef CONFIG_SSL_CTX_MUTEXING
+@@ -177 +274,3 @@
+-#else   /* no mutexing */
++#endif
++
++#if !defined(CONFIG_SSL_CTX_MUTEXING) /* no mutexing */
+diff -ruN -U0 a/ssl/ssl.h b/ssl/ssl.h
+--- a/ssl/ssl.h	2016-12-13 17:44:40
++++ b/ssl/ssl.h	2026-07-09 19:52:46
+@@ -69,0 +70 @@
++#if !defined(_WIN32_WCE)
+@@ -70,0 +72 @@
++#endif
+@@ -222,0 +225 @@
++EXP_FUNC SSL_CTX * STDCALL ssl_ctx_new_with_port(uint32_t options, int num_sessions, const AXTLS_PORT_HOOKS *hooks);
+diff -ruN -U0 a/ssl/tls1.c b/ssl/tls1.c
+--- a/ssl/tls1.c	2019-03-13 22:40:36
++++ b/ssl/tls1.c	2026-07-09 19:55:56
+@@ -167,0 +168,6 @@
++    return ssl_ctx_new_with_port(options, num_sessions, NULL);
++}
++
++EXP_FUNC SSL_CTX *STDCALL ssl_ctx_new_with_port(uint32_t options, int num_sessions, const AXTLS_PORT_HOOKS *hooks)
++{
++    const AXTLS_PORT_HOOKS *previous = axtls_port_scope_push(hooks);
+@@ -168,0 +175,2 @@
++    if (ssl_ctx == NULL) { axtls_port_scope_pop(previous); return NULL; }
++    if (axtls_port_hooks_copy(&ssl_ctx->port_hooks, hooks) < 0) { free(ssl_ctx); axtls_port_scope_pop(previous); return NULL; }
+@@ -174,0 +183 @@
++        axtls_port_scope_pop(previous);
+@@ -191,0 +201 @@
++    axtls_port_scope_pop(previous);
+@@ -201,0 +212 @@
++    const AXTLS_PORT_HOOKS *previous;
+@@ -205,0 +217,2 @@
++    previous = axtls_port_scope_push(&ssl_ctx->port_hooks);
++
+@@ -238,0 +252 @@
++    axtls_port_scope_pop(previous);
+@@ -247,0 +262,2 @@
++    if (ssl) axtls_port_scope_push(&ssl->ssl_ctx->port_hooks);
++
+@@ -292,0 +309 @@
++    if (ssl) axtls_port_scope_push(&ssl->ssl_ctx->port_hooks);
+@@ -315,0 +333 @@
++    if (ssl) axtls_port_scope_push(&ssl->ssl_ctx->port_hooks);
+@@ -1209,0 +1228 @@
++    uint8_t* ptr; //flsobral@tc114_36: auxiliary pointer to avoid error when using free, see usage below.
+@@ -1260 +1279,2 @@
+-    free(is_write ? ssl->encrypt_ctx : ssl->decrypt_ctx);
++    ptr = is_write ? ssl->encrypt_ctx : ssl->decrypt_ctx;
++    free(ptr); //flsobral@tc114_36: vc2008 gives an error if we try to use the above statement here, so we use this pointer to fix it.
+@@ -1291,3 +1311,3 @@
+-    int ret = SSL_OK;
+-    int read_len, is_client = IS_SET_SSL_FLAG(SSL_IS_CLIENT);
+-    uint8_t *buf = ssl->bm_data;
++    int ret;
++    int read_len, is_client;
++    uint8_t *buf;
+@@ -1294,0 +1315,4 @@
++start: // flsobral@tc113_34: new tag on basic_read, so we can loop back and read the record after reading the header.
++    ret = SSL_OK;
++    is_client = IS_SET_SSL_FLAG(SSL_IS_CLIENT);
++    buf = ssl->bm_data;
+@@ -1297,0 +1322,2 @@
++    do
++    {
+@@ -1323,0 +1350,2 @@
++    }
++    while (ssl->got_bytes < ssl->need_bytes); /* haven't quite got what we want, so try again */
+@@ -1325,4 +1352,0 @@
+-    /* haven't quite got what we want, so try again later */
+-    if (ssl->got_bytes < ssl->need_bytes)
+-        return SSL_OK;
+-
+@@ -1357 +1381,2 @@
+-        goto error;                         /* no error, we're done */
++        ssl->bm_read_index = 0;             /* reset to go again */
++        goto start;                         /* restart to get the record */
+diff -ruN -U0 a/ssl/tls1.h b/ssl/tls1.h
+--- a/ssl/tls1.h	2017-06-27 17:28:19
++++ b/ssl/tls1.h	2026-07-09 19:52:46
+@@ -45,0 +46 @@
++#include "axtls_port.h"
+@@ -230,0 +232 @@
++    AXTLS_PORT_HOOKS port_hooks;
+diff -ruN -U0 a/ssl/tls1_clnt.c b/ssl/tls1_clnt.c
+--- a/ssl/tls1_clnt.c	2016-12-10 02:30:30
++++ b/ssl/tls1_clnt.c	2026-07-09 19:51:59
+@@ -32,0 +33 @@
++#if !defined(_WIN32_WCE)
+@@ -33,0 +35 @@
++#endif
+@@ -68,0 +71 @@
++    if (ssl_ctx) axtls_port_scope_push(&ssl_ctx->port_hooks);
+diff -ruN -U0 a/ssl/tls1_svr.c b/ssl/tls1_svr.c
+--- a/ssl/tls1_svr.c	2017-08-30 22:58:40
++++ b/ssl/tls1_svr.c	2026-07-09 19:51:59
+@@ -58,0 +59 @@
++    if (ssl_ctx) axtls_port_scope_push(&ssl_ctx->port_hooks);
+@@ -209,0 +211 @@
++        int ext_len;
+@@ -211 +213 @@
+-        int ext_len = buf[offset++] << 8;
++        ext_len = buf[offset++] << 8;
+diff -ruN -U0 a/ssl/x509.c b/ssl/x509.c
+--- a/ssl/x509.c	2019-03-15 08:04:24
++++ b/ssl/x509.c	2026-07-09 19:51:59
+@@ -39,0 +40 @@
++#if !defined(_WIN32_WCE)
+@@ -40,0 +42 @@
++#endif
+@@ -696,0 +699 @@
++        bool has_started = false;
+@@ -699 +701,0 @@
+-        bool has_started = false;
+

@@ -1,6 +1,10 @@
 bundle: native-deps-totalcross-7.2.0
 
 dependencies:
+  axtls:
+    version: 2.1.5
+    release: axtls-2.1.5
+    path: axtls
   sqlite3:
     version: 3.32.3
     release: sqlite3-3.32.3
