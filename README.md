@@ -24,4 +24,6 @@ TotalCross can consume this repository as a submodule or as an unpacked package:
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/sqlite3/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/mbedtls/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/axtls/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/qrcodegen/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/deps/qrcode/cmake")
 ```

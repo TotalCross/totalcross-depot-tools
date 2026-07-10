@@ -1,0 +1,17 @@
+diff --git a/src/qrcode.h b/src/qrcode.h
+index 4b8cc83..71d0a2d 100644
+--- a/src/qrcode.h
++++ b/src/qrcode.h
+@@ -33,9 +33,11 @@
+ #ifndef __QRCODE_H_
+ #define __QRCODE_H_
+ 
+ #ifndef __cplusplus
++#ifndef _STDBOOL_H
+ typedef unsigned char bool;
+ static const bool false = 0;
+ static const bool true = 1;
++#endif
+ #endif
+ 
+ #include <stdint.h>

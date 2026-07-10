@@ -1,0 +1,26 @@
+name: qrcode
+version: 20200519
+release: qrcode-20200519
+upstream_version: eafbde494979abc2445c363cc2602230bcbe299c
+source:
+  type: archive
+  url: https://codeload.github.com/ricmoo/QRCode/tar.gz/eafbde494979abc2445c363cc2602230bcbe299c
+  sha256: ed85acf3ea44af275139fb78e580e2918d2c265d0a78f0034e05b89625c69621
+  directory: QRCode-eafbde494979abc2445c363cc2602230bcbe299c
+artifact:
+  include:
+    - qrcode.h
+  libraries:
+    - qrcode
+  archives:
+    - qrcode-linux-x86_64.tar.gz
+    - qrcode-linux-armv7l.tar.gz
+    - qrcode-linux-aarch64.tar.gz
+    - qrcode-windows-x86.tar.gz
+    - qrcode-windows-x64.tar.gz
+    - qrcode-windows-arm64.tar.gz
+    - qrcode-android-arm64-v8a.tar.gz
+    - qrcode-ios-arm64.tar.gz
+    - qrcode-ios-simulator-arm64.tar.gz
+    - qrcode-ios.xcframework.zip
+    - qrcode-macos-arm64.tar.gz

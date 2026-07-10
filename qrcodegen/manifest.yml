@@ -1,0 +1,26 @@
+name: qrcodegen
+version: 20250123
+release: qrcodegen-20250123
+upstream_version: 2c9044de6b049ca25cb3cd1649ed7e27aa055138
+source:
+  type: archive
+  url: https://codeload.github.com/nayuki/QR-Code-generator/tar.gz/2c9044de6b049ca25cb3cd1649ed7e27aa055138
+  sha256: fd5b5079196cbe4d733838e784eecc1d854f3772562f166483a9b617844922f5
+  directory: QR-Code-generator-2c9044de6b049ca25cb3cd1649ed7e27aa055138
+artifact:
+  include:
+    - qrcodegen.h
+  libraries:
+    - qrcodegen
+  archives:
+    - qrcodegen-linux-x86_64.tar.gz
+    - qrcodegen-linux-armv7l.tar.gz
+    - qrcodegen-linux-aarch64.tar.gz
+    - qrcodegen-windows-x86.tar.gz
+    - qrcodegen-windows-x64.tar.gz
+    - qrcodegen-windows-arm64.tar.gz
+    - qrcodegen-android-arm64-v8a.tar.gz
+    - qrcodegen-ios-arm64.tar.gz
+    - qrcodegen-ios-simulator-arm64.tar.gz
+    - qrcodegen-ios.xcframework.zip
+    - qrcodegen-macos-arm64.tar.gz

@@ -1,0 +1,51 @@
+name: Release qrcode static libraries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: version
+        run: |
+          version="$(awk '/^version:/{print $2; exit}' qrcode/manifest.yml)"
+          test -n "${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$(.github/scripts/next-release-tag.sh qrcode "${version}")" >> "$GITHUB_OUTPUT"
+  build:
+    needs: prepare
+    uses: ./.github/workflows/build-qrcode.yml
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Create release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "qrcode ${VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+      - name: Publish GitHub Release
+        run: gh release create "${TAG_NAME}" release-assets/* --verify-tag --title "qrcode ${VERSION} static libraries" --notes "Static qrcode ${VERSION} libraries for TotalCross."

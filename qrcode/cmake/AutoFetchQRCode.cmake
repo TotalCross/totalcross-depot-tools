@@ -1,0 +1,27 @@
+get_filename_component(TC_QRCODE_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+get_filename_component(TC_QRCODE_DEP_DIR "${TC_QRCODE_AUTOFETCH_DIR}/.." ABSOLUTE)
+
+function(tcvm_auto_fetch_qrcode)
+  if(NOT DEFINED QRCODE_RELEASE_TAG)
+    set(QRCODE_RELEASE_TAG "qrcode-20200519")
+  endif()
+  if(NOT DEFINED QRCODE_GITHUB_REPO)
+    set(QRCODE_GITHUB_REPO "TotalCross/totalcross-depot-tools")
+  endif()
+  include("${TC_QRCODE_DEP_DIR}/cmake/FindQRCode.cmake")
+  if(QRCode_FOUND)
+    return()
+  endif()
+  find_program(TC_QRCODE_BASH bash REQUIRED)
+  execute_process(COMMAND "${TC_QRCODE_BASH}" "${TC_QRCODE_DEP_DIR}/fetch.sh"
+    --platform "${QRCode_PLATFORM}" --arch "${QRCode_ARCH}"
+    --release-tag "${QRCODE_RELEASE_TAG}" --github-repo "${QRCODE_GITHUB_REPO}"
+    WORKING_DIRECTORY "${TC_QRCODE_DEP_DIR}" RESULT_VARIABLE TC_QRCODE_FETCH_RESULT)
+  if(NOT TC_QRCODE_FETCH_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to fetch qrcode prebuilt for ${QRCode_PLATFORM}/${QRCode_ARCH}")
+  endif()
+  include("${TC_QRCODE_DEP_DIR}/cmake/FindQRCode.cmake")
+  if(NOT QRCode_FOUND)
+    message(FATAL_ERROR "Fetched qrcode artifact was not found")
+  endif()
+endfunction()
