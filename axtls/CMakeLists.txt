@@ -81,13 +81,14 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/extensions/md2.c"
   "${TC_AXTLS_SOURCE_DIR}/crypto/md2.c" COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/extensions/pbkdf2.c"
   "${TC_AXTLS_SOURCE_DIR}/crypto/pbkdf2.c" COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/extensions/hmac_harden.c"
+  "${TC_AXTLS_SOURCE_DIR}/crypto/hmac_harden.c" COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/extensions/axtls_pbkdf2.h"
   "${TC_AXTLS_SOURCE_DIR}/crypto/axtls_pbkdf2.h" COPYONLY)
 
 find_program(TC_AXTLS_PATCH_EXECUTABLE patch REQUIRED)
 foreach(TC_AXTLS_PATCH
-    0001-totalcross-functional-and-port-hooks.patch
-    0002-harden-hmac-sha1.patch)
+    0001-totalcross-functional-and-port-hooks.patch)
   execute_process(
     COMMAND "${TC_AXTLS_PATCH_EXECUTABLE}" -p1 --batch --forward -l
       -i "${CMAKE_CURRENT_SOURCE_DIR}/patches/${TC_AXTLS_PATCH}"
@@ -102,7 +103,7 @@ foreach(TC_AXTLS_PATCH
 endforeach()
 
 set(TC_AXTLS_SOURCES
-  crypto/aes.c crypto/bigint.c crypto/crypto_misc.c crypto/hmac.c crypto/pbkdf2.c
+  crypto/aes.c crypto/bigint.c crypto/crypto_misc.c crypto/hmac_harden.c crypto/pbkdf2.c
   crypto/md2.c crypto/md5.c crypto/rc4.c crypto/rsa.c crypto/sha1.c
   crypto/sha256.c crypto/sha384.c crypto/sha512.c
   ssl/asn1.c ssl/loader.c ssl/openssl.c ssl/os_port.c ssl/p12.c
