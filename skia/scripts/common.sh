@@ -409,6 +409,8 @@ is_component_build=false
 target_cpu="${target_cpu}"
 xcode_sysroot="$(gn_escape "$sysroot")"
 skia_enable_gpu=true
+skia_use_gl=true
+skia_use_metal=true
 skia_enable_pdf=false
 skia_enable_tools=false
 skia_use_opencl=false
@@ -539,6 +541,7 @@ cc="clang-9"
 cxx="clang++-9"
 skia_use_egl=true
 skia_enable_gpu=true
+skia_use_gl=false
 skia_use_libjpeg_turbo_decode=false
 skia_use_libjpeg_turbo_encode=false
 is_official_build=true
@@ -575,7 +578,7 @@ build_skia_linux_armv7l() {
   local build_dir="$OUT_DIR/linux-armv7l"
 
   stage_dev_subset
-  gn_gen_and_build "$build_dir" "$(linux_common_gn_args "arm" "armv7l" "gles")" skia
+  gn_gen_and_build "$build_dir" "$(linux_armv7_gn_args)" skia
   copy_static_artifact "$build_dir" "libskia.a" "libskia-linux-armv7l.a" "linux-armv7l" "linux" "armv7l" "libskia.a"
 }
 
@@ -588,6 +591,8 @@ $(ccache_gn_arg)ndk="${NDK_BUNDLE}"
 ndk_api=23
 target_os="android"
 target_cpu="${target_cpu}"
+skia_use_gl=true
+skia_use_vulkan=true
 skia_use_icu=false
 skia_use_zlib=${SKIA_DEP_USE_ZLIB}
 skia_use_system_zlib=${SKIA_DEP_USE_ZLIB}
@@ -645,6 +650,8 @@ is_debug=false
 is_official_build=true
 is_component_build=false
 skia_enable_gpu=true
+skia_use_gl=true
+skia_use_metal=true
 skia_enable_pdf=false
 skia_enable_tools=false
 skia_use_opencl=false
@@ -793,6 +800,7 @@ is_debug=false
 is_official_build=true
 is_component_build=false
 skia_enable_gpu=true
+skia_use_gl=true
 skia_enable_pdf=false
 skia_enable_tools=false
 skia_use_opencl=false
