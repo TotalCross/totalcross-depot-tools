@@ -1,10 +1,10 @@
 name: skia
 version: 158dc9d7
-release: skia-158dc9d7-r3
+release: skia-158dc9d7-r4
 source:
   type: github_release
   repo: TotalCross/totalcross-depot-tools
-  tag: skia-158dc9d7-r3
+  tag: skia-158dc9d7-r4
 upstream:
   skia:
     url: https://skia.googlesource.com/skia.git
