@@ -579,7 +579,7 @@ build_skia_linux_armv7l() {
   local build_dir="$OUT_DIR/linux-armv7l"
 
   stage_dev_subset
-  gn_gen_and_build "$build_dir" "$(linux_common_gn_args "arm" "armv7l" "gles" "false")" skia
+  gn_gen_and_build "$build_dir" "$(linux_common_gn_args "arm" "armv7l" "gles")" skia
   copy_static_artifact "$build_dir" "libskia.a" "libskia-linux-armv7l.a" "linux-armv7l" "linux" "armv7l" "libskia.a"
 }
 
