@@ -450,6 +450,7 @@ linux_common_gn_args() {
   local target_cpu="$1"
   local platform_arch="$2"
   local gl_standard="$3"
+  local use_gl="${4:-true}"
   configure_prebuilt_deps "linux" "$platform_arch" "unix"
   cat <<EOF
 $(ccache_gn_arg)target_os="linux"
@@ -459,7 +460,7 @@ is_official_build=true
 is_component_build=false
 skia_enable_gpu=true
 skia_use_egl=true
-skia_use_gl=true
+skia_use_gl=${use_gl}
 skia_gl_standard="${gl_standard}"
 skia_use_opencl=true
 skia_use_zlib=${SKIA_DEP_USE_ZLIB}
@@ -578,7 +579,7 @@ build_skia_linux_armv7l() {
   local build_dir="$OUT_DIR/linux-armv7l"
 
   stage_dev_subset
-  gn_gen_and_build "$build_dir" "$(linux_armv7_gn_args)" skia
+  gn_gen_and_build "$build_dir" "$(linux_common_gn_args "arm" "armv7l" "gles" "false")" skia
   copy_static_artifact "$build_dir" "libskia.a" "libskia-linux-armv7l.a" "linux-armv7l" "linux" "armv7l" "libskia.a"
 }
 
