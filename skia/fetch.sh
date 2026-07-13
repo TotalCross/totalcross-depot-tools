@@ -22,9 +22,9 @@ an artifact base URL or a GitHub Release.
 
 Options:
   --platform <name>   Target platform: ios, ios-simulator, macos, linux,
-                      android, windows.
+                      wasm, android, windows.
   --arch <name>       Target arch/ABI: arm64, x86, x64, x86_64, aarch64,
-                      armv7l, arm64-v8a.
+                      armv7l, wasm32, arm64-v8a.
   --source <path|url> Install from a specific local file or URL.
   --base-url <url>    Base URL used with the manifest artifact_name.
   --github-repo <r>   GitHub repo in owner/name format.
@@ -194,6 +194,7 @@ normalize_platform() {
     ios-simulator|iphonesimulator) echo "ios-simulator" ;;
     Darwin|darwin|macos|mac|osx) echo "macos" ;;
     Linux|linux) echo "linux" ;;
+    wasm|wasm32|Emscripten|emscripten) echo "wasm" ;;
     Android|android) echo "android" ;;
     Windows|windows|mingw*|MINGW*|msys*|MSYS*) echo "windows" ;;
     *) die "unsupported platform: $1" ;;
@@ -208,6 +209,7 @@ normalize_arch() {
     x64) echo "x64" ;;
     x86|i386|i686) echo "x86" ;;
     armv7l|armv7) echo "armv7l" ;;
+    wasm|wasm32) echo "wasm32" ;;
     arm64-v8a) echo "arm64-v8a" ;;
     *) die "unsupported architecture/ABI: $1" ;;
   esac

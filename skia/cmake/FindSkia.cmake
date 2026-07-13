@@ -69,6 +69,9 @@ elseif(APPLE)
   elseif(SKIA_ARCH STREQUAL "aarch64")
     set(SKIA_ARCH "arm64")
   endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  set(SKIA_PLATFORM "wasm")
+  set(SKIA_ARCH "wasm32")
 elseif(UNIX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(SKIA_PLATFORM "linux")
   set(SKIA_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
@@ -203,13 +206,17 @@ find_package_handle_standard_args(Skia
 )
 
 if(Skia_FOUND AND NOT TARGET Skia::Skia)
-  find_package(ZLIB REQUIRED MODULE)
-  find_package(PNG REQUIRED MODULE)
+  set(SKIA_INTERFACE_LIBRARIES "")
+  if(NOT SKIA_PLATFORM STREQUAL "wasm")
+    find_package(ZLIB REQUIRED MODULE)
+    find_package(PNG REQUIRED MODULE)
+    set(SKIA_INTERFACE_LIBRARIES "PNG::PNG;ZLIB::ZLIB")
+  endif()
 
   add_library(Skia::Skia UNKNOWN IMPORTED)
   set_target_properties(Skia::Skia PROPERTIES
     IMPORTED_LOCATION "${SKIA_LIBRARY}"
     INTERFACE_INCLUDE_DIRECTORIES "${SKIA_INCLUDE_DIRS}"
-    INTERFACE_LINK_LIBRARIES "PNG::PNG;ZLIB::ZLIB"
+    INTERFACE_LINK_LIBRARIES "${SKIA_INTERFACE_LIBRARIES}"
   )
 endif()

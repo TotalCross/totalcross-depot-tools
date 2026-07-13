@@ -634,6 +634,66 @@ build_skia_android() {
   copy_static_artifact "$build_dir" "libskia.a" "libskia-android-${abi}.a" "android-${abi}" "android" "$abi" "libskia.a"
 }
 
+wasm_gn_args() {
+  local emcc
+  local emcxx
+  local emar
+
+  require_cmd emcc
+  require_cmd em++
+  require_cmd emar
+  emcc=$(command -v emcc)
+  emcxx=$(command -v em++)
+  emar=$(command -v emar)
+
+  cat <<EOF
+$(ccache_gn_arg)target_cpu="wasm"
+cc="$(gn_escape "$emcc")"
+cxx="$(gn_escape "$emcxx")"
+ar="$(gn_escape "$emar")"
+is_debug=false
+is_official_build=true
+is_component_build=false
+skia_enable_gpu=true
+skia_use_gl=true
+skia_use_webgl=true
+skia_gl_standard="webgl"
+skia_use_angle=false
+skia_use_vulkan=false
+skia_use_opencl=false
+skia_use_fontconfig=false
+skia_use_freetype=true
+skia_use_system_freetype2=false
+skia_use_harfbuzz=false
+skia_use_icu=false
+skia_use_expat=false
+skia_use_zlib=true
+skia_use_system_zlib=false
+skia_use_libpng_decode=true
+skia_use_libpng_encode=true
+skia_use_system_libpng=false
+skia_use_libjpeg_turbo_decode=false
+skia_use_libjpeg_turbo_encode=false
+skia_use_system_libjpeg_turbo=false
+skia_use_libwebp_decode=false
+skia_use_libwebp_encode=false
+skia_use_system_libwebp=false
+skia_use_lua=false
+skia_use_piex=false
+skia_enable_pdf=false
+skia_enable_tools=false
+extra_cflags=[$(gn_array "-O3" "-DSKNX_NO_SIMD" "-DSK_DISABLE_AAA" "-DSK_FORCE_8_BYTE_ALIGNMENT")]
+EOF
+}
+
+build_skia_wasm32() {
+  local build_dir="$OUT_DIR/wasm-wasm32"
+
+  stage_dev_subset
+  gn_gen_and_build "$build_dir" "$(wasm_gn_args)" skia
+  copy_static_artifact "$build_dir" "libskia.a" "libskia-wasm32.a" "wasm-wasm32" "wasm" "wasm32" "libskia.a"
+}
+
 ios_gn_args() {
   local sdk="$1"
   local simulator="$2"

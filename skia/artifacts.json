@@ -17,6 +17,7 @@
             "libskia-linux-x86_64.a",
             "libskia-linux-aarch64.a",
             "libskia-linux-armv7l.a",
+            "libskia-wasm32.a",
             "libskia-android-arm64-v8a.a",
             "libskia-macos-arm64.a",
             "libskia-ios-arm64.a",
@@ -28,6 +29,7 @@
             "build_config_manifest-linux-x86_64.md",
             "build_config_manifest-linux-aarch64.md",
             "build_config_manifest-linux-armv7l.md",
+            "build_config_manifest-wasm-wasm32.md",
             "build_config_manifest-android-arm64-v8a.md",
             "build_config_manifest-macos-arm64.md",
             "build_config_manifest-ios-arm64.md",
@@ -62,6 +64,10 @@
         "linux-armv7l": {
             "artifact_name": "libskia-linux-armv7l.a",
             "target_path": "local/out/Release/linux/armv7l/libskia.a"
+        },
+        "wasm-wasm32": {
+            "artifact_name": "libskia-wasm32.a",
+            "target_path": "local/out/Release/wasm/wasm32/libskia.a"
         },
         "android-arm64-v8a": {
             "artifact_name": "libskia-android-arm64-v8a.a",
@@ -105,6 +111,10 @@
             "linux-armv7l": {
                 "artifact_name": "build_config_manifest-linux-armv7l.md",
                 "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md"
+            },
+            "wasm-wasm32": {
+                "artifact_name": "build_config_manifest-wasm-wasm32.md",
+                "target_path": "local/out/Release/wasm/wasm32/build_config_manifest.md"
             },
             "android-arm64-v8a": {
                 "artifact_name": "build_config_manifest-android-arm64-v8a.md",
