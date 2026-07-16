@@ -78,6 +78,12 @@ Skia is different from the CMake-built dependencies:
 - Release assets should be generated from `dist` or dependency build output
   exactly as declared by the manifest.
 
+## Scripts
+
+- Every script in the repository must have the executable permission bit set.
+- New scripts must be created with executable permissions and must retain `+x`
+  when committed.
+
 ## Validation
 
 Before handing off dependency changes, run the checks that fit the scope:
