@@ -26,6 +26,8 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v6
+      - name: Configure MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Validate /MT artifact directives
         shell: pwsh
         run: ./.github/scripts/test-windows-static-runtime-validator.ps1
