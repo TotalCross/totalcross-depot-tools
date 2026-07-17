@@ -51,6 +51,9 @@ This plan does not change which library features are compiled and does not move 
 - Observation: Ubuntu Bionic does not publish a `generate-ninja` package, and a Docker Hub tag may already exist when the image workflow is dispatched.
   Evidence: The Skia image publication failed with `Unable to locate package generate-ninja`; `.github/workflows/docker-linux-images.yml` now queries the Docker Hub tag endpoint before allocating build setup.
 
+- Observation: Bionic's distribution CMake is too old for the repository's `cmake -S/-B` build interface and for CMake projects that require 3.16.
+  Evidence: zlib Linux jobs using `v2.0.0` reported `The source directory "/sources/zlib/build/linux-amd64" does not exist`; the prior Bionic Dockerfiles used Kitware's CMake repository, whereas the minimized image had reverted to Bionic's CMake 3.10 package.
+
 Add new observations here as implementation proceeds. Every observation that changes the design must also result in a `Decision Log` entry.
 
 ## Decision Log
@@ -89,6 +92,10 @@ Add new observations here as implementation proceeds. Every observation that cha
 
 - Decision: Treat an existing exact Docker Hub image tag as immutable and skip its image build and push.
   Rationale: The requested version is the publication identity. Rebuilding it can overwrite an already validated image and wastes QEMU, Buildx, checkout, and registry-cache work. A non-200/non-404 Docker Hub response fails rather than incorrectly treating an API failure as a missing image.
+  Date/Author: 2026-07-17 / OpenAI
+
+- Decision: Publish corrected minimal Bionic images as `v2.0.1` and pin every affected native workflow to that version.
+  Rationale: The image publication workflow deliberately treats version tags as immutable. Restoring the Kitware repository preserves the required CMake interface and version without restoring the removed desktop-graphics package set.
   Date/Author: 2026-07-17 / OpenAI
 
 ## Outcomes & Retrospective

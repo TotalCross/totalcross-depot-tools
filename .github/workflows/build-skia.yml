@@ -96,7 +96,7 @@ jobs:
       matrix:
         include:
           - project: linux-amd64
-            image: totalcross/skia-linux-amd64:v2.0.0
+            image: totalcross/skia-linux-amd64:v2.0.1
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -108,7 +108,7 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm64
-            image: totalcross/skia-linux-amd64:v2.0.0
+            image: totalcross/skia-linux-amd64:v2.0.1
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -120,7 +120,7 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm32v7
-            image: totalcross/linux-arm32v7:v2.0.0
+            image: totalcross/linux-arm32v7:v2.0.1
             runner: ubuntu-22.04
             build_project: linux-arm32v7
             docker_platform: linux/arm/v7
@@ -193,7 +193,7 @@ jobs:
             --platform linux/amd64 \
             -v "${PWD}:${PWD}" \
             -w "${PWD}" \
-            -t totalcross/skia-linux-amd64:v2.0.0 \
+            -t totalcross/skia-linux-amd64:v2.0.1 \
             bash -lc "
               SKIA_SKIP_DEPS_SYNC=1 SKIA_ONLY_GN_GEN=1 bash skia/scripts/${{ matrix.script }}
             "

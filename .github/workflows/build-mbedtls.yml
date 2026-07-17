@@ -63,7 +63,7 @@ jobs:
             --platform ${{ matrix.docker_platform }} \
             -v "${PWD}:/sources" \
             -w /sources \
-            -t totalcross/${{ matrix.project }}:v2.0.0 \
+            -t totalcross/${{ matrix.project }}:v2.0.1 \
             bash -lc "
               cmake --version &&
               cmake -S /sources/mbedtls -B /sources/mbedtls/build/${{ matrix.project }} \

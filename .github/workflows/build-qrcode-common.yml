@@ -48,7 +48,7 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Build static library
         run: |
-          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.0 bash -lc "
+          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.1 bash -lc "
             cmake -S /sources/${{ inputs.dependency }} -B /sources/${{ inputs.dependency }}/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -G Ninja &&
             cmake --build /sources/${{ inputs.dependency }}/build/${{ matrix.project }} &&
             cmake --install /sources/${{ inputs.dependency }}/build/${{ matrix.project }} --prefix /sources/${{ inputs.dependency }}/build/${{ matrix.project }}/install &&
