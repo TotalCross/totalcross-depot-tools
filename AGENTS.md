@@ -60,6 +60,14 @@ change explicitly adds more release assets and updates the consumer filters.
 Do not make local Android builds request `armeabi-v7a` unless the corresponding
 SQLite3, mbedTLS, and Skia artifacts exist in the target releases.
 
+## iOS packaging runners
+
+Every `package-ios` job in a build workflow must run on `macos-15`. GitHub maps
+that hosted-runner label to Apple Silicon (`arm64`); do not replace it with
+`macos-15-intel`. The packaging jobs only combine already-built iOS artifacts
+into XCFrameworks, so keeping them on the standard ARM64 macOS pool avoids
+unnecessary waits for Intel macOS capacity.
+
 ## Windows static runtime
 
 - Every Windows static library must use the static MSVC runtime (`/MT`).
