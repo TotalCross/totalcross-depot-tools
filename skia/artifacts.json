@@ -11,7 +11,7 @@
         "commit": "e868546ad82d7d25eb0a925825d033c355e28152"
     },
     "release": {
-        "tag": "skia-158dc9d7-r6",
+        "tag": "skia-158dc9d7-r7",
         "dev_bundle": "skia-dev-headers-158dc9d7.zip",
         "assets": [
             "libskia-linux-x86_64.a",
@@ -46,7 +46,7 @@
         "source": {
             "type": "github_release",
             "repo": "TotalCross/totalcross-depot-tools",
-            "tag": "skia-158dc9d7-r6"
+            "tag": "skia-158dc9d7-r7"
         },
         "dev_bundle": {
             "artifact_name": "skia-dev-headers-158dc9d7.zip"

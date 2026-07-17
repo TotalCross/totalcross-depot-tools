@@ -44,7 +44,7 @@ Examples:
   $(basename "$0") --platform linux --arch x86_64 --base-url https://artifacts.example.com/skia/m87
   $(basename "$0") --platform ios --arch arm64
   $(basename "$0") --platform ios-simulator --arch arm64
-  $(basename "$0") --github-repo TotalCross/totalcross-depot-tools --release-tag skia-158dc9d7-r6
+  $(basename "$0") --github-repo TotalCross/totalcross-depot-tools --release-tag skia-158dc9d7-r7
 EOF
 }
 

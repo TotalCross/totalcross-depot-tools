@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MIT
 name: skia
 version: 158dc9d7
-release: skia-158dc9d7-r6
+release: skia-158dc9d7-r7
 source:
   type: github_release
   repo: TotalCross/totalcross-depot-tools
-  tag: skia-158dc9d7-r6
+  tag: skia-158dc9d7-r7
 upstream:
   skia:
     url: https://skia.googlesource.com/skia.git
