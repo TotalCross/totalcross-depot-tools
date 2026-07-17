@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Audit published Windows static runtimes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: windows-2022
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download and verify published artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $releases = @(
+            @{ tag = 'zlib-ng-2.1.6-r3'; pattern = 'zlib-ng-windows-*.tar.gz' },
+            @{ tag = 'zlib-1.3.1-r3'; pattern = 'zlib-windows-*.tar.gz' },
+            @{ tag = 'libpng-1.6.48-r3'; pattern = 'libpng-windows-*.tar.gz' },
+            @{ tag = 'libjpeg-10-r2'; pattern = 'libjpeg-windows-*.tar.gz' },
+            @{ tag = 'libjpeg-turbo-3.1.4.1-r2'; pattern = 'libjpeg-turbo-windows-*.tar.gz' },
+            @{ tag = 'mbedtls-3.5.2-r3'; pattern = 'mbedtls-windows-*.tar.gz' },
+            @{ tag = 'sqlite3-3.32.3-r2'; pattern = 'sqlite3-windows-*.tar.gz' },
+            @{ tag = 'skia-158dc9d7-r7'; pattern = 'libskia-windows-*.lib' }
+          )
+          foreach ($release in $releases) {
+            $directory = Join-Path $PWD "release-audit/$($release.tag)"
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            gh release download $release.tag --repo TotalCross/totalcross-depot-tools --dir $directory --pattern $release.pattern
+            & ./.github/scripts/verify-windows-static-runtime.ps1 "$directory/*"
+            if ($LASTEXITCODE -ne 0) { throw "Runtime verification failed for $($release.tag)." }
+          }

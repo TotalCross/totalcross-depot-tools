@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: libpng
 version: 1.6.48
-release: libpng-1.6.48-r2
+release: libpng-1.6.48-r3
 source:
   type: git
   url: https://github.com/glennrp/libpng.git
