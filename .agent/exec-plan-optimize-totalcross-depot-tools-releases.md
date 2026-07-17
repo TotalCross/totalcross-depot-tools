@@ -21,7 +21,7 @@ This plan does not change which library features are compiled and does not move 
 - [x] (2026-07-17 21:17Z) Replaced native-workflow Android SDK/NDK installation steps with `.github/actions/setup-android-native`, which verifies NDK 28.2.13676358 and exports its path.
 - [x] (2026-07-17 21:17Z) Created minimal Bionic native CMake image definitions, a Skia amd64 image definition, image smoke coverage, and migrated native workflow image tags to `v2.0.0`.
 - [x] (2026-07-17 21:17Z) Removed push triggers from build and policy workflows and consolidated commit-message and copyright validation into `.github/workflows/validate-commit.yml`, with one checkout and independent failure reporting.
-- [ ] Remove standalone `prepare` jobs that only calculate versions, tags, or dependency release names (completed: dependency-release resolution in `build-minizip.yml`, `build-minizip-ng.yml`, and `build-libpng.yml`; remaining: publication wrappers).
+- [x] (2026-07-17 23:10Z) Removed standalone metadata-only `prepare` jobs from every individual release wrapper. Dependency-release resolution stays in its consuming build job; release version/tag resolution now runs after the release job's existing checkout. The Visual C++ runtime derives its version from the x86 release artifact manifest, so it no longer needs an additional Windows runner.
 - [x] (2026-07-17 21:17Z) Added `dry_run=true` as the safe default for individual release workflows; pin, tag, release, and Skia metadata-commit steps are skipped during validation-only dispatches.
 - [x] (2026-07-17 22:42Z) Completed a GitHub Actions zlib dry-run (`29618567589`) across Linux, Windows, Android, macOS, iOS, and iOS Simulator; all build and packaging jobs succeeded and pin/tag/release steps were skipped.
 - [x] (2026-07-17 21:17Z) Added shared native build and target-manifest primitives, plus guarded graphics and small-library dry-run orchestrators.
@@ -101,9 +101,13 @@ Add new observations here as implementation proceeds. Every observation that cha
   Rationale: The image publication workflow deliberately treats version tags as immutable. Restoring the Kitware repository preserves the required CMake interface and version without restoring the removed desktop-graphics package set.
   Date/Author: 2026-07-17 / OpenAI
 
+- Decision: Resolve release metadata in the publication job, after its existing full-history checkout and before artifact publication.
+  Rationale: The tag is only consumed by publication, so a separate metadata runner added latency without sharing useful build state. Visual C++ runtime metadata is read from the packaged x86 artifact rather than downloading the installer a second time on a dedicated Windows runner.
+  Date/Author: 2026-07-17 / OpenAI
+
 ## Outcomes & Retrospective
 
-The first implementation pass added semantic dependency routing, Android toolchain verification, minimal image definitions, baseline metrics collection, shared workflow primitives, dry-run stack orchestration, and scoped Skia cache/diagnostic changes. A zlib GitHub Actions dry-run on 2026-07-17 succeeded across its full platform matrix and skipped all state-changing publication steps. Local YAML, shell, Python, and router tests passed. No cold/warm comparison or Docker image smoke run was measured because this workstation has no Docker. Metadata-only release jobs, Apple consolidation, SQLite migration, and ARMv7 equivalence remain incomplete and must not be represented as delivered.
+The first implementation pass added semantic dependency routing, Android toolchain verification, minimal image definitions, baseline metrics collection, shared workflow primitives, dry-run stack orchestration, scoped Skia cache/diagnostic changes, and metadata-job removal from individual release wrappers. A zlib GitHub Actions dry-run on 2026-07-17 succeeded across its full platform matrix and skipped all state-changing publication steps. Local YAML, shell, Python, and router tests passed. No cold/warm comparison or Docker image smoke run was measured because this workstation has no Docker. Apple consolidation, SQLite migration, and ARMv7 equivalence remain incomplete and must not be represented as delivered.
 
 At completion, compare the final state against the purpose of reducing repeated setup while preserving platform coverage and separate releases. State clearly whether the ARMv7 experiment succeeded or whether QEMU remained necessary.
 

@@ -18,61 +18,28 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Prepare release
-    runs-on: ubuntu-24.04
-    outputs:
-      skia_version: ${{ steps.version.outputs.skia_version }}
-      tag_name: ${{ steps.version.outputs.tag_name }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Read Skia release metadata
-        id: version
-        run: |
-          skia_version="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["skia"]["commit"][:8])')"
-          current_tag="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["release"]["tag"])')"
-          if [ -z "$skia_version" ] || [ -z "$current_tag" ]; then
-            echo "Could not read Skia release metadata from skia/manifest.json" >&2
-            exit 1
-          fi
-
-          if git ls-remote --exit-code --tags origin "refs/tags/${current_tag}" >/dev/null; then
-            tag_name="$(.github/scripts/next-release-tag.sh skia "${skia_version}")"
-          else
-            tag_name="${current_tag}"
-          fi
-
-          if [ -z "$tag_name" ]; then
-            echo "Could not read Skia release metadata from skia/manifest.json" >&2
-            exit 1
-          fi
-
-          echo "skia_version=${skia_version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
-
   build:
     name: Build release assets
-    needs: prepare
     uses: ./.github/workflows/build-skia.yml
 
   release:
     name: Publish release
-    needs:
-      - prepare
-      - build
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      SKIA_VERSION: ${{ needs.prepare.outputs.skia_version }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Read Skia release version
+        run: |
+          skia_version="$(python3 -c 'import json; print(json.load(open("skia/manifest.json"))["skia"]["commit"][:8])')"
+          test -n "${skia_version}"
+          echo "SKIA_VERSION=${skia_version}" >> "$GITHUB_ENV"
 
       - name: Download release assets
         uses: actions/download-artifact@v7

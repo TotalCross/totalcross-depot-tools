@@ -18,33 +18,23 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    runs-on: ubuntu-24.04
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag_name: ${{ steps.version.outputs.tag_name }}
-    steps:
-      - uses: actions/checkout@v6
-      - id: version
-        run: |
-          version="$(awk '/^version:/{print $2; exit}' qrcodegen/manifest.yml)"
-          test -n "${version}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$(.github/scripts/next-release-tag.sh qrcodegen "${version}")" >> "$GITHUB_OUTPUT"
   build:
-    needs: prepare
     uses: ./.github/workflows/build-qrcodegen.yml
   release:
-    needs: [prepare, build]
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      VERSION: ${{ needs.prepare.outputs.version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - name: Read qrcodegen release metadata
+        uses: ./.github/actions/prepare-release-metadata
+        with:
+          dependency: qrcodegen
+          version-env: VERSION
+          version-command: "awk '/^version:/{print $2; exit}' qrcodegen/manifest.yml"
       - uses: actions/download-artifact@v7
         with:
           path: release-assets

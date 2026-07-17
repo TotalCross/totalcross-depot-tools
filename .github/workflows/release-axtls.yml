@@ -18,52 +18,29 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Prepare release
-    runs-on: ubuntu-24.04
-    outputs:
-      axtls_version: ${{ steps.version.outputs.axtls_version }}
-      tag_name: ${{ steps.version.outputs.tag_name }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Read axTLS version
-        id: version
-        run: |
-          axtls_version="$(awk '/^version:/{print $2; exit}' axtls/manifest.yml)"
-          if [ -z "$axtls_version" ]; then
-            echo "Could not read axTLS version from axtls/CMakeLists.txt" >&2
-            exit 1
-          fi
-
-          tag_name="$(.github/scripts/next-release-tag.sh axtls "${axtls_version}")"
-
-          echo "axtls_version=${axtls_version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
-
   build:
     name: Build release assets
-    needs: prepare
     uses: ./.github/workflows/build-axtls.yml
 
   release:
     name: Publish release
-    needs:
-      - prepare
-      - build
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      AXTLS_VERSION: ${{ needs.prepare.outputs.axtls_version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Read axTLS release metadata
+        uses: ./.github/actions/prepare-release-metadata
+        with:
+          dependency: axtls
+          version-env: AXTLS_VERSION
+          version-command: "awk '/^version:/{print $2; exit}' axtls/manifest.yml"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v7

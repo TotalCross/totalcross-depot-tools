@@ -18,52 +18,29 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Prepare release
-    runs-on: ubuntu-24.04
-    outputs:
-      sqlite_version: ${{ steps.version.outputs.sqlite_version }}
-      tag_name: ${{ steps.version.outputs.tag_name }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Read SQLite version
-        id: version
-        run: |
-          sqlite_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' sqlite3/CMakeLists.txt)"
-          if [ -z "$sqlite_version" ]; then
-            echo "Could not read SQLite version from sqlite3/CMakeLists.txt" >&2
-            exit 1
-          fi
-
-          tag_name="$(.github/scripts/next-release-tag.sh sqlite3 "${sqlite_version}")"
-
-          echo "sqlite_version=${sqlite_version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
-
   build:
     name: Build release assets
-    needs: prepare
     uses: ./.github/workflows/build-sqlite3.yml
 
   release:
     name: Publish release
-    needs:
-      - prepare
-      - build
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      SQLITE_VERSION: ${{ needs.prepare.outputs.sqlite_version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Read SQLite release metadata
+        uses: ./.github/actions/prepare-release-metadata
+        with:
+          dependency: sqlite3
+          version-env: SQLITE_VERSION
+          version-command: "awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' sqlite3/CMakeLists.txt"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v7

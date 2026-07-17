@@ -18,63 +18,16 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Prepare release
-    runs-on: windows-2022
-    outputs:
-      redist_version: ${{ steps.version.outputs.redist_version }}
-      tag_name: ${{ steps.tag.outputs.tag_name }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Read redistributable version
-        id: version
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $installer = Join-Path $env:RUNNER_TEMP "vc_redist.x86.exe"
-          Invoke-WebRequest -Uri "https://aka.ms/vc14/vc_redist.x86.exe" -OutFile $installer
-          $version = (Get-Item -LiteralPath $installer).VersionInfo.ProductVersion
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            throw "Could not read Visual C++ redistributable version from installer metadata"
-          }
-          $version = $version.TrimStart("v")
-          "redist_version=$version" >> $env:GITHUB_OUTPUT
-
-      - name: Compute release tag
-        id: tag
-        shell: bash
-        run: |
-          redist_major="${REDIST_VERSION%%.*}"
-          if [ -z "${redist_major}" ]; then
-            echo "Could not derive Visual C++ redistributable major version" >&2
-            exit 1
-          fi
-
-          tag_name="$(.github/scripts/next-release-tag.sh vcruntime "${redist_major}")"
-          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
-        env:
-          REDIST_VERSION: ${{ steps.version.outputs.redist_version }}
-
   build:
     name: Build release assets
-    needs: prepare
     uses: ./.github/workflows/build-vcruntime.yml
 
   release:
     name: Publish release
-    needs:
-      - prepare
-      - build
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      REDIST_VERSION: ${{ needs.prepare.outputs.redist_version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
@@ -87,6 +40,15 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
+
+      - name: Read redistributable release metadata
+        run: |
+          redist_version="$(tar -xOzf release-assets/vcruntime-windows-x86.tar.gz vcruntime/windows/x86/manifest.txt | awk -F= '/^redist_version=/{print $2; exit}')"
+          test -n "${redist_version}"
+          redist_major="${redist_version%%.*}"
+          test -n "${redist_major}"
+          tag_name="$(.github/scripts/next-release-tag.sh vcruntime "${redist_major}")"
+          printf 'REDIST_VERSION=%s\nTAG_NAME=%s\n' "${redist_version}" "${tag_name}" >> "$GITHUB_ENV"
 
       - name: Pin bundle release
         if: ${{ !inputs.dry_run }}
