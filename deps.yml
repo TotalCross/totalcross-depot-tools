@@ -41,7 +41,7 @@ dependencies:
     path: minizip-ng
   libpng:
     version: 1.6.48
-    release: libpng-1.6.48-r2
+    release: libpng-1.6.48-r3
     path: libpng
   libjpeg:
     version: 10
