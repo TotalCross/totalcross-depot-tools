@@ -33,7 +33,7 @@ dependencies:
     path: zlib-ng
   minizip:
     version: 1.3.1
-    release: minizip-1.3.1
+    release: minizip-1.3.1-r2
     path: minizip
   minizip-ng:
     version: 4.2.2
