@@ -1,0 +1,159 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Build SLJIT static libraries
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: [sljit/**, .github/workflows/build-sljit.yml]
+  pull_request:
+    branches: [master]
+    paths: [sljit/**, .github/workflows/build-sljit.yml]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-linux:
+    name: Build SLJIT ${{ matrix.platform_arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: linux-amd64
+            runner: ubuntu-22.04
+            docker_platform: linux/amd64
+            platform_arch: linux/x86_64
+            elf_machine: Advanced Micro Devices X86-64
+            use_qemu: false
+          - project: linux-arm32v7
+            runner: ubuntu-22.04
+            docker_platform: linux/arm/v7
+            platform_arch: linux/armv7l
+            elf_machine: ARM
+            use_qemu: true
+          - project: linux-arm64
+            runner: ubuntu-22.04-arm
+            docker_platform: linux/arm64
+            platform_arch: linux/aarch64
+            elf_machine: AArch64
+            use_qemu: false
+    steps:
+      - uses: actions/checkout@v6
+      - name: Allow ARMv7 emulation
+        if: ${{ matrix.use_qemu }}
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Build, test, install, and package
+        run: |
+          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v1.0.7 bash -lc '
+            cmake -S /sources/sljit -B /sources/sljit/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -G Ninja &&
+            cmake --build /sources/sljit/build/${{ matrix.project }} &&
+            ctest --test-dir /sources/sljit/build/${{ matrix.project }} --output-on-failure &&
+            cmake --install /sources/sljit/build/${{ matrix.project }} --prefix /sources/sljit/build/${{ matrix.project }}/install &&
+            bash /sources/sljit/scripts/package-artifact.sh /sources/sljit/build/${{ matrix.project }} /sources/sljit/build/${{ matrix.project }}/install ${{ matrix.platform_arch }}'
+      - name: Validate ELF architecture and package contents
+        run: |
+          archive="sljit/build/${{ matrix.project }}/sljit-${{ matrix.platform_arch }}.tar.gz"
+          tar -tzf "${archive}" | grep -qx "sljit/${{ matrix.platform_arch }}/share/licenses/sljit/LICENSE"
+          tar -xzf "${archive}" -C /tmp
+          library="/tmp/sljit/${{ matrix.platform_arch }}/lib/libsljit.a"
+          object="$(ar t "${library}" | head -n 1)"
+          ar p "${library}" "${object}" > /tmp/sljit-object.o
+          readelf -h /tmp/sljit-object.o | grep -F "Machine:                           ${{ matrix.elf_machine }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sljit-${{ matrix.project }}
+          path: sljit/build/${{ matrix.project }}/sljit-*.tar.gz
+
+  build-windows:
+    name: Build SLJIT windows/${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            runner: windows-2022
+            cmake_platform: Win32
+          - arch: x64
+            runner: windows-2022
+            cmake_platform: x64
+          - arch: arm64
+            runner: windows-11-arm
+            cmake_platform: ARM64
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build, test, install, and package with /MT
+        shell: bash
+        run: |
+          build_dir="sljit/build/windows-${{ matrix.arch }}"
+          cmake -S sljit -B "${build_dir}" -G "Visual Studio 17 2022" -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_TESTING=ON
+          cmake --build "${build_dir}" --config Release --verbose 2>&1 | tee "${build_dir}/compile.log"
+          grep -E '(^|[[:space:]])/MT([[:space:]]|$)' "${build_dir}/compile.log"
+          ! grep -E '(^|[[:space:]])/MD(d)?([[:space:]]|$)' "${build_dir}/compile.log"
+          ctest --test-dir "${build_dir}" -C Release --output-on-failure
+          cmake --install "${build_dir}" --config Release --prefix "${build_dir}/install"
+          dumpbin /directives "${build_dir}/install/lib/sljit.lib" | tee "${build_dir}/directives.log"
+          grep -F 'DEFAULTLIB:LIBCMT' "${build_dir}/directives.log"
+          ! grep -E 'DEFAULTLIB:(MSVCRT|MSVCRTD)' "${build_dir}/directives.log"
+          bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" windows/${{ matrix.arch }}
+      - name: Validate package contents
+        shell: bash
+        run: tar -tzf "sljit/build/windows-${{ matrix.arch }}/sljit-windows-${{ matrix.arch }}.tar.gz" | grep -qx 'sljit/windows/${{ matrix.arch }}/share/licenses/sljit/LICENSE'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sljit-windows-${{ matrix.arch }}
+          path: sljit/build/windows-${{ matrix.arch }}/sljit-*.tar.gz
+
+  build-android:
+    name: Build SLJIT android/arm64-v8a
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - run: sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+      - name: Build, link, install, and package
+        run: |
+          build_dir=sljit/build/android-arm64-v8a
+          cmake -S sljit -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${ANDROID_HOME}/ndk/28.2.13676358/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF -DBUILD_TESTING=ON -G Ninja
+          cmake --build "${build_dir}"
+          cmake --install "${build_dir}" --prefix "${build_dir}/install"
+          bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" android/arm64-v8a
+      - name: Validate symbols, architecture, linkability, and metadata
+        run: |
+          build_dir=sljit/build/android-arm64-v8a
+          tool_dir="${ANDROID_HOME}/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          library="${build_dir}/install/lib/libsljit.a"
+          "${tool_dir}/llvm-nm" -g --defined-only "${library}" | grep -E ' sljit_(create_compiler|generate_code|free_code)$'
+          "${tool_dir}/llvm-readelf" -h "${library}" | grep -F 'Machine:                           AArch64'
+          grep -F -- '-target aarch64-none-linux-android23' "${build_dir}/build.ninja"
+          tar -xOf "${build_dir}/sljit-android-arm64-v8a.tar.gz" sljit/android/arm64-v8a/manifest.txt | grep -Fx 'android_min_sdk=23'
+          tar -xOf "${build_dir}/sljit-android-arm64-v8a.tar.gz" sljit/android/arm64-v8a/manifest.txt | grep -Fx 'android_ndk=28.2.13676358'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sljit-android-arm64-v8a
+          path: sljit/build/android-arm64-v8a/sljit-*.tar.gz
+
+  build-macos:
+    name: Build SLJIT macos/arm64
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build, test, install, and package
+        run: |
+          build_dir=sljit/build/macos-arm64
+          cmake -S sljit -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_TESTING=ON -G Ninja
+          cmake --build "${build_dir}"
+          ctest --test-dir "${build_dir}" --output-on-failure
+          cmake --install "${build_dir}" --prefix "${build_dir}/install"
+          bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" macos/arm64
+          file "${build_dir}/install/lib/libsljit.a" | grep -i arm64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sljit-macos-arm64
+          path: sljit/build/macos-arm64/sljit-*.tar.gz

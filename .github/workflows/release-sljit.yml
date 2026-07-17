@@ -1,0 +1,74 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Release SLJIT static libraries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: version
+        run: |
+          version="$(awk '/^version:/{print $2; exit}' sljit/manifest.yml)"
+          test -n "${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$(.github/scripts/next-release-tag.sh sljit "${version}")" >> "$GITHUB_OUTPUT"
+  build:
+    needs: prepare
+    uses: ./.github/workflows/build-sljit.yml
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Verify declared release assets
+        run: |
+          mapfile -t expected < <(awk '/^    - sljit-.*\\.tar\\.gz$/{print $2}' sljit/manifest.yml | sort)
+          mapfile -t actual < <(find release-assets -maxdepth 1 -type f -name 'sljit-*.tar.gz' -printf '%f\\n' | sort)
+          test "${#expected[@]}" -eq 8
+          test "${#expected[@]}" -eq "${#actual[@]}"
+          diff -u <(printf '%s\\n' "${expected[@]}") <(printf '%s\\n' "${actual[@]}")
+      - name: Pin bundle release
+        id: pin_bundle_release
+        uses: ./.github/actions/pin-deps-release
+        with:
+          dependency: sljit
+          tag: ${{ env.TAG_NAME }}
+      - name: Create release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "sljit ${VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+      - name: Publish GitHub Release
+        run: |
+          gh release create "${TAG_NAME}" release-assets/* --verify-tag \
+            --title "SLJIT ${VERSION} static libraries" \
+            --notes "SLJIT 3907e69005ba6e30b225000f24aaef3632f88347 static libraries. Built with the W^X allocator; Windows uses /MT; Android arm64-v8a uses NDK r28c and API 23. Android runtime JIT execution is not claimed by this build-only validation. Simplified BSD license included in every archive."
+      - name: Revert bundle release pin after failure
+        if: ${{ failure() && steps.pin_bundle_release.outputs.commit != '' }}
+        uses: ./.github/actions/revert-deps-release-pin
+        with:
+          commit: ${{ steps.pin_bundle_release.outputs.commit }}

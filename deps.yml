@@ -3,6 +3,10 @@
 bundle: native-deps-totalcross-7.2.0
 
 dependencies:
+  sljit:
+    version: 20260717
+    release: sljit-20260717
+    path: sljit
   qrcodegen:
     version: 20250123
     release: qrcodegen-20250123

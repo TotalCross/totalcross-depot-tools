@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: sljit
+version: 20260717
+release: sljit-20260717
+upstream_version: 3907e69005ba6e30b225000f24aaef3632f88347
+source:
+  type: archive
+  url: https://codeload.github.com/zherczeg/sljit/tar.gz/3907e69005ba6e30b225000f24aaef3632f88347
+  sha256: f3e299647a610c537296a41d8866f1e7b664401c229e6cdb67a621250086efd9
+  directory: sljit-3907e69005ba6e30b225000f24aaef3632f88347
+license:
+  name: Simplified BSD
+  path: LICENSE
+build:
+  definitions:
+    - SLJIT_WX_EXECUTABLE_ALLOCATOR=1
+    - SLJIT_PROT_EXECUTABLE_ALLOCATOR=0
+    - SLJIT_ARGUMENT_CHECKS=1
+    - SLJIT_DEBUG=0
+    - SLJIT_VERBOSE=0
+  windows_msvc_runtime: MT
+  android:
+    abi: arm64-v8a
+    ndk: 28.2.13676358
+    min_sdk: 23
+artifact:
+  include:
+    - sljitLir.h
+    - sljitConfig.h
+    - sljitConfigCPU.h
+    - sljitConfigInternal.h
+  libraries:
+    unix: libsljit.a
+    windows: sljit.lib
+  archives:
+    - sljit-linux-x86_64.tar.gz
+    - sljit-linux-armv7l.tar.gz
+    - sljit-linux-aarch64.tar.gz
+    - sljit-windows-x86.tar.gz
+    - sljit-windows-x64.tar.gz
+    - sljit-windows-arm64.tar.gz
+    - sljit-android-arm64-v8a.tar.gz
+    - sljit-macos-arm64.tar.gz
