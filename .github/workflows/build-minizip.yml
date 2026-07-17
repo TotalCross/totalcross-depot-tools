@@ -189,101 +189,83 @@ jobs:
           path: minizip/build/android-arm64-v8a/minizip-*.tar.gz
 
   build-apple:
-    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos
-            arch: arm64
-            build_dir: macos-arm64
-            cmake_generator: Ninja
-            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
-          - platform: ios
-            arch: arm64
-            build_dir: ios-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-          - platform: ios-simulator
-            arch: arm64
-            build_dir: ios-simulator-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-
+    name: Build and package Apple arm64 artifacts
     runs-on: macos-15
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Fetch zlib prebuilts
+      - name: Fetch zlib Apple prebuilts
         run: |
-          bash zlib/fetch.sh \
-            --platform "${{ matrix.platform }}" \
-            --arch "${{ matrix.arch }}" \
-            --release-tag "${REQUESTED_ZLIB_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib)}"
+          for platform in macos ios ios-simulator; do
+            bash zlib/fetch.sh \
+              --platform "${platform}" \
+              --arch arm64 \
+              --release-tag "${REQUESTED_ZLIB_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib)}"
+          done
 
-      - name: Build static libraries
-        run: |
-          cmake -S minizip -B minizip/build/${{ matrix.build_dir }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib/local/${{ matrix.platform }}/${{ matrix.arch }}" \
-            ${{ matrix.cmake_args }} \
-            -G "${{ matrix.cmake_generator }}"
-          cmake --build minizip/build/${{ matrix.build_dir }} --config Release
-          cmake --install minizip/build/${{ matrix.build_dir }} --config Release --prefix minizip/build/${{ matrix.build_dir }}/install
-          bash minizip/scripts/package-artifact.sh minizip/build/${{ matrix.build_dir }} minizip/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - name: Build macOS static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: minizip-${{ matrix.build_dir }}
-          path: minizip/build/${{ matrix.build_dir }}/minizip-*.tar.gz
+          source-dir: minizip
+          build-dir: minizip/build/macos-arm64
+          install-dir: minizip/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DZLIB_DIR=$PWD/zlib/local/macos/arm64 -DCMAKE_OSX_ARCHITECTURES=arm64
+          package-script: minizip/scripts/package-artifact.sh
 
-  package-ios:
-    name: Package iOS XCFramework
-    needs: build-apple
-    runs-on: macos-15
-
-    steps:
-      - name: Download iOS device artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS device static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: minizip-ios-arm64
-          path: package-input/ios
+          source-dir: minizip
+          build-dir: minizip/build/ios-arm64
+          install-dir: minizip/build/ios-arm64/install
+          platform-arch: ios/arm64
+          generator: Xcode
+          cmake-args: -DZLIB_DIR=$PWD/zlib/local/ios/arm64 -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: minizip/scripts/package-artifact.sh
 
-      - name: Download iOS simulator artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS simulator static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: minizip-ios-simulator-arm64
-          path: package-input/ios-simulator
+          source-dir: minizip
+          build-dir: minizip/build/ios-simulator-arm64
+          install-dir: minizip/build/ios-simulator-arm64/install
+          platform-arch: ios-simulator/arm64
+          generator: Xcode
+          cmake-args: -DZLIB_DIR=$PWD/zlib/local/ios-simulator/arm64 -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: minizip/scripts/package-artifact.sh
 
       - name: Create XCFramework
         run: |
-          mkdir -p package-work package-output
-          tar -xzf package-input/ios/minizip-ios-arm64.tar.gz -C package-work
-          tar -xzf package-input/ios-simulator/minizip-ios-simulator-arm64.tar.gz -C package-work
-
-          device_root="${PWD}/package-work/minizip/ios/arm64"
-          simulator_root="${PWD}/package-work/minizip/ios-simulator/arm64"
-          device_lib="$(find "${device_root}/lib" -type f \( -name "libminizip*.a" -o -name "minizip*.a" \) | head -n 1)"
-          simulator_lib="$(find "${simulator_root}/lib" -type f \( -name "libminizip*.a" -o -name "minizip*.a" \) | head -n 1)"
-
-          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
-            echo "Unable to locate minizip iOS static libraries" >&2
-            exit 1
-          fi
-
           xcodebuild -create-xcframework \
-            -library "${device_lib}" -headers "${device_root}/include" \
-            -library "${simulator_lib}" -headers "${simulator_root}/include" \
-            -output package-output/minizip-ios.xcframework
+            -library minizip/build/ios-arm64/install/lib/libminizip.a -headers minizip/build/ios-arm64/install/include \
+            -library minizip/build/ios-simulator-arm64/install/lib/libminizip.a -headers minizip/build/ios-simulator-arm64/install/include \
+            -output minizip/build/minizip-ios.xcframework
+          ditto -c -k --sequesterRsrc --keepParent minizip/build/minizip-ios.xcframework minizip/build/minizip-ios.xcframework.zip
 
-          cd package-output
-          ditto -c -k --sequesterRsrc --keepParent minizip-ios.xcframework minizip-ios.xcframework.zip
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: minizip-macos-arm64
+          path: minizip/build/macos-arm64/minizip-*.tar.gz
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: minizip-ios-arm64
+          path: minizip/build/ios-arm64/minizip-*.tar.gz
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: minizip-ios-simulator-arm64
+          path: minizip/build/ios-simulator-arm64/minizip-*.tar.gz
 
       - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
           name: minizip-ios-xcframework
-          path: package-output/minizip-ios.xcframework.zip
+          path: minizip/build/minizip-ios.xcframework.zip

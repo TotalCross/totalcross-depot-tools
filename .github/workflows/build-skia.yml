@@ -412,62 +412,63 @@ jobs:
           path: skia/dist/diagnostics
 
   build-apple:
-    name: Build ${{ matrix.platform_arch }}
+    name: Build and package Apple arm64 artifacts
     runs-on: macos-15
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform_arch: macos/arm64
-            platform: macos
-            arch: arm64
-            artifact_suffix: macos-arm64
-            script: build-macos-arm64.sh
-            library: libskia-macos-arm64.a
-            manifest: build_config_manifest-macos-arm64.md
-          - platform_arch: ios/arm64
-            platform: ios
-            arch: arm64
-            artifact_suffix: ios-arm64
-            script: build-ios-arm64.sh
-            library: libskia-ios-arm64.a
-            manifest: build_config_manifest-ios-arm64.md
-          - platform_arch: ios-simulator/arm64
-            platform: ios-simulator
-            arch: arm64
-            artifact_suffix: ios-simulator-arm64
-            script: build-ios-simulator-arm64.sh
-            library: libskia-ios-simulator-arm64.a
-            manifest: build_config_manifest-ios-simulator-arm64.md
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Restore ccache
+      - name: Restore macOS ccache
         uses: actions/cache@v5
         with:
-          path: .cache/ccache/skia-${{ matrix.artifact_suffix }}
-          key: skia-ccache-${{ runner.os }}-${{ matrix.artifact_suffix }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          path: .cache/ccache/skia-macos-arm64
+          key: skia-ccache-${{ runner.os }}-macos-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+
+      - name: Restore iOS device ccache
+        uses: actions/cache@v5
+        with:
+          path: .cache/ccache/skia-ios-arm64
+          key: skia-ccache-${{ runner.os }}-ios-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+
+      - name: Restore iOS simulator ccache
+        uses: actions/cache@v5
+        with:
+          path: .cache/ccache/skia-ios-simulator-arm64
+          key: skia-ccache-${{ runner.os }}-ios-simulator-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
 
       - name: Verify or install build tools
         run: |
           command -v ninja >/dev/null 2>&1 || brew install ninja
           command -v ccache >/dev/null 2>&1 || brew install ccache
 
-      - name: Fetch zlib-ng/libpng prebuilts
-        run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
+      - name: Fetch zlib-ng/libpng Apple prebuilts
+        run: |
+          bash skia/scripts/fetch-prebuilt-deps.sh macos arm64
+          bash skia/scripts/fetch-prebuilt-deps.sh ios arm64
+          bash skia/scripts/fetch-prebuilt-deps.sh ios-simulator arm64
 
       - name: Fetch pinned Skia sources
         working-directory: skia
         run: ./scripts/fetch-source.sh
 
-      - name: Build static library
+      - name: Build macOS static library
         working-directory: skia
         env:
-          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.artifact_suffix }}
-        run: ./scripts/${{ matrix.script }}
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-macos-arm64
+        run: ./scripts/build-macos-arm64.sh
+
+      - name: Build iOS device static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-arm64
+        run: ./scripts/build-ios-arm64.sh
+
+      - name: Build iOS simulator static library
+        working-directory: skia
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-simulator-arm64
+        run: ./scripts/build-ios-simulator-arm64.sh
 
       - name: Print build summary on failure
         if: failure()
@@ -476,51 +477,13 @@ jobs:
 
       - name: Verify artifacts
         run: |
-          test -f skia/dist/${{ matrix.library }}
-          test -f skia/dist/${{ matrix.manifest }}
-          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/${{ matrix.manifest }}
-          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/${{ matrix.manifest }}
+          for suffix in macos-arm64 ios-arm64 ios-simulator-arm64; do
+            test -f "skia/dist/libskia-${suffix}.a"
+            test -f "skia/dist/build_config_manifest-${suffix}.md"
+            grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${suffix}.md"
+            grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${suffix}.md"
+          done
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-${{ matrix.artifact_suffix }}
-          path: |
-            skia/dist/${{ matrix.library }}
-            skia/dist/${{ matrix.manifest }}
-
-      - name: Upload diagnostics
-        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-diagnostics-${{ matrix.artifact_suffix }}
-          path: skia/dist/diagnostics
-
-  package-ios:
-    name: Package iOS XCFramework and headers
-    runs-on: macos-15
-    needs: build-apple
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Download iOS device artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: skia-ios-arm64
-          path: skia/dist
-
-      - name: Download iOS simulator artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: skia-ios-simulator-arm64
-          path: skia/dist
-
-      - name: Fetch pinned Skia sources for headers
-        working-directory: skia
-        run: ./scripts/fetch-source.sh
 
       - name: Stage development headers
         working-directory: skia
@@ -528,25 +491,37 @@ jobs:
           source ./scripts/common.sh
           stage_dev_subset
 
-      - name: Package XCFramework
+      - name: Package Apple artifacts
         working-directory: skia
-        run: ./scripts/package-ios-xcframework.sh
-
-      - name: Package dev headers
-        working-directory: skia
-        run: ./scripts/package-dev-bundle.sh
-
-      - name: Verify artifacts
         run: |
-          test -f skia/dist/libskia-ios-arm64.a
-          test -f skia/dist/libskia-ios-simulator-arm64.a
-          test -f skia/dist/skia-ios.xcframework.zip
-          test -f skia/dist/skia-dev-headers-158dc9d7.zip
-          test -f skia/dist/build_config_manifest-ios-arm64.md
-          test -f skia/dist/build_config_manifest-ios-simulator-arm64.md
-          ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+          ./scripts/package-ios-xcframework.sh
+          ./scripts/package-dev-bundle.sh
 
-      - name: Upload artifact
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-macos-arm64
+          path: |
+            skia/dist/libskia-macos-arm64.a
+            skia/dist/build_config_manifest-macos-arm64.md
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-ios-arm64
+          path: |
+            skia/dist/libskia-ios-arm64.a
+            skia/dist/build_config_manifest-ios-arm64.md
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-ios-simulator-arm64
+          path: |
+            skia/dist/libskia-ios-simulator-arm64.a
+            skia/dist/build_config_manifest-ios-simulator-arm64.md
+
+      - name: Upload iOS package artifact
         uses: actions/upload-artifact@v7
         with:
           name: skia-ios-package
@@ -557,6 +532,27 @@ jobs:
             skia/dist/skia-dev-headers-158dc9d7.zip
             skia/dist/build_config_manifest-ios-arm64.md
             skia/dist/build_config_manifest-ios-simulator-arm64.md
+
+      - name: Upload macOS diagnostics
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-macos-arm64
+          path: skia/dist/diagnostics
+
+      - name: Upload iOS device diagnostics
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-ios-arm64
+          path: skia/dist/diagnostics
+
+      - name: Upload iOS simulator diagnostics
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-ios-simulator-arm64
+          path: skia/dist/diagnostics
 
   build-windows:
     name: Build windows/${{ matrix.arch }}
@@ -652,7 +648,6 @@ jobs:
       - build-android
       - build-wasm
       - build-apple
-      - package-ios
       - build-windows
 
     steps:

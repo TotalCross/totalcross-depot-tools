@@ -195,101 +195,88 @@ jobs:
           path: libpng/build/android-arm64-v8a/libpng-*.tar.gz
 
   build-apple:
-    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos
-            arch: arm64
-            build_dir: macos-arm64
-            cmake_generator: Ninja
-            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
-          - platform: ios
-            arch: arm64
-            build_dir: ios-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-          - platform: ios-simulator
-            arch: arm64
-            build_dir: ios-simulator-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-
+    name: Build and package Apple arm64 artifacts
     runs-on: macos-15
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Fetch zlib-ng prebuilts
+      - name: Fetch zlib-ng Apple prebuilts
         run: |
-          bash zlib-ng/fetch.sh \
-            --platform "${{ matrix.platform }}" \
-            --arch "${{ matrix.arch }}" \
-            --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
+          for platform in macos ios ios-simulator; do
+            bash zlib-ng/fetch.sh \
+              --platform "${platform}" \
+              --arch arm64 \
+              --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
+          done
 
-      - name: Build static libraries
-        run: |
-          cmake -S libpng -B libpng/build/${{ matrix.build_dir }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/${{ matrix.platform }}/${{ matrix.arch }}" \
-            ${{ matrix.cmake_args }} \
-            -G "${{ matrix.cmake_generator }}"
-          cmake --build libpng/build/${{ matrix.build_dir }} --config Release
-          cmake --install libpng/build/${{ matrix.build_dir }} --config Release --prefix libpng/build/${{ matrix.build_dir }}/install
-          bash libpng/scripts/package-artifact.sh libpng/build/${{ matrix.build_dir }} libpng/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - name: Build macOS static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libpng-${{ matrix.build_dir }}
-          path: libpng/build/${{ matrix.build_dir }}/libpng-*.tar.gz
+          source-dir: libpng
+          build-dir: libpng/build/macos-arm64
+          install-dir: libpng/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DZLIB_DIR=$PWD/zlib-ng/local/macos/arm64 -DCMAKE_OSX_ARCHITECTURES=arm64
+          package-script: libpng/scripts/package-artifact.sh
 
-  package-ios:
-    name: Package iOS XCFramework
-    needs: build-apple
-    runs-on: macos-15
-
-    steps:
-      - name: Download iOS device artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS device static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libpng-ios-arm64
-          path: package-input/ios
+          source-dir: libpng
+          build-dir: libpng/build/ios-arm64
+          install-dir: libpng/build/ios-arm64/install
+          platform-arch: ios/arm64
+          generator: Xcode
+          cmake-args: -DZLIB_DIR=$PWD/zlib-ng/local/ios/arm64 -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: libpng/scripts/package-artifact.sh
 
-      - name: Download iOS simulator artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS simulator static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libpng-ios-simulator-arm64
-          path: package-input/ios-simulator
+          source-dir: libpng
+          build-dir: libpng/build/ios-simulator-arm64
+          install-dir: libpng/build/ios-simulator-arm64/install
+          platform-arch: ios-simulator/arm64
+          generator: Xcode
+          cmake-args: -DZLIB_DIR=$PWD/zlib-ng/local/ios-simulator/arm64 -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: libpng/scripts/package-artifact.sh
 
       - name: Create XCFramework
         run: |
-          mkdir -p package-work package-output
-          tar -xzf package-input/ios/libpng-ios-arm64.tar.gz -C package-work
-          tar -xzf package-input/ios-simulator/libpng-ios-simulator-arm64.tar.gz -C package-work
-
-          device_root="${PWD}/package-work/libpng/ios/arm64"
-          simulator_root="${PWD}/package-work/libpng/ios-simulator/arm64"
-          device_lib="$(find "${device_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.a" \) | head -n 1)"
-          simulator_lib="$(find "${simulator_root}/lib" -type f \( -name "libpng*.a" -o -name "png*.a" \) | head -n 1)"
-
-          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
-            echo "Unable to locate libpng iOS static libraries" >&2
-            exit 1
-          fi
-
+          device_root="${PWD}/libpng/build/ios-arm64/install"
+          simulator_root="${PWD}/libpng/build/ios-simulator-arm64/install"
+          device_lib="$(find "${device_root}/lib" -maxdepth 1 -type f \( -name 'libpng*.a' -o -name 'png*.a' \) | head -n 1)"
+          simulator_lib="$(find "${simulator_root}/lib" -maxdepth 1 -type f \( -name 'libpng*.a' -o -name 'png*.a' \) | head -n 1)"
+          test -n "${device_lib}" && test -n "${simulator_lib}"
           xcodebuild -create-xcframework \
             -library "${device_lib}" -headers "${device_root}/include" \
             -library "${simulator_lib}" -headers "${simulator_root}/include" \
-            -output package-output/libpng-ios.xcframework
+            -output libpng/build/libpng-ios.xcframework
+          ditto -c -k --sequesterRsrc --keepParent libpng/build/libpng-ios.xcframework libpng/build/libpng-ios.xcframework.zip
 
-          cd package-output
-          ditto -c -k --sequesterRsrc --keepParent libpng-ios.xcframework libpng-ios.xcframework.zip
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libpng-macos-arm64
+          path: libpng/build/macos-arm64/libpng-*.tar.gz
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libpng-ios-arm64
+          path: libpng/build/ios-arm64/libpng-*.tar.gz
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libpng-ios-simulator-arm64
+          path: libpng/build/ios-simulator-arm64/libpng-*.tar.gz
 
       - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
           name: libpng-ios-xcframework
-          path: package-output/libpng-ios.xcframework.zip
+          path: libpng/build/libpng-ios.xcframework.zip
