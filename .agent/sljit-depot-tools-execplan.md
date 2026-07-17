@@ -29,6 +29,9 @@ The Android artifact is intentionally built even though the first TotalCross int
 
 ## Surprises & Discoveries
 
+- Observation: the first GitHub Actions matrix run compiled and tested every target that reached its test phase, but post-build validation commands had portability defects.
+  Evidence: [run 29612359610](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29612359610) passed the macOS job; Linux validation constructed an archive filename with an unescaped platform slash; Android symbol and AArch64 inspection passed before an over-specific Ninja target spelling check failed; and Windows x86, x64, and ARM64 compiled `/MT` libraries and passed CTest before Git Bash could not locate `dumpbin`. The workflow now derives archive names correctly, accepts both documented Clang target spellings, and invokes `dumpbin` through `VsDevCmd.bat`.
+
 - Observation: SLJIT does not publish numbered releases suitable for a semantic version pin at the time this plan was written.
   Evidence: upstream HEAD was `3907e69005ba6e30b225000f24aaef3632f88347` on 2026-07-17, and the repository exposed no release tag for this snapshot. The depot distribution therefore needs a date-based version plus an immutable commit and archive hash.
 
