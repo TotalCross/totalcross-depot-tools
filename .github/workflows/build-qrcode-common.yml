@@ -107,67 +107,72 @@ jobs:
           path: ${{ inputs.dependency }}/build/android-arm64-v8a/${{ inputs.dependency }}-*.tar.gz
 
   build-apple:
-    name: Build ${{ inputs.dependency }} ${{ matrix.platform }}/${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos
-            arch: arm64
-            build_dir: macos-arm64
-            cmake_generator: Ninja
-            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
-          - platform: ios
-            arch: arm64
-            build_dir: ios-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-          - platform: ios-simulator
-            arch: arm64
-            build_dir: ios-simulator-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+    name: Build and package ${{ inputs.dependency }} Apple arm64 artifacts
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
-      - name: Build static library
-        run: |
-          cmake -S ${{ inputs.dependency }} -B ${{ inputs.dependency }}/build/${{ matrix.build_dir }} -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }} -G "${{ matrix.cmake_generator }}"
-          cmake --build ${{ inputs.dependency }}/build/${{ matrix.build_dir }} --config Release
-          cmake --install ${{ inputs.dependency }}/build/${{ matrix.build_dir }} --config Release --prefix ${{ inputs.dependency }}/build/${{ matrix.build_dir }}/install
-          bash ${{ inputs.dependency }}/scripts/package-artifact.sh ${{ inputs.dependency }}/build/${{ matrix.build_dir }} ${{ inputs.dependency }}/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ inputs.dependency }}-${{ matrix.build_dir }}
-          path: ${{ inputs.dependency }}/build/${{ matrix.build_dir }}/${{ inputs.dependency }}-*.tar.gz
 
-  package-ios:
-    name: Package ${{ inputs.dependency }} iOS XCFramework
-    needs: build-apple
-    runs-on: macos-15
-    steps:
-      - uses: actions/download-artifact@v7
+      - name: Build macOS static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: ${{ inputs.dependency }}-ios-arm64
-          path: package-input/ios
-      - uses: actions/download-artifact@v7
+          source-dir: ${{ inputs.dependency }}
+          build-dir: ${{ inputs.dependency }}/build/macos-arm64
+          install-dir: ${{ inputs.dependency }}/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          package-script: ${{ inputs.dependency }}/scripts/package-artifact.sh
+
+      - name: Build iOS device static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: ${{ inputs.dependency }}-ios-simulator-arm64
-          path: package-input/ios-simulator
+          source-dir: ${{ inputs.dependency }}
+          build-dir: ${{ inputs.dependency }}/build/ios-arm64
+          install-dir: ${{ inputs.dependency }}/build/ios-arm64/install
+          platform-arch: ios/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: ${{ inputs.dependency }}/scripts/package-artifact.sh
+
+      - name: Build iOS simulator static library
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: ${{ inputs.dependency }}
+          build-dir: ${{ inputs.dependency }}/build/ios-simulator-arm64
+          install-dir: ${{ inputs.dependency }}/build/ios-simulator-arm64/install
+          platform-arch: ios-simulator/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: ${{ inputs.dependency }}/scripts/package-artifact.sh
+
       - name: Create XCFramework
         run: |
-          mkdir -p package-work package-output
-          tar -xzf package-input/ios/${{ inputs.dependency }}-ios-arm64.tar.gz -C package-work
-          tar -xzf package-input/ios-simulator/${{ inputs.dependency }}-ios-simulator-arm64.tar.gz -C package-work
-          device_root="${PWD}/package-work/${{ inputs.dependency }}/ios/arm64"
-          simulator_root="${PWD}/package-work/${{ inputs.dependency }}/ios-simulator/arm64"
-          device_lib="${device_root}/lib/lib${{ inputs.library }}.a"
-          simulator_lib="${simulator_root}/lib/lib${{ inputs.library }}.a"
-          test -f "${device_lib}" && test -f "${simulator_lib}"
-          xcodebuild -create-xcframework -library "${device_lib}" -headers "${device_root}/include" -library "${simulator_lib}" -headers "${simulator_root}/include" -output package-output/${{ inputs.dependency }}-ios.xcframework
-          cd package-output
-          ditto -c -k --sequesterRsrc --keepParent ${{ inputs.dependency }}-ios.xcframework ${{ inputs.dependency }}-ios.xcframework.zip
-      - uses: actions/upload-artifact@v7
+          xcodebuild -create-xcframework \
+            -library ${{ inputs.dependency }}/build/ios-arm64/install/lib/lib${{ inputs.library }}.a -headers ${{ inputs.dependency }}/build/ios-arm64/install/include \
+            -library ${{ inputs.dependency }}/build/ios-simulator-arm64/install/lib/lib${{ inputs.library }}.a -headers ${{ inputs.dependency }}/build/ios-simulator-arm64/install/include \
+            -output ${{ inputs.dependency }}/build/${{ inputs.dependency }}-ios.xcframework
+          ditto -c -k --sequesterRsrc --keepParent ${{ inputs.dependency }}/build/${{ inputs.dependency }}-ios.xcframework ${{ inputs.dependency }}/build/${{ inputs.dependency }}-ios.xcframework.zip
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.dependency }}-macos-arm64
+          path: ${{ inputs.dependency }}/build/macos-arm64/${{ inputs.dependency }}-*.tar.gz
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.dependency }}-ios-arm64
+          path: ${{ inputs.dependency }}/build/ios-arm64/${{ inputs.dependency }}-*.tar.gz
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.dependency }}-ios-simulator-arm64
+          path: ${{ inputs.dependency }}/build/ios-simulator-arm64/${{ inputs.dependency }}-*.tar.gz
+
+      - name: Upload XCFramework artifact
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.dependency }}-ios-xcframework
-          path: package-output/${{ inputs.dependency }}-ios.xcframework.zip
+          path: ${{ inputs.dependency }}/build/${{ inputs.dependency }}-ios.xcframework.zip
