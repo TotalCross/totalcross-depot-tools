@@ -25,11 +25,11 @@ dependencies:
     path: mbedtls
   zlib:
     version: 1.3.1
-    release: zlib-1.3.1-r2
+    release: zlib-1.3.1-r3
     path: zlib
   zlib-ng:
     version: 2.1.6
-    release: zlib-ng-2.1.6-r2
+    release: zlib-ng-2.1.6-r3
     path: zlib-ng
   minizip:
     version: 1.3.1

@@ -1,0 +1,14 @@
+name: Revert failed bundle release pin
+description: Revert and push a deps.yml pin commit after a release workflow fails.
+inputs:
+  commit:
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git revert --no-edit "${{ inputs.commit }}"
+        git push origin "HEAD:${GITHUB_REF_NAME}"

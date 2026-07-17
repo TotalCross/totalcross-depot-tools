@@ -82,6 +82,13 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Pin bundle release
+        id: pin_bundle_release
+        uses: ./.github/actions/pin-deps-release
+        with:
+          dependency: vcruntime
+          tag: ${{ env.TAG_NAME }}
+
       - name: Create release tag
         run: |
           git config user.name "github-actions[bot]"
@@ -95,3 +102,9 @@ jobs:
             --verify-tag \
             --title "Visual C++ runtime ${REDIST_VERSION} DLLs" \
             --notes "Microsoft Visual C++ Redistributable runtime DLLs for TotalCross. Redistribution is governed by the applicable Microsoft Visual Studio license terms."
+
+      - name: Revert bundle release pin after failure
+        if: ${{ failure() && steps.pin_bundle_release.outputs.commit != '' }}
+        uses: ./.github/actions/revert-deps-release-pin
+        with:
+          commit: ${{ steps.pin_bundle_release.outputs.commit }}

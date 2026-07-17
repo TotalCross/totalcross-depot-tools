@@ -43,6 +43,12 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
+      - name: Pin bundle release
+        id: pin_bundle_release
+        uses: ./.github/actions/pin-deps-release
+        with:
+          dependency: qrcode
+          tag: ${{ env.TAG_NAME }}
       - name: Create release tag
         run: |
           git config user.name "github-actions[bot]"
@@ -51,3 +57,8 @@ jobs:
           git push origin "refs/tags/${TAG_NAME}"
       - name: Publish GitHub Release
         run: gh release create "${TAG_NAME}" release-assets/* --verify-tag --title "qrcode ${VERSION} static libraries" --notes "Static qrcode ${VERSION} libraries for TotalCross."
+      - name: Revert bundle release pin after failure
+        if: ${{ failure() && steps.pin_bundle_release.outputs.commit != '' }}
+        uses: ./.github/actions/revert-deps-release-pin
+        with:
+          commit: ${{ steps.pin_bundle_release.outputs.commit }}

@@ -102,6 +102,7 @@ jobs:
           git add deps.yml skia/manifest.yml skia/manifest.json skia/artifacts.json skia/fetch.sh skia/cmake/AutoFetchSkia.cmake
           git commit -m "Update Skia release metadata to ${TAG_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "DEPS_PIN_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Create release tag
         run: |
@@ -125,3 +126,11 @@ jobs:
             --verify-tag \
             --title "Skia ${SKIA_VERSION} static libraries" \
             --notes "Static Skia ${SKIA_VERSION} libraries for TotalCross, including WebAssembly/WebGL wasm32, Android arm64-v8a with NDK ${ANDROID_NDK_VERSION:-28.2.13676358}, iOS device/simulator arm64 artifacts, and a separate diagnostics archive with full GN/Ninja logs."
+
+      - name: Revert release metadata after failure
+        if: ${{ failure() && env.DEPS_PIN_COMMIT != '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit "${DEPS_PIN_COMMIT}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
