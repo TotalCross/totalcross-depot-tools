@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 name: Revert failed bundle release pin
 description: Revert and push a deps.yml pin commit after a release workflow fails.
 inputs:
