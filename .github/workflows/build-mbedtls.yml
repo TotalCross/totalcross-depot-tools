@@ -150,75 +150,50 @@ jobs:
           path: mbedtls/build/android-arm64-v8a/mbedtls-*.tar.gz
 
   build-apple:
-    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos
-            arch: arm64
-            build_dir: macos-arm64
-            cmake_generator: Ninja
-            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
-          - platform: ios
-            arch: arm64
-            build_dir: ios-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-          - platform: ios-simulator
-            arch: arm64
-            build_dir: ios-simulator-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-
+    name: Build and package Apple arm64 artifacts
     runs-on: macos-15
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Build static libraries
-        run: |
-          cmake -S mbedtls -B mbedtls/build/${{ matrix.build_dir }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            ${{ matrix.cmake_args }} \
-            -G "${{ matrix.cmake_generator }}"
-          cmake --build mbedtls/build/${{ matrix.build_dir }} --config Release
-          cmake --install mbedtls/build/${{ matrix.build_dir }} --config Release --prefix mbedtls/build/${{ matrix.build_dir }}/install
-          bash mbedtls/scripts/package-artifact.sh mbedtls/build/${{ matrix.build_dir }} mbedtls/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - name: Build macOS static libraries
+        uses: ./.github/actions/build-native-library
         with:
-          name: mbedtls-${{ matrix.build_dir }}
-          path: mbedtls/build/${{ matrix.build_dir }}/mbedtls-*.tar.gz
+          source-dir: mbedtls
+          build-dir: mbedtls/build/macos-arm64
+          install-dir: mbedtls/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          package-script: mbedtls/scripts/package-artifact.sh
 
-  package-ios:
-    name: Package iOS XCFramework
-    needs: build-apple
-    runs-on: macos-15
-
-    steps:
-      - name: Download iOS device artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS device static libraries
+        uses: ./.github/actions/build-native-library
         with:
-          name: mbedtls-ios-arm64
-          path: package-input/ios
+          source-dir: mbedtls
+          build-dir: mbedtls/build/ios-arm64
+          install-dir: mbedtls/build/ios-arm64/install
+          platform-arch: ios/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: mbedtls/scripts/package-artifact.sh
 
-      - name: Download iOS simulator artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS simulator static libraries
+        uses: ./.github/actions/build-native-library
         with:
-          name: mbedtls-ios-simulator-arm64
-          path: package-input/ios-simulator
+          source-dir: mbedtls
+          build-dir: mbedtls/build/ios-simulator-arm64
+          install-dir: mbedtls/build/ios-simulator-arm64/install
+          platform-arch: ios-simulator/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: mbedtls/scripts/package-artifact.sh
 
       - name: Create XCFramework
         run: |
-          mkdir -p package-work package-output
-          tar -xzf package-input/ios/mbedtls-ios-arm64.tar.gz -C package-work
-          tar -xzf package-input/ios-simulator/mbedtls-ios-simulator-arm64.tar.gz -C package-work
-
-          device_root="${PWD}/package-work/mbedtls/ios/arm64"
-          simulator_root="${PWD}/package-work/mbedtls/ios-simulator/arm64"
+          device_root="${PWD}/mbedtls/build/ios-arm64/install"
+          simulator_root="${PWD}/mbedtls/build/ios-simulator-arm64/install"
           for library_name in libmbedtls.a libmbedx509.a libmbedcrypto.a; do
             if [ ! -f "${device_root}/lib/${library_name}" ] || [ ! -f "${simulator_root}/lib/${library_name}" ]; then
               echo "Unable to locate ${library_name} in mbedTLS iOS artifacts" >&2
@@ -226,9 +201,9 @@ jobs:
             fi
           done
 
-          mkdir -p package-output/ios package-output/ios-simulator
-          device_lib="${PWD}/package-output/ios/libmbedtls.a"
-          simulator_lib="${PWD}/package-output/ios-simulator/libmbedtls.a"
+          mkdir -p mbedtls/build/package-output/ios mbedtls/build/package-output/ios-simulator
+          device_lib="${PWD}/mbedtls/build/package-output/ios/libmbedtls.a"
+          simulator_lib="${PWD}/mbedtls/build/package-output/ios-simulator/libmbedtls.a"
           libtool -static -o "${device_lib}" \
             "${device_root}/lib/libmbedtls.a" \
             "${device_root}/lib/libmbedx509.a" \
@@ -246,13 +221,29 @@ jobs:
           xcodebuild -create-xcframework \
             -library "${device_lib}" -headers "${device_root}/include" \
             -library "${simulator_lib}" -headers "${simulator_root}/include" \
-            -output package-output/mbedtls-ios.xcframework
+            -output mbedtls/build/mbedtls-ios.xcframework
+          ditto -c -k --sequesterRsrc --keepParent mbedtls/build/mbedtls-ios.xcframework mbedtls/build/mbedtls-ios.xcframework.zip
 
-          cd package-output
-          ditto -c -k --sequesterRsrc --keepParent mbedtls-ios.xcframework mbedtls-ios.xcframework.zip
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mbedtls-macos-arm64
+          path: mbedtls/build/macos-arm64/mbedtls-*.tar.gz
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mbedtls-ios-arm64
+          path: mbedtls/build/ios-arm64/mbedtls-*.tar.gz
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: mbedtls-ios-simulator-arm64
+          path: mbedtls/build/ios-simulator-arm64/mbedtls-*.tar.gz
 
       - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
           name: mbedtls-ios-xcframework
-          path: package-output/mbedtls-ios.xcframework.zip
+          path: mbedtls/build/mbedtls-ios.xcframework.zip
