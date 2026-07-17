@@ -10,6 +10,13 @@ live under that dependency directory.
 The root `deps.yml` is only the compatible bundle index. Keep dependency
 versions, release tags, and paths aligned with the dependency manifests.
 
+Builds that consume another dependency from this repository must use that
+dependency's `release` pin in `deps.yml` by default. Do not resolve the latest
+GitHub release or read a separate dependency manifest as an alternative source
+of truth. Use `.github/scripts/read-deps-release.sh` for shell and workflow
+resolution; explicit workflow inputs may override it only for a deliberate
+release handoff.
+
 ## Layout
 
 - `deps.yml`: bundle index for compatible dependency releases.

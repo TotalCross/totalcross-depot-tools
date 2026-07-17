@@ -19,14 +19,14 @@ on:
     paths:
       - minizip/**
       - zlib/fetch.sh
-      - .github/scripts/latest-release-tag.sh
+      - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip.yml
   pull_request:
     branches: [ master ]
     paths:
       - minizip/**
       - zlib/fetch.sh
-      - .github/scripts/latest-release-tag.sh
+      - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip.yml
 
 env:
@@ -36,7 +36,7 @@ env:
 
 jobs:
   prepare:
-    name: Resolve zlib release
+    name: Resolve compatible zlib release
     runs-on: ubuntu-24.04
     outputs:
       zlib_release_tag: ${{ steps.release.outputs.zlib_release_tag }}
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Resolve zlib release tag
+      - name: Resolve zlib release tag from deps.yml
         id: release
         env:
           REQUESTED_ZLIB_RELEASE_TAG: ${{ inputs.zlib_release_tag }}
@@ -53,7 +53,7 @@ jobs:
           if [ -n "${REQUESTED_ZLIB_RELEASE_TAG}" ]; then
             zlib_release_tag="${REQUESTED_ZLIB_RELEASE_TAG}"
           else
-            zlib_release_tag="$(.github/scripts/latest-release-tag.sh zlib "${ZLIB_VERSION}")"
+            zlib_release_tag="$(.github/scripts/read-deps-release.sh zlib)"
           fi
 
           echo "Using zlib release ${zlib_release_tag}"

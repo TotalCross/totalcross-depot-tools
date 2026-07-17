@@ -19,14 +19,14 @@ on:
     paths:
       - minizip-ng/**
       - zlib-ng/fetch.sh
-      - .github/scripts/latest-release-tag.sh
+      - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip-ng.yml
   pull_request:
     branches: [ master ]
     paths:
       - minizip-ng/**
       - zlib-ng/fetch.sh
-      - .github/scripts/latest-release-tag.sh
+      - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip-ng.yml
 
 env:
@@ -36,7 +36,7 @@ env:
 
 jobs:
   prepare:
-    name: Resolve zlib-ng release
+    name: Resolve compatible zlib-ng release
     runs-on: ubuntu-24.04
     outputs:
       zlib_ng_release_tag: ${{ steps.release.outputs.zlib_ng_release_tag }}
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Resolve zlib-ng release tag
+      - name: Resolve zlib-ng release tag from deps.yml
         id: release
         env:
           REQUESTED_ZLIB_NG_RELEASE_TAG: ${{ inputs.zlib_ng_release_tag }}
@@ -53,7 +53,7 @@ jobs:
           if [ -n "${REQUESTED_ZLIB_NG_RELEASE_TAG}" ]; then
             zlib_ng_release_tag="${REQUESTED_ZLIB_NG_RELEASE_TAG}"
           else
-            zlib_ng_release_tag="$(.github/scripts/latest-release-tag.sh zlib-ng "${ZLIB_NG_VERSION}")"
+            zlib_ng_release_tag="$(.github/scripts/read-deps-release.sh zlib-ng)"
           fi
 
           echo "Using zlib-ng release ${zlib_ng_release_tag}"

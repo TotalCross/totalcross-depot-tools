@@ -9,6 +9,7 @@ on:
     branches: [ main, master ]
     paths:
       - skia/**
+      - deps.yml
       - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - zlib-ng/manifest.yml
@@ -19,6 +20,7 @@ on:
     branches: [ main, master ]
     paths:
       - skia/**
+      - deps.yml
       - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - zlib-ng/manifest.yml

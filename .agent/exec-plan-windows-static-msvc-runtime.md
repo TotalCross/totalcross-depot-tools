@@ -49,8 +49,8 @@ The implementation also audits the Windows assets already published on GitHub, d
 - Observation: Skia is not built by CMake. Its Windows configuration is generated in `skia/scripts/common.sh`, so the CMake policy cannot affect it.
   Evidence: `windows_gn_args` emits GN arguments and `build_skia_windows` invokes the GN/Ninja path.
 
-- Observation: Skia does not automatically choose the latest `zlib-ng` and `libpng` releases. `skia/scripts/fetch-prebuilt-deps.sh` reads the `release:` values in `zlib-ng/manifest.yml` and `libpng/manifest.yml`.
-  Evidence: the script calls `read_release` for both manifests before invoking each dependency's `fetch.sh`.
+- Observation: Skia and every other build that consumes a repository artifact resolve the compatible `release` pin from `deps.yml`.
+  Evidence: `.github/scripts/read-deps-release.sh` is used by `skia/scripts/fetch-prebuilt-deps.sh` and the libpng, minizip, and minizip-ng build workflows.
 
 - Observation: `libpng` is built against released `zlib-ng` prebuilts, and Skia is built against released `zlib-ng` and `libpng` prebuilts.
   Evidence: `.github/workflows/build-libpng.yml`, `.github/workflows/build-skia.yml`, and the corresponding fetch scripts.
@@ -103,6 +103,10 @@ Add new discoveries here as they are observed. Each entry must include a short c
 - Decision: commit and push the correction before dispatching any release workflow.
   Rationale: every replacement release tag must contain the correction commit in its history, and every release build must execute the corrected workflow and verifier.
   Date/Author: 2026-07-17 / plan author.
+
+- Decision: `deps.yml` is the default source of release pins for all internal build dependencies.
+  Rationale: the bundle index defines the compatible set; independently selecting a newer release can produce an untested combination.
+  Date/Author: 2026-07-17 / plan executor.
 
 ## Outcomes & Retrospective
 

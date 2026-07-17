@@ -13,19 +13,14 @@ ROOT_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 PLATFORM="$1"
 ARCH="$2"
 
-read_release() {
-  local manifest="$1"
-  awk '/^release:[[:space:]]*/ { print $2; exit }' "$manifest"
-}
-
 fetch_required() {
   local dep="$1"
   local token_env="$2"
   local release_tag
 
-  release_tag=$(read_release "$ROOT_DIR/$dep/manifest.yml")
+  release_tag=$(bash "$ROOT_DIR/.github/scripts/read-deps-release.sh" "$dep")
   if [[ -z "$release_tag" ]]; then
-    echo "error: could not read release tag for $dep" >&2
+    echo "error: could not read compatible release tag for $dep from deps.yml" >&2
     exit 1
   fi
 

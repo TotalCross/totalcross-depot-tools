@@ -8,6 +8,10 @@ packaging and CMake consumption files.
 
 - `deps.yml`: compatible dependency bundle index.
 - `<dependency>/manifest.yml`: source version, build flags and artifact names.
+
+When one dependency build consumes another repository artifact, it resolves the
+compatible release pin from `deps.yml`. This keeps Skia, libpng, minizip, and
+minizip-ng aligned with the bundle rather than selecting the newest release.
 - `<dependency>/fetch.sh`: downloads or stages the dependency sources.
 - `<dependency>/CMakeLists.txt`: builds the dependency in isolation.
 - `<dependency>/cmake`: CMake modules used by TotalCross consumers.
