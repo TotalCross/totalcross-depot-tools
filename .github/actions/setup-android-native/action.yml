@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Setup preinstalled Android native toolchain
+description: Verify and expose the NDK already present on GitHub's hosted image.
+inputs:
+  ndk-version:
+    description: Installed NDK version to use.
+    required: false
+    default: 28.2.13676358
+outputs:
+  ndk-path:
+    description: Absolute path to the verified NDK.
+    value: ${{ steps.resolve.outputs.ndk-path }}
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        REQUESTED_NDK_VERSION: ${{ inputs.ndk-version }}
+      run: |
+        ndk_path="${ANDROID_HOME}/ndk/${REQUESTED_NDK_VERSION}"
+        toolchain="${ndk_path}/build/cmake/android.toolchain.cmake"
+        if [ ! -d "${ndk_path}" ] || [ ! -f "${toolchain}" ]; then
+          echo "Android NDK ${REQUESTED_NDK_VERSION} is not preinstalled at ${ndk_path}. Restore an explicit sdkmanager installation only after updating this action and documenting the hosted-image change." >&2
+          exit 1
+        fi
+        printf 'ANDROID_NDK_HOME=%s\nANDROID_NDK_ROOT=%s\nNDK_BUNDLE=%s\n' "${ndk_path}" "${ndk_path}" "${ndk_path}" >> "$GITHUB_ENV"
+        echo "ndk-path=${ndk_path}" >> "$GITHUB_OUTPUT"
+        cmake --version
+        ninja --version

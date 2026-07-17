@@ -48,7 +48,7 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Build, test, install, and package
         run: |
-          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v1.0.7 bash -lc '
+          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.0 bash -lc '
             cmake -S /sources/sljit -B /sources/sljit/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -G Ninja &&
             cmake --build /sources/sljit/build/${{ matrix.project }} &&
             ctest --test-dir /sources/sljit/build/${{ matrix.project }} --output-on-failure &&
@@ -117,10 +117,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-      - run: sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+      - uses: ./.github/actions/setup-android-native
       - name: Build, link, install, and package
         run: |
           build_dir=sljit/build/android-arm64-v8a

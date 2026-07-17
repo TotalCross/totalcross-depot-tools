@@ -8,7 +8,7 @@ on:
       tag:
         description: Docker image tag to publish
         required: true
-        default: v1.0.7
+        default: v2.0.0
       push_latest:
         description: Also publish the latest tag
         required: true
@@ -33,18 +33,53 @@ jobs:
           - image: totalcross/linux-arm64
             dockerfile: docker/linux-arm64/Dockerfile
             platform: linux/arm64
+          - image: totalcross/skia-linux-amd64
+            dockerfile: docker/skia-linux-amd64/Dockerfile
+            platform: linux/amd64
 
     steps:
+      - name: Check whether versioned image is already published
+        id: image-exists
+        shell: bash
+        env:
+          IMAGE: ${{ matrix.image }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          response_file="$(mktemp)"
+          trap 'rm -f "${response_file}"' EXIT
+          status="$(curl --silent --show-error --output "${response_file}" --write-out '%{http_code}' \
+            --header 'Accept: application/json' \
+            "https://hub.docker.com/v2/repositories/${IMAGE}/tags/${TAG}")"
+          case "${status}" in
+            200)
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              echo "${IMAGE}:${TAG} is already published; skipping build and push."
+              ;;
+            404)
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "${IMAGE}:${TAG} is not published; building it."
+              ;;
+            *)
+              echo "Could not determine whether ${IMAGE}:${TAG} exists (Docker Hub returned HTTP ${status})." >&2
+              cat "${response_file}" >&2
+              exit 1
+              ;;
+          esac
+
       - name: Checkout source code
+        if: steps.image-exists.outputs.exists == 'false'
         uses: actions/checkout@v6
 
       - name: Set up QEMU
+        if: steps.image-exists.outputs.exists == 'false'
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
+        if: steps.image-exists.outputs.exists == 'false'
         uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
+        if: steps.image-exists.outputs.exists == 'false'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -52,6 +87,7 @@ jobs:
 
       - name: Build image tags
         id: image-tags
+        if: steps.image-exists.outputs.exists == 'false'
         shell: bash
         run: |
           tags="${{ matrix.image }}:${{ inputs.tag }}"
@@ -61,6 +97,7 @@ jobs:
           echo "tags=${tags}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image
+        if: steps.image-exists.outputs.exists == 'false'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -68,3 +105,16 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.image-tags.outputs.tags }}
+          cache-from: type=registry,ref=${{ matrix.image }}:buildcache
+          cache-to: type=registry,ref=${{ matrix.image }}:buildcache,mode=max
+
+      - name: Record publication decision
+        if: always() && steps.image-exists.outcome == 'success'
+        run: |
+          if [ "${{ steps.image-exists.outputs.exists }}" = "true" ]; then
+            echo "### Docker image skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "${{ matrix.image }}:${{ inputs.tag }} was already published." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Docker image published" >> "$GITHUB_STEP_SUMMARY"
+            echo "${{ matrix.image }}:${{ inputs.tag }} was built and pushed." >> "$GITHUB_STEP_SUMMARY"
+          fi

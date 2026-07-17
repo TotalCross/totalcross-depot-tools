@@ -1,0 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+dependencies:
+  libpng: {version: 1.6.49, release: libpng-1.6.49-r1, path: libpng}

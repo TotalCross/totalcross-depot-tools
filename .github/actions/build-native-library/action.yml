@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Build and package native CMake library
+description: Configure, build, install and package one repository dependency.
+inputs:
+  source-dir: { required: true }
+  build-dir: { required: true }
+  install-dir: { required: true }
+  platform-arch: { required: true }
+  generator: { required: false, default: Ninja }
+  cmake-args: { required: false, default: '' }
+  package-script: { required: true }
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        cmake -S "${{ inputs.source-dir }}" -B "${{ inputs.build-dir }}" -DCMAKE_BUILD_TYPE=Release ${{ inputs.cmake-args }} -G "${{ inputs.generator }}"
+        cmake --build "${{ inputs.build-dir }}" --config Release
+        cmake --install "${{ inputs.build-dir }}" --config Release --prefix "${{ inputs.install-dir }}"
+        bash "${{ inputs.package-script }}" "${{ inputs.build-dir }}" "${{ inputs.install-dir }}" "${{ inputs.platform-arch }}"

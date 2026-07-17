@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: MIT
 FROM ubuntu:bionic
 
-MAINTAINER Allan César "acmlira@gmail.com"
-
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    build-essential ca-certificates ccache cmake curl git ninja-build rsync && \
+    build-essential ca-certificates ccache cmake curl git \
+    gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+    ninja-build python3 rsync && \
     rm -rf /var/lib/apt/lists/*
-ENV BUILD_FOLDER /build
 
-WORKDIR ${BUILD_FOLDER}
+WORKDIR /build

@@ -1,0 +1,1768 @@
+{
+  "workflow": "Build Skia static libraries",
+  "run_id": 29612356263,
+  "event": "push",
+  "head_sha": "3f23d8d11815ff74439833866cb10a3dd10f0463",
+  "attempt": 1,
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-07-17T20:45:29Z",
+  "started_at": "2026-07-17T20:45:29Z",
+  "updated_at": "2026-07-17T20:57:56Z",
+  "queue_seconds": 0.0,
+  "elapsed_seconds": 747.0,
+  "runner_jobs": 14,
+  "jobs": [
+    {
+      "name": "Build windows/x64",
+      "runner": "GitHub Actions 1000004317",
+      "labels": [
+        "windows-2022"
+      ],
+      "started_at": "2026-07-17T20:45:32Z",
+      "completed_at": "2026-07-17T20:57:15Z",
+      "elapsed_seconds": 703.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:33Z",
+          "completed_at": "2026-07-17T20:45:34Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:38Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:38Z",
+          "completed_at": "2026-07-17T20:45:41Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:41Z",
+          "completed_at": "2026-07-17T20:45:54Z",
+          "conclusion": "success",
+          "elapsed_seconds": 13.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:45:54Z",
+          "completed_at": "2026-07-17T20:45:56Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:45:56Z",
+          "completed_at": "2026-07-17T20:46:04Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:46:04Z",
+          "completed_at": "2026-07-17T20:57:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 658.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:57:02Z",
+          "completed_at": "2026-07-17T20:57:02Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:57:02Z",
+          "completed_at": "2026-07-17T20:57:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify static MSVC runtime",
+          "started_at": "2026-07-17T20:57:02Z",
+          "completed_at": "2026-07-17T20:57:10Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:57:10Z",
+          "completed_at": "2026-07-17T20:57:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:57:12Z",
+          "completed_at": "2026-07-17T20:57:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:57:12Z",
+          "completed_at": "2026-07-17T20:57:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:57:13Z",
+          "completed_at": "2026-07-17T20:57:15Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:57:15Z",
+          "completed_at": "2026-07-17T20:57:15Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build windows/x86",
+      "runner": "GitHub Actions 1000004318",
+      "labels": [
+        "windows-2022"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:57:03Z",
+      "elapsed_seconds": 690.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:35Z",
+          "completed_at": "2026-07-17T20:45:39Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:39Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 17.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:45:59Z",
+          "completed_at": "2026-07-17T20:46:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:46:01Z",
+          "completed_at": "2026-07-17T20:46:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 11.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:46:12Z",
+          "completed_at": "2026-07-17T20:56:54Z",
+          "conclusion": "success",
+          "elapsed_seconds": 642.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:56:54Z",
+          "completed_at": "2026-07-17T20:56:54Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:56:54Z",
+          "completed_at": "2026-07-17T20:56:54Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify static MSVC runtime",
+          "started_at": "2026-07-17T20:56:54Z",
+          "completed_at": "2026-07-17T20:56:56Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:56:56Z",
+          "completed_at": "2026-07-17T20:56:58Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:56:58Z",
+          "completed_at": "2026-07-17T20:56:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:56:59Z",
+          "completed_at": "2026-07-17T20:57:00Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:57:00Z",
+          "completed_at": "2026-07-17T20:57:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:57:02Z",
+          "completed_at": "2026-07-17T20:57:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build macos/arm64",
+      "runner": "GitHub Actions 1000004311",
+      "labels": [
+        "macos-15"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:51:19Z",
+      "elapsed_seconds": 346.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:33Z",
+          "completed_at": "2026-07-17T20:45:34Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:36Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:36Z",
+          "completed_at": "2026-07-17T20:45:39Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:39Z",
+          "completed_at": "2026-07-17T20:45:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:45:43Z",
+          "completed_at": "2026-07-17T20:45:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:45:44Z",
+          "completed_at": "2026-07-17T20:45:54Z",
+          "conclusion": "success",
+          "elapsed_seconds": 10.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:45:54Z",
+          "completed_at": "2026-07-17T20:51:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 318.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:51:12Z",
+          "completed_at": "2026-07-17T20:51:12Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:51:12Z",
+          "completed_at": "2026-07-17T20:51:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:51:12Z",
+          "completed_at": "2026-07-17T20:51:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:51:14Z",
+          "completed_at": "2026-07-17T20:51:15Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:51:15Z",
+          "completed_at": "2026-07-17T20:51:15Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:51:15Z",
+          "completed_at": "2026-07-17T20:51:16Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:51:16Z",
+          "completed_at": "2026-07-17T20:51:17Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        }
+      ]
+    },
+    {
+      "name": "Build ios-simulator/arm64",
+      "runner": "GitHub Actions 1000004312",
+      "labels": [
+        "macos-15"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:52:37Z",
+      "elapsed_seconds": 424.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:33Z",
+          "completed_at": "2026-07-17T20:45:33Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:33Z",
+          "completed_at": "2026-07-17T20:45:36Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:36Z",
+          "completed_at": "2026-07-17T20:45:37Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:37Z",
+          "completed_at": "2026-07-17T20:45:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:45:44Z",
+          "completed_at": "2026-07-17T20:45:45Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:45:45Z",
+          "completed_at": "2026-07-17T20:45:55Z",
+          "conclusion": "success",
+          "elapsed_seconds": 10.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:45:55Z",
+          "completed_at": "2026-07-17T20:52:29Z",
+          "conclusion": "success",
+          "elapsed_seconds": 394.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:52:29Z",
+          "completed_at": "2026-07-17T20:52:29Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:52:29Z",
+          "completed_at": "2026-07-17T20:52:29Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:52:29Z",
+          "completed_at": "2026-07-17T20:52:31Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:52:31Z",
+          "completed_at": "2026-07-17T20:52:31Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:52:31Z",
+          "completed_at": "2026-07-17T20:52:32Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:52:32Z",
+          "completed_at": "2026-07-17T20:52:32Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:52:32Z",
+          "completed_at": "2026-07-17T20:52:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "name": "Build ios/arm64",
+      "runner": "GitHub Actions 1000004310",
+      "labels": [
+        "macos-15"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:51:14Z",
+      "elapsed_seconds": 341.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:35Z",
+          "completed_at": "2026-07-17T20:45:37Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:37Z",
+          "completed_at": "2026-07-17T20:45:40Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:40Z",
+          "completed_at": "2026-07-17T20:45:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:45:43Z",
+          "completed_at": "2026-07-17T20:45:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:45:44Z",
+          "completed_at": "2026-07-17T20:45:55Z",
+          "conclusion": "success",
+          "elapsed_seconds": 11.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:45:55Z",
+          "completed_at": "2026-07-17T20:51:05Z",
+          "conclusion": "success",
+          "elapsed_seconds": 310.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:51:05Z",
+          "completed_at": "2026-07-17T20:51:05Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:51:05Z",
+          "completed_at": "2026-07-17T20:51:05Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:51:05Z",
+          "completed_at": "2026-07-17T20:51:08Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:51:08Z",
+          "completed_at": "2026-07-17T20:51:09Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:51:09Z",
+          "completed_at": "2026-07-17T20:51:10Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:51:10Z",
+          "completed_at": "2026-07-17T20:51:10Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:51:10Z",
+          "completed_at": "2026-07-17T20:51:11Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        }
+      ]
+    },
+    {
+      "name": "Build windows/arm64",
+      "runner": "GitHub Actions 1000004316",
+      "labels": [
+        "windows-11-arm"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:57:31Z",
+      "elapsed_seconds": 718.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:35Z",
+          "completed_at": "2026-07-17T20:45:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 9.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:45:44Z",
+          "completed_at": "2026-07-17T20:45:52Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:45:52Z",
+          "completed_at": "2026-07-17T20:46:26Z",
+          "conclusion": "success",
+          "elapsed_seconds": 34.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:46:26Z",
+          "completed_at": "2026-07-17T20:46:31Z",
+          "conclusion": "success",
+          "elapsed_seconds": 5.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:46:31Z",
+          "completed_at": "2026-07-17T20:46:51Z",
+          "conclusion": "success",
+          "elapsed_seconds": 20.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:46:51Z",
+          "completed_at": "2026-07-17T20:57:09Z",
+          "conclusion": "success",
+          "elapsed_seconds": 618.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:57:09Z",
+          "completed_at": "2026-07-17T20:57:09Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:57:09Z",
+          "completed_at": "2026-07-17T20:57:10Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Verify static MSVC runtime",
+          "started_at": "2026-07-17T20:57:10Z",
+          "completed_at": "2026-07-17T20:57:18Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:57:18Z",
+          "completed_at": "2026-07-17T20:57:21Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:57:21Z",
+          "completed_at": "2026-07-17T20:57:23Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:57:23Z",
+          "completed_at": "2026-07-17T20:57:23Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:57:23Z",
+          "completed_at": "2026-07-17T20:57:29Z",
+          "conclusion": "success",
+          "elapsed_seconds": 6.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:57:29Z",
+          "completed_at": "2026-07-17T20:57:29Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Prepare Skia source dependencies",
+      "runner": "GitHub Actions 1000004313",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "started_at": "2026-07-17T20:45:33Z",
+      "completed_at": "2026-07-17T20:45:45Z",
+      "elapsed_seconds": 12.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:34Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:45:34Z",
+          "completed_at": "2026-07-17T20:45:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Compute Skia source cache key",
+          "started_at": "2026-07-17T20:45:35Z",
+          "completed_at": "2026-07-17T20:45:35Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:45:35Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Fetch pinned Skia sources",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Sync Skia dependencies",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Package Skia source archive",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:42Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:45:42Z",
+          "completed_at": "2026-07-17T20:45:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:45:43Z",
+          "completed_at": "2026-07-17T20:45:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build android/arm64-v8a",
+      "runner": "GitHub Actions 1000004337",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "started_at": "2026-07-17T20:46:07Z",
+      "completed_at": "2026-07-17T20:47:01Z",
+      "elapsed_seconds": 54.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:46:08Z",
+          "completed_at": "2026-07-17T20:46:09Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:46:09Z",
+          "completed_at": "2026-07-17T20:46:10Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:46:10Z",
+          "completed_at": "2026-07-17T20:46:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:46:12Z",
+          "completed_at": "2026-07-17T20:46:28Z",
+          "conclusion": "success",
+          "elapsed_seconds": 16.0
+        },
+        {
+          "name": "Setup Android SDK",
+          "started_at": "2026-07-17T20:46:28Z",
+          "completed_at": "2026-07-17T20:46:37Z",
+          "conclusion": "success",
+          "elapsed_seconds": 9.0
+        },
+        {
+          "name": "Install Android NDK",
+          "started_at": "2026-07-17T20:46:37Z",
+          "completed_at": "2026-07-17T20:46:41Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:46:41Z",
+          "completed_at": "2026-07-17T20:46:41Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:46:41Z",
+          "completed_at": "2026-07-17T20:46:45Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Extract Skia source archive",
+          "started_at": "2026-07-17T20:46:45Z",
+          "completed_at": "2026-07-17T20:46:48Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch native depot_tools",
+          "started_at": "2026-07-17T20:46:48Z",
+          "completed_at": "2026-07-17T20:46:50Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:46:50Z",
+          "completed_at": "2026-07-17T20:46:57Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:46:57Z",
+          "completed_at": "2026-07-17T20:46:57Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:46:57Z",
+          "completed_at": "2026-07-17T20:46:57Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:46:57Z",
+          "completed_at": "2026-07-17T20:46:58Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:46:58Z",
+          "completed_at": "2026-07-17T20:46:58Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:46:58Z",
+          "completed_at": "2026-07-17T20:46:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:46:59Z",
+          "completed_at": "2026-07-17T20:46:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:46:59Z",
+          "completed_at": "2026-07-17T20:46:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:46:59Z",
+          "completed_at": "2026-07-17T20:46:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build wasm/wasm32",
+      "runner": "GitHub Actions 1000004338",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "started_at": "2026-07-17T20:46:09Z",
+      "completed_at": "2026-07-17T20:55:48Z",
+      "elapsed_seconds": 579.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:46:10Z",
+          "completed_at": "2026-07-17T20:46:11Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:46:11Z",
+          "completed_at": "2026-07-17T20:46:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:46:12Z",
+          "completed_at": "2026-07-17T20:46:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Install build tools",
+          "started_at": "2026-07-17T20:46:14Z",
+          "completed_at": "2026-07-17T20:46:23Z",
+          "conclusion": "success",
+          "elapsed_seconds": 9.0
+        },
+        {
+          "name": "Setup Emscripten",
+          "started_at": "2026-07-17T20:46:23Z",
+          "completed_at": "2026-07-17T20:46:51Z",
+          "conclusion": "success",
+          "elapsed_seconds": 28.0
+        },
+        {
+          "name": "Restore Skia source archive",
+          "started_at": "2026-07-17T20:46:51Z",
+          "completed_at": "2026-07-17T20:46:56Z",
+          "conclusion": "success",
+          "elapsed_seconds": 5.0
+        },
+        {
+          "name": "Extract Skia source archive",
+          "started_at": "2026-07-17T20:46:56Z",
+          "completed_at": "2026-07-17T20:47:00Z",
+          "conclusion": "success",
+          "elapsed_seconds": 4.0
+        },
+        {
+          "name": "Fetch native depot_tools",
+          "started_at": "2026-07-17T20:47:00Z",
+          "completed_at": "2026-07-17T20:47:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:47:01Z",
+          "completed_at": "2026-07-17T20:55:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 522.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:55:43Z",
+          "completed_at": "2026-07-17T20:55:43Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:55:43Z",
+          "completed_at": "2026-07-17T20:55:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:55:43Z",
+          "completed_at": "2026-07-17T20:55:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:55:44Z",
+          "completed_at": "2026-07-17T20:55:45Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore Skia source archive",
+          "started_at": "2026-07-17T20:55:45Z",
+          "completed_at": "2026-07-17T20:55:45Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:55:45Z",
+          "completed_at": "2026-07-17T20:55:45Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:55:45Z",
+          "completed_at": "2026-07-17T20:55:46Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:55:46Z",
+          "completed_at": "2026-07-17T20:55:46Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build linux/armv7l",
+      "runner": "GitHub Actions 1000004335",
+      "labels": [
+        "ubuntu-22.04"
+      ],
+      "started_at": "2026-07-17T20:45:58Z",
+      "completed_at": "2026-07-17T20:48:03Z",
+      "elapsed_seconds": 125.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:45:59Z",
+          "completed_at": "2026-07-17T20:46:00Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:46:00Z",
+          "completed_at": "2026-07-17T20:46:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:46:01Z",
+          "completed_at": "2026-07-17T20:46:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Allow multiarch",
+          "started_at": "2026-07-17T20:46:02Z",
+          "completed_at": "2026-07-17T20:46:08Z",
+          "conclusion": "success",
+          "elapsed_seconds": 6.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:46:08Z",
+          "completed_at": "2026-07-17T20:46:08Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:46:08Z",
+          "completed_at": "2026-07-17T20:46:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 5.0
+        },
+        {
+          "name": "Extract Skia source archive",
+          "started_at": "2026-07-17T20:46:13Z",
+          "completed_at": "2026-07-17T20:46:16Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch native depot_tools",
+          "started_at": "2026-07-17T20:46:16Z",
+          "completed_at": "2026-07-17T20:46:18Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Install host GN tools",
+          "started_at": "2026-07-17T20:46:18Z",
+          "completed_at": "2026-07-17T20:47:03Z",
+          "conclusion": "success",
+          "elapsed_seconds": 45.0
+        },
+        {
+          "name": "Generate Ninja files",
+          "started_at": "2026-07-17T20:47:03Z",
+          "completed_at": "2026-07-17T20:47:04Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Generate Ninja files in amd64 container",
+          "started_at": "2026-07-17T20:47:04Z",
+          "completed_at": "2026-07-17T20:47:04Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:47:04Z",
+          "completed_at": "2026-07-17T20:47:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 55.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:47:59Z",
+          "completed_at": "2026-07-17T20:47:59Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:47:59Z",
+          "completed_at": "2026-07-17T20:47:59Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:47:59Z",
+          "completed_at": "2026-07-17T20:48:00Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:48:00Z",
+          "completed_at": "2026-07-17T20:48:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:48:01Z",
+          "completed_at": "2026-07-17T20:48:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:48:01Z",
+          "completed_at": "2026-07-17T20:48:01Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:48:01Z",
+          "completed_at": "2026-07-17T20:48:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:48:02Z",
+          "completed_at": "2026-07-17T20:48:02Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build linux/x86_64",
+      "runner": "GitHub Actions 1000004339",
+      "labels": [
+        "ubuntu-22.04"
+      ],
+      "started_at": "2026-07-17T20:46:14Z",
+      "completed_at": "2026-07-17T20:47:16Z",
+      "elapsed_seconds": 62.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:46:15Z",
+          "completed_at": "2026-07-17T20:46:16Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:46:16Z",
+          "completed_at": "2026-07-17T20:46:17Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:46:17Z",
+          "completed_at": "2026-07-17T20:46:20Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Allow multiarch",
+          "started_at": "2026-07-17T20:46:20Z",
+          "completed_at": "2026-07-17T20:46:20Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:46:20Z",
+          "completed_at": "2026-07-17T20:46:20Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:46:20Z",
+          "completed_at": "2026-07-17T20:46:28Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Extract Skia source archive",
+          "started_at": "2026-07-17T20:46:28Z",
+          "completed_at": "2026-07-17T20:46:31Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch native depot_tools",
+          "started_at": "2026-07-17T20:46:31Z",
+          "completed_at": "2026-07-17T20:46:33Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Install host GN tools",
+          "started_at": "2026-07-17T20:46:33Z",
+          "completed_at": "2026-07-17T20:46:53Z",
+          "conclusion": "success",
+          "elapsed_seconds": 20.0
+        },
+        {
+          "name": "Generate Ninja files",
+          "started_at": "2026-07-17T20:46:53Z",
+          "completed_at": "2026-07-17T20:46:53Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Generate Ninja files in amd64 container",
+          "started_at": "2026-07-17T20:46:53Z",
+          "completed_at": "2026-07-17T20:46:53Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:46:53Z",
+          "completed_at": "2026-07-17T20:47:09Z",
+          "conclusion": "success",
+          "elapsed_seconds": 16.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:47:09Z",
+          "completed_at": "2026-07-17T20:47:09Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:47:09Z",
+          "completed_at": "2026-07-17T20:47:09Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:47:09Z",
+          "completed_at": "2026-07-17T20:47:12Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:47:12Z",
+          "completed_at": "2026-07-17T20:47:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:47:13Z",
+          "completed_at": "2026-07-17T20:47:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:47:13Z",
+          "completed_at": "2026-07-17T20:47:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:47:13Z",
+          "completed_at": "2026-07-17T20:47:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:47:14Z",
+          "completed_at": "2026-07-17T20:47:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Build linux/aarch64",
+      "runner": "GitHub Actions 1000004340",
+      "labels": [
+        "ubuntu-22.04"
+      ],
+      "started_at": "2026-07-17T20:46:17Z",
+      "completed_at": "2026-07-17T20:47:43Z",
+      "elapsed_seconds": 86.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:46:19Z",
+          "completed_at": "2026-07-17T20:46:20Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:46:20Z",
+          "completed_at": "2026-07-17T20:46:21Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore ccache",
+          "started_at": "2026-07-17T20:46:21Z",
+          "completed_at": "2026-07-17T20:46:28Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Allow multiarch",
+          "started_at": "2026-07-17T20:46:28Z",
+          "completed_at": "2026-07-17T20:46:28Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Fetch zlib-ng/libpng prebuilts",
+          "started_at": "2026-07-17T20:46:28Z",
+          "completed_at": "2026-07-17T20:46:29Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:46:29Z",
+          "completed_at": "2026-07-17T20:46:37Z",
+          "conclusion": "success",
+          "elapsed_seconds": 8.0
+        },
+        {
+          "name": "Extract Skia source archive",
+          "started_at": "2026-07-17T20:46:37Z",
+          "completed_at": "2026-07-17T20:46:40Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch native depot_tools",
+          "started_at": "2026-07-17T20:46:40Z",
+          "completed_at": "2026-07-17T20:46:42Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Install host GN tools",
+          "started_at": "2026-07-17T20:46:42Z",
+          "completed_at": "2026-07-17T20:47:07Z",
+          "conclusion": "success",
+          "elapsed_seconds": 25.0
+        },
+        {
+          "name": "Generate Ninja files",
+          "started_at": "2026-07-17T20:47:07Z",
+          "completed_at": "2026-07-17T20:47:08Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Generate Ninja files in amd64 container",
+          "started_at": "2026-07-17T20:47:08Z",
+          "completed_at": "2026-07-17T20:47:08Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Build static library",
+          "started_at": "2026-07-17T20:47:08Z",
+          "completed_at": "2026-07-17T20:47:34Z",
+          "conclusion": "success",
+          "elapsed_seconds": 26.0
+        },
+        {
+          "name": "Print build summary on failure",
+          "started_at": "2026-07-17T20:47:34Z",
+          "completed_at": "2026-07-17T20:47:34Z",
+          "conclusion": "skipped",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:47:34Z",
+          "completed_at": "2026-07-17T20:47:34Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:47:34Z",
+          "completed_at": "2026-07-17T20:47:37Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Upload diagnostics",
+          "started_at": "2026-07-17T20:47:37Z",
+          "completed_at": "2026-07-17T20:47:38Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Restore Skia source archive cache",
+          "started_at": "2026-07-17T20:47:38Z",
+          "completed_at": "2026-07-17T20:47:38Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Post Restore ccache",
+          "started_at": "2026-07-17T20:47:38Z",
+          "completed_at": "2026-07-17T20:47:39Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:47:39Z",
+          "completed_at": "2026-07-17T20:47:39Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:47:39Z",
+          "completed_at": "2026-07-17T20:47:39Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "Package iOS XCFramework and headers",
+      "runner": "GitHub Actions 1000004361",
+      "labels": [
+        "macos-15"
+      ],
+      "started_at": "2026-07-17T20:52:40Z",
+      "completed_at": "2026-07-17T20:53:24Z",
+      "elapsed_seconds": 44.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:52:41Z",
+          "completed_at": "2026-07-17T20:52:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        },
+        {
+          "name": "Checkout source code",
+          "started_at": "2026-07-17T20:52:43Z",
+          "completed_at": "2026-07-17T20:52:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Download iOS device artifact",
+          "started_at": "2026-07-17T20:52:44Z",
+          "completed_at": "2026-07-17T20:52:47Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Download iOS simulator artifact",
+          "started_at": "2026-07-17T20:52:47Z",
+          "completed_at": "2026-07-17T20:52:50Z",
+          "conclusion": "success",
+          "elapsed_seconds": 3.0
+        },
+        {
+          "name": "Fetch pinned Skia sources for headers",
+          "started_at": "2026-07-17T20:52:50Z",
+          "completed_at": "2026-07-17T20:53:05Z",
+          "conclusion": "success",
+          "elapsed_seconds": 15.0
+        },
+        {
+          "name": "Stage development headers",
+          "started_at": "2026-07-17T20:53:05Z",
+          "completed_at": "2026-07-17T20:53:06Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Package XCFramework",
+          "started_at": "2026-07-17T20:53:06Z",
+          "completed_at": "2026-07-17T20:53:13Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Package dev headers",
+          "started_at": "2026-07-17T20:53:13Z",
+          "completed_at": "2026-07-17T20:53:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Verify artifacts",
+          "started_at": "2026-07-17T20:53:14Z",
+          "completed_at": "2026-07-17T20:53:14Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        },
+        {
+          "name": "Upload artifact",
+          "started_at": "2026-07-17T20:53:14Z",
+          "completed_at": "2026-07-17T20:53:19Z",
+          "conclusion": "success",
+          "elapsed_seconds": 5.0
+        },
+        {
+          "name": "Post Checkout source code",
+          "started_at": "2026-07-17T20:53:19Z",
+          "completed_at": "2026-07-17T20:53:20Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:53:20Z",
+          "completed_at": "2026-07-17T20:53:22Z",
+          "conclusion": "success",
+          "elapsed_seconds": 2.0
+        }
+      ]
+    },
+    {
+      "name": "Package release assets",
+      "runner": "GitHub Actions 1000004381",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "started_at": "2026-07-17T20:57:34Z",
+      "completed_at": "2026-07-17T20:57:55Z",
+      "elapsed_seconds": 21.0,
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "started_at": "2026-07-17T20:57:35Z",
+          "completed_at": "2026-07-17T20:57:36Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Download build artifacts",
+          "started_at": "2026-07-17T20:57:36Z",
+          "completed_at": "2026-07-17T20:57:43Z",
+          "conclusion": "success",
+          "elapsed_seconds": 7.0
+        },
+        {
+          "name": "Generate SHA256SUMS",
+          "started_at": "2026-07-17T20:57:43Z",
+          "completed_at": "2026-07-17T20:57:44Z",
+          "conclusion": "success",
+          "elapsed_seconds": 1.0
+        },
+        {
+          "name": "Upload release assets",
+          "started_at": "2026-07-17T20:57:44Z",
+          "completed_at": "2026-07-17T20:57:53Z",
+          "conclusion": "success",
+          "elapsed_seconds": 9.0
+        },
+        {
+          "name": "Complete job",
+          "started_at": "2026-07-17T20:57:53Z",
+          "completed_at": "2026-07-17T20:57:53Z",
+          "conclusion": "success",
+          "elapsed_seconds": 0.0
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "skia-release-assets",
+      "size_in_bytes": 87551373
+    },
+    {
+      "name": "skia-diagnostics-windows-arm64",
+      "size_in_bytes": 40417
+    },
+    {
+      "name": "skia-windows-arm64",
+      "size_in_bytes": 8121202
+    },
+    {
+      "name": "skia-diagnostics-windows-x64",
+      "size_in_bytes": 39292
+    },
+    {
+      "name": "skia-windows-x64",
+      "size_in_bytes": 9745152
+    },
+    {
+      "name": "skia-diagnostics-windows-x86",
+      "size_in_bytes": 40230
+    },
+    {
+      "name": "skia-windows-x86",
+      "size_in_bytes": 6950255
+    },
+    {
+      "name": "skia-diagnostics-wasm-wasm32",
+      "size_in_bytes": 38512
+    },
+    {
+      "name": "skia-wasm-wasm32",
+      "size_in_bytes": 3723641
+    },
+    {
+      "name": "skia-ios-package",
+      "size_in_bytes": 31215426
+    },
+    {
+      "name": "skia-diagnostics-ios-simulator-arm64",
+      "size_in_bytes": 100821
+    },
+    {
+      "name": "skia-ios-simulator-arm64",
+      "size_in_bytes": 7422945
+    },
+    {
+      "name": "skia-diagnostics-macos-arm64",
+      "size_in_bytes": 89806
+    },
+    {
+      "name": "skia-macos-arm64",
+      "size_in_bytes": 3932460
+    },
+    {
+      "name": "skia-diagnostics-ios-arm64",
+      "size_in_bytes": 98639
+    },
+    {
+      "name": "skia-ios-arm64",
+      "size_in_bytes": 7415261
+    },
+    {
+      "name": "skia-diagnostics-linux-armv7l",
+      "size_in_bytes": 38673
+    },
+    {
+      "name": "skia-linux-arm32v7",
+      "size_in_bytes": 5323327
+    },
+    {
+      "name": "skia-diagnostics-linux-aarch64",
+      "size_in_bytes": 37833
+    },
+    {
+      "name": "skia-linux-arm64",
+      "size_in_bytes": 5874951
+    },
+    {
+      "name": "skia-diagnostics-linux-x86_64",
+      "size_in_bytes": 38355
+    },
+    {
+      "name": "skia-linux-amd64",
+      "size_in_bytes": 6392510
+    },
+    {
+      "name": "skia-diagnostics-android-arm64-v8a",
+      "size_in_bytes": 43239
+    },
+    {
+      "name": "skia-android-arm64-v8a",
+      "size_in_bytes": 5700403
+    }
+  ],
+  "cache_status": "not available from the Actions run API"
+}

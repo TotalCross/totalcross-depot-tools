@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Release small libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      components:
+        description: Comma-separated components or all
+        default: all
+        required: true
+        type: string
+      publish:
+        description: Publish separate releases after dry-run validation
+        default: false
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          COMPONENTS: ${{ inputs.components }}
+        run: |
+          case ",${COMPONENTS}," in *",all,"*|*",qrcode,"*|*",qrcodegen,"*|*",axtls,"*|*",mbedtls,"*|*",vcruntime,"*) ;; *) echo "unknown component selection: ${COMPONENTS}" >&2; exit 1;; esac
+          echo "## Small-library dry run" >> "$GITHUB_STEP_SUMMARY"
+          echo "components: ${COMPONENTS}; publish: ${{ inputs.publish }}" >> "$GITHUB_STEP_SUMMARY"
+  qrcode:
+    needs: validate
+    if: contains(format(',{0},', inputs.components), ',qrcode,') || inputs.components == 'all'
+    uses: ./.github/workflows/build-qrcode.yml
+  qrcodegen:
+    needs: validate
+    if: contains(format(',{0},', inputs.components), ',qrcodegen,') || inputs.components == 'all'
+    uses: ./.github/workflows/build-qrcodegen.yml
+  axtls:
+    needs: validate
+    if: contains(format(',{0},', inputs.components), ',axtls,') || inputs.components == 'all'
+    uses: ./.github/workflows/build-axtls.yml
+  mbedtls:
+    needs: validate
+    if: contains(format(',{0},', inputs.components), ',mbedtls,') || inputs.components == 'all'
+    uses: ./.github/workflows/build-mbedtls.yml
+  vcruntime:
+    needs: validate
+    if: contains(format(',{0},', inputs.components), ',vcruntime,') || inputs.components == 'all'
+    uses: ./.github/workflows/build-vcruntime.yml

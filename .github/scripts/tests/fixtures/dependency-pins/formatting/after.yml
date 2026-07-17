@@ -1,0 +1,3 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+dependencies: { zlib: { path: zlib, release: zlib-1.3.1-r3, version: 1.3.1 } }

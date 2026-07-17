@@ -48,7 +48,7 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Build static library
         run: |
-          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v1.0.7 bash -lc "
+          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.0 bash -lc "
             cmake -S /sources/${{ inputs.dependency }} -B /sources/${{ inputs.dependency }}/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -G Ninja &&
             cmake --build /sources/${{ inputs.dependency }}/build/${{ matrix.project }} &&
             cmake --install /sources/${{ inputs.dependency }}/build/${{ matrix.project }} --prefix /sources/${{ inputs.dependency }}/build/${{ matrix.project }}/install &&
@@ -94,10 +94,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-      - run: sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+      - uses: ./.github/actions/setup-android-native
       - name: Build static library
         run: |
           cmake -S ${{ inputs.dependency }} -B ${{ inputs.dependency }}/build/android-arm64-v8a -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${ANDROID_HOME}/ndk/28.2.13676358/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF -G Ninja

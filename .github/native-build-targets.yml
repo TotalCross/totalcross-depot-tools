@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+# Canonical runner and artifact names shared by native release workflows.
+linux:
+  amd64: { runner: ubuntu-22.04, image: 'totalcross/linux-amd64:v2.0.0', platform: linux/x86_64 }
+  armv7: { runner: ubuntu-22.04, image: 'totalcross/linux-arm32v7:v2.0.0', platform: linux/armv7l }
+  arm64: { runner: ubuntu-22.04-arm, image: 'totalcross/linux-arm64:v2.0.0', platform: linux/aarch64 }
+android:
+  arm64-v8a: { runner: ubuntu-24.04, api: 23, ndk: 28.2.13676358 }
+apple:
+  runner: macos-15
+  macos: { generator: Ninja, arguments: -DCMAKE_OSX_ARCHITECTURES=arm64 }
+  ios: { generator: Xcode, arguments: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO }
+  ios-simulator: { generator: Xcode, arguments: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO }

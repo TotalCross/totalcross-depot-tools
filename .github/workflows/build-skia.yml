@@ -9,7 +9,6 @@ on:
     branches: [ main, master ]
     paths:
       - skia/**
-      - deps.yml
       - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - zlib-ng/manifest.yml
@@ -34,6 +33,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GITHUB_TOKEN: ${{ github.token }}
   SKIA_DIAGNOSTICS_ARCHIVE: skia-build-diagnostics-158dc9d7.tar.gz
+  SKIA_DIAGNOSTICS_MODE: summary
   SKIA_USE_CCACHE: 1
 
 jobs:
@@ -52,7 +52,6 @@ jobs:
         run: |
           key_hash=$(
             git rev-parse \
-              HEAD:.github/workflows/build-skia.yml \
               HEAD:skia/manifest.json \
               HEAD:skia/scripts/fetch-source.sh \
               HEAD:skia/scripts/common.sh |
@@ -86,7 +85,8 @@ jobs:
         if: steps.skia-source-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p skia/.source-cache
-          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+            --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
 
   build-linux:
     name: Build ${{ matrix.platform_arch }}
@@ -96,6 +96,7 @@ jobs:
       matrix:
         include:
           - project: linux-amd64
+            image: totalcross/skia-linux-amd64:v2.0.0
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -107,6 +108,7 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm64
+            image: totalcross/skia-linux-amd64:v2.0.0
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -118,6 +120,7 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm32v7
+            image: totalcross/linux-arm32v7:v2.0.0
             runner: ubuntu-22.04
             build_project: linux-arm32v7
             docker_platform: linux/arm/v7
@@ -140,8 +143,11 @@ jobs:
         with:
           path: ~/.cache/ccache/skia-${{ matrix.project }}
           key: skia-ccache-${{ runner.os }}-${{ matrix.project }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
-          restore-keys: |
-            skia-ccache-${{ runner.os }}-${{ matrix.project }}-
+
+      - name: Configure and report ccache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --show-stats || true
 
       - name: Allow multiarch
         if: ${{ matrix.use_qemu || matrix.use_gn_container }}
@@ -166,17 +172,12 @@ jobs:
         working-directory: skia
         run: ./scripts/fetch-source.sh depot_tools
 
-      - name: Install host GN tools
+      - name: Verify image-provided GN tools
         if: ${{ !matrix.use_gn_container }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ccache ninja-build python3 rsync
-          if [ "${{ matrix.use_cross_toolchain }}" = "true" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
-          fi
-          if ! command -v gn >/dev/null 2>&1; then
-            sudo apt-get install -y generate-ninja || sudo apt-get install -y gn
-          fi
+          command -v python3
+          command -v ccache
+          command -v ninja || command -v gn
 
       - name: Generate Ninja files
         if: ${{ !matrix.use_gn_container }}
@@ -192,13 +193,8 @@ jobs:
             --platform linux/amd64 \
             -v "${PWD}:${PWD}" \
             -w "${PWD}" \
-            -t totalcross/linux-amd64:v1.0.7 \
+            -t totalcross/skia-linux-amd64:v2.0.0 \
             bash -lc "
-              apt-get update &&
-              apt-get install -y ccache ninja-build python3 rsync &&
-              if ! command -v gn >/dev/null 2>&1; then
-                apt-get install -y generate-ninja || apt-get install -y gn
-              fi &&
               SKIA_SKIP_DEPS_SYNC=1 SKIA_ONLY_GN_GEN=1 bash skia/scripts/${{ matrix.script }}
             "
 
@@ -214,18 +210,9 @@ jobs:
             -e SKIA_SKIP_GN_GEN=1 \
             -e SKIA_SKIP_DEPS_SYNC=1 \
             -w "${PWD}" \
-            -t totalcross/${{ matrix.build_project }}:v1.0.7 \
+            -t ${{ matrix.image }} \
             bash -lc "
-              if ! command -v ccache >/dev/null 2>&1; then
-                apt-get update
-              fi
-              if ! command -v ccache >/dev/null 2>&1; then
-                apt-get install -y ccache || true
-              fi
-              if [ '${{ matrix.use_cross_toolchain }}' = 'true' ]; then
-                apt-get update &&
-                apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
-              fi
+              command -v ccache
               bash skia/scripts/${{ matrix.script }}
             "
 
@@ -233,6 +220,10 @@ jobs:
         if: failure()
         run: |
           find skia/dist/diagnostics -type f -name 'build-summary.json' -print -exec cat {} \; || true
+
+      - name: Report ccache result
+        if: always()
+        run: ccache --show-stats || true
 
       - name: Verify artifacts
         run: |
@@ -250,8 +241,8 @@ jobs:
             skia/dist/libskia-${{ matrix.artifact_suffix }}.a
             skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md
 
-      - name: Upload diagnostics
-        if: always()
+      - name: Upload full diagnostics
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
         uses: actions/upload-artifact@v7
         with:
           name: skia-diagnostics-${{ matrix.artifact_suffix }}
@@ -271,19 +262,19 @@ jobs:
         with:
           path: .cache/ccache/skia-android-arm64-v8a
           key: skia-ccache-${{ runner.os }}-android-arm64-v8a-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
-          restore-keys: |
-            skia-ccache-${{ runner.os }}-android-arm64-v8a-
+
+      - name: Configure and report ccache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --show-stats || true
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build rsync
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Verify preinstalled Android NDK
+        uses: ./.github/actions/setup-android-native
         with:
-          packages: ''
-
-      - name: Install Android NDK
-        run: sdkmanager "ndk;${ANDROID_NDK_VERSION}" "cmake;3.22.1"
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
 
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh android arm64-v8a
@@ -339,7 +330,7 @@ jobs:
             skia/dist/build_config_manifest-android-arm64-v8a.md
 
       - name: Upload diagnostics
-        if: always()
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
         uses: actions/upload-artifact@v7
         with:
           name: skia-diagnostics-android-arm64-v8a
@@ -359,8 +350,6 @@ jobs:
         with:
           path: .cache/ccache/skia-wasm-wasm32
           key: skia-ccache-${{ runner.os }}-wasm-wasm32-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
-          restore-keys: |
-            skia-ccache-${{ runner.os }}-wasm-wasm32-
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build rsync
@@ -416,7 +405,7 @@ jobs:
             skia/dist/build_config_manifest-wasm-wasm32.md
 
       - name: Upload diagnostics
-        if: always()
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
         uses: actions/upload-artifact@v7
         with:
           name: skia-diagnostics-wasm-wasm32
@@ -461,11 +450,11 @@ jobs:
         with:
           path: .cache/ccache/skia-${{ matrix.artifact_suffix }}
           key: skia-ccache-${{ runner.os }}-${{ matrix.artifact_suffix }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
-          restore-keys: |
-            skia-ccache-${{ runner.os }}-${{ matrix.artifact_suffix }}-
 
-      - name: Install build tools
-        run: brew install ccache ninja || true
+      - name: Verify or install build tools
+        run: |
+          command -v ninja >/dev/null 2>&1 || brew install ninja
+          command -v ccache >/dev/null 2>&1 || brew install ccache
 
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} ${{ matrix.arch }}
@@ -502,7 +491,7 @@ jobs:
             skia/dist/${{ matrix.manifest }}
 
       - name: Upload diagnostics
-        if: always()
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
         uses: actions/upload-artifact@v7
         with:
           name: skia-diagnostics-${{ matrix.artifact_suffix }}
@@ -596,21 +585,12 @@ jobs:
         with:
           path: .cache/ccache/skia-windows-${{ matrix.arch }}
           key: skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
-          restore-keys: |
-            skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-
 
       - name: Install build tools
         shell: powershell
         run: |
-          choco install ninja -y
-          if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
-          }
-          choco install ccache -y --no-progress --limit-output --ignore-checksums
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "ccache is unavailable on this runner; continuing without it"
-            $global:LASTEXITCODE = 0
-          }
+          if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) { choco install ninja -y }
+          if (-not (Get-Command ccache -ErrorAction SilentlyContinue)) { choco install ccache -y --no-progress --limit-output --ignore-checksums }
 
       - name: Fetch zlib-ng/libpng prebuilts
         shell: bash
@@ -658,7 +638,7 @@ jobs:
             skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
 
       - name: Upload diagnostics
-        if: always()
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
         uses: actions/upload-artifact@v7
         with:
           name: skia-diagnostics-windows-${{ matrix.arch }}

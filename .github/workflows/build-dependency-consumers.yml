@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Build dependency consumers
+
+on:
+  push:
+    branches: [main, master]
+    paths: [deps.yml]
+  pull_request:
+    branches: [main, master]
+    paths: [deps.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  route:
+    name: Route changed dependency pins
+    runs-on: ubuntu-24.04
+    outputs:
+      minizip: ${{ steps.diff.outputs.minizip }}
+      libpng: ${{ steps.diff.outputs.libpng }}
+      minizip_ng: ${{ steps.diff.outputs.minizip_ng }}
+      skia: ${{ steps.diff.outputs.skia }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - id: diff
+        name: Compare semantic dependency pins
+        run: |
+          before="${{ github.event.pull_request.base.sha || github.event.before }}"
+          python3 .github/scripts/diff-dependency-pins.py --before "${before}" --after deps.yml --format github-output >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/diff-dependency-pins.py --before "${before}" --after deps.yml --format human | tee -a "$GITHUB_STEP_SUMMARY"
+  minizip:
+    needs: route
+    if: needs.route.outputs.minizip == 'true'
+    uses: ./.github/workflows/build-minizip.yml
+  libpng:
+    needs: route
+    if: needs.route.outputs.libpng == 'true'
+    uses: ./.github/workflows/build-libpng.yml
+  minizip-ng:
+    needs: route
+    if: needs.route.outputs.minizip_ng == 'true'
+    uses: ./.github/workflows/build-minizip-ng.yml
+  skia:
+    needs: route
+    if: needs.route.outputs.skia == 'true'
+    uses: ./.github/workflows/build-skia.yml

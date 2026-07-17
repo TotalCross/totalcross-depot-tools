@@ -63,7 +63,7 @@ jobs:
             --platform ${{ matrix.docker_platform }} \
             -v "${PWD}:/sources" \
             -w /sources \
-            -t totalcross/${{ matrix.project }}:v1.0.7 \
+            -t totalcross/${{ matrix.project }}:v2.0.0 \
             bash -lc "
               cmake --version &&
               cmake -S /sources/zlib -B /sources/zlib/build/${{ matrix.project }} \
@@ -134,13 +134,8 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-
-      - name: Install Android NDK
-        run: sdkmanager "ndk;28.2.13676358" "cmake;3.22.1"
+      - name: Verify preinstalled Android NDK
+        uses: ./.github/actions/setup-android-native
 
       - name: Build static libraries
         run: |
