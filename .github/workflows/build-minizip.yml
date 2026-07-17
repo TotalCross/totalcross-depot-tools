@@ -17,6 +17,7 @@ on:
   push:
     branches: [ master ]
     paths:
+      - deps.yml
       - minizip/**
       - zlib/fetch.sh
       - .github/scripts/read-deps-release.sh
@@ -24,6 +25,7 @@ on:
   pull_request:
     branches: [ master ]
     paths:
+      - deps.yml
       - minizip/**
       - zlib/fetch.sh
       - .github/scripts/read-deps-release.sh
