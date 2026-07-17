@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.16)
+include("${CMAKE_CURRENT_LIST_DIR}/../cmake/TotalCrossWindowsStaticRuntime.cmake")
 
 project(totalcross-zlib-static
   VERSION 1.3.1

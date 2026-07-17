@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.16)
+include("${CMAKE_CURRENT_LIST_DIR}/../cmake/TotalCrossWindowsStaticRuntime.cmake")
 
 project(totalcross-libjpeg-turbo-static
   VERSION 3.1.4.1
@@ -47,6 +48,9 @@ set(TC_LIBJPEG_TURBO_CMAKE_ARGS
   "-DWITH_TESTS=OFF"
   "-DWITH_JAVA=OFF"
   "-DWITH_TURBOJPEG=ON"
+  "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW"
+  "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
+  "-DWITH_CRT_DLL=OFF"
 )
 set(TC_LIBJPEG_TURBO_EXTERNAL_PROJECT_OPTIONS)
 

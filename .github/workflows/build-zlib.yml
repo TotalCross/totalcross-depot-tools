@@ -6,14 +6,18 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - zlib/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-zlib.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - zlib/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-zlib.yml
 
 env:
@@ -111,6 +115,10 @@ jobs:
           cmake --build zlib/build/windows-${{ matrix.arch }} --config Release
           cmake --install zlib/build/windows-${{ matrix.arch }} --config Release --prefix zlib/build/windows-${{ matrix.arch }}/install
           bash zlib/scripts/package-artifact.sh zlib/build/windows-${{ matrix.arch }} zlib/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 zlib/build/windows-${{ matrix.arch }}/zlib-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

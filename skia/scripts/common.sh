@@ -885,8 +885,8 @@ skia_use_fontconfig=false
 skia_use_harfbuzz=false
 skia_use_expat=false
 skia_use_system_icu=false
-extra_cflags=[$(gn_array "/O2" "/W0" "${SKIA_DEP_CFLAGS[@]}")]
-extra_cxxflags=[$(gn_array "/O2" "/W0" "${SKIA_DEP_CFLAGS[@]}")]
+extra_cflags=[$(gn_array "/MT" "/O2" "/W0" "${SKIA_DEP_CFLAGS[@]}")]
+extra_cxxflags=[$(gn_array "/MT" "/O2" "/W0" "${SKIA_DEP_CFLAGS[@]}")]
 extra_ldflags=[$(gn_array "${SKIA_DEP_LDFLAGS[@]}")]
 EOF
 }

@@ -53,6 +53,17 @@ change explicitly adds more release assets and updates the consumer filters.
 Do not make local Android builds request `armeabi-v7a` unless the corresponding
 SQLite3, mbedTLS, and Skia artifacts exist in the target releases.
 
+## Windows static runtime
+
+- Every Windows static library must use the static MSVC runtime (`/MT`).
+- CMake wrappers must include `cmake/TotalCrossWindowsStaticRuntime.cmake`
+  before `project()`; nested CMake builds must also receive
+  `CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded` explicitly.
+- Non-CMake builds must set the equivalent compiler option explicitly.
+- Every Windows build must run `.github/scripts/verify-windows-static-runtime.ps1`
+  against its final artifact before upload, for x86, x64, and ARM64.
+- `vcruntime` is excluded: it packages prebuilt DLLs rather than static libraries.
+
 ## Skia Notes
 
 Skia is different from the CMake-built dependencies:

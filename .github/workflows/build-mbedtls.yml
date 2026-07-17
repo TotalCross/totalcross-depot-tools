@@ -6,14 +6,18 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - mbedtls/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-mbedtls.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - mbedtls/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-mbedtls.yml
 
 env:
@@ -111,6 +115,10 @@ jobs:
           cmake --build mbedtls/build/windows-${{ matrix.arch }} --config Release
           cmake --install mbedtls/build/windows-${{ matrix.arch }} --config Release --prefix mbedtls/build/windows-${{ matrix.arch }}/install
           bash mbedtls/scripts/package-artifact.sh mbedtls/build/windows-${{ matrix.arch }} mbedtls/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 mbedtls/build/windows-${{ matrix.arch }}/mbedtls-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

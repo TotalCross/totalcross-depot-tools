@@ -15,16 +15,20 @@ on:
         required: false
         type: string
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - libpng/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - .github/scripts/latest-release-tag.sh
       - .github/workflows/build-libpng.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - libpng/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - .github/scripts/latest-release-tag.sh
       - .github/workflows/build-libpng.yml
@@ -174,6 +178,10 @@ jobs:
           cmake --build libpng/build/windows-${{ matrix.arch }} --config Release
           cmake --install libpng/build/windows-${{ matrix.arch }} --config Release --prefix libpng/build/windows-${{ matrix.arch }}/install
           bash libpng/scripts/package-artifact.sh libpng/build/windows-${{ matrix.arch }} libpng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 libpng/build/windows-${{ matrix.arch }}/libpng-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

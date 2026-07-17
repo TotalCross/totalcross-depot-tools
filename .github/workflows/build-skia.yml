@@ -6,18 +6,20 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - skia/**
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - zlib-ng/manifest.yml
       - libpng/fetch.sh
       - libpng/manifest.yml
       - .github/workflows/build-skia.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - skia/**
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - zlib-ng/manifest.yml
       - libpng/fetch.sh
@@ -638,7 +640,12 @@ jobs:
           test -f skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+          grep -Eq 'extra_cflags.*"/MT"' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 skia/dist/libskia-windows-${{ matrix.arch }}.lib
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

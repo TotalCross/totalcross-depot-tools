@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0007 NEW)
+include("${CMAKE_CURRENT_LIST_DIR}/../cmake/TotalCrossWindowsStaticRuntime.cmake")
 
 project(totalcross-libpng-static
   VERSION 1.6.48

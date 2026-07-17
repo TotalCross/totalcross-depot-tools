@@ -6,14 +6,18 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - libjpeg-turbo/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-libjpeg-turbo.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - libjpeg-turbo/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-libjpeg-turbo.yml
 
 env:
@@ -111,6 +115,10 @@ jobs:
           cmake --build libjpeg-turbo/build/windows-${{ matrix.arch }} --config Release
           cmake --install libjpeg-turbo/build/windows-${{ matrix.arch }} --config Release --prefix libjpeg-turbo/build/windows-${{ matrix.arch }}/install
           bash libjpeg-turbo/scripts/package-artifact.sh libjpeg-turbo/build/windows-${{ matrix.arch }} libjpeg-turbo/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 libjpeg-turbo/build/windows-${{ matrix.arch }}/libjpeg-turbo-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

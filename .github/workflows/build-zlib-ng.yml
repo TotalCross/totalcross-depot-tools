@@ -6,14 +6,18 @@ on:
   workflow_call:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - zlib-ng/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-zlib-ng.yml
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - zlib-ng/**
+      - cmake/TotalCrossWindowsStaticRuntime.cmake
+      - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-zlib-ng.yml
 
 env:
@@ -111,6 +115,10 @@ jobs:
           cmake --build zlib-ng/build/windows-${{ matrix.arch }} --config Release
           cmake --install zlib-ng/build/windows-${{ matrix.arch }} --config Release --prefix zlib-ng/build/windows-${{ matrix.arch }}/install
           bash zlib-ng/scripts/package-artifact.sh zlib-ng/build/windows-${{ matrix.arch }} zlib-ng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 zlib-ng/build/windows-${{ matrix.arch }}/zlib-ng-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
