@@ -12,52 +12,29 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Prepare release
-    runs-on: ubuntu-24.04
-    outputs:
-      zlib_version: ${{ steps.version.outputs.zlib_version }}
-      tag_name: ${{ steps.version.outputs.tag_name }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Read zlib version
-        id: version
-        run: |
-          zlib_version="$(awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' zlib/CMakeLists.txt)"
-          if [ -z "$zlib_version" ]; then
-            echo "Could not read zlib version from zlib/CMakeLists.txt" >&2
-            exit 1
-          fi
-
-          tag_name="$(.github/scripts/next-release-tag.sh zlib "${zlib_version}")"
-
-          echo "zlib_version=${zlib_version}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
-
   build:
     name: Build release assets
-    needs: prepare
     uses: ./.github/workflows/build-zlib.yml
 
   release:
     name: Publish release
-    needs:
-      - prepare
-      - build
+    needs: build
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      ZLIB_VERSION: ${{ needs.prepare.outputs.zlib_version }}
-      TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Read zlib release metadata
+        uses: ./.github/actions/prepare-release-metadata
+        with:
+          dependency: zlib
+          version-env: ZLIB_VERSION
+          version-command: "awk '/^[[:space:]]*VERSION[[:space:]]+[0-9]/{print $2; exit}' zlib/CMakeLists.txt"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v7
