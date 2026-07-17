@@ -17,7 +17,7 @@ dependencies:
     path: axtls
   sqlite3:
     version: 3.32.3
-    release: sqlite3-3.32.3
+    release: sqlite3-3.32.3-r2
     path: sqlite3
   mbedtls:
     version: 3.5.2
