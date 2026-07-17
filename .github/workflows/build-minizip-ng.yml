@@ -26,36 +26,12 @@ on:
 env:
   MINIZIP_NG_VERSION: 4.2.2
   ZLIB_NG_VERSION: 2.1.6
+  REQUESTED_ZLIB_NG_RELEASE_TAG: ${{ inputs.zlib_ng_release_tag }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  prepare:
-    name: Resolve compatible zlib-ng release
-    runs-on: ubuntu-24.04
-    outputs:
-      zlib_ng_release_tag: ${{ steps.release.outputs.zlib_ng_release_tag }}
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v6
-
-      - name: Resolve zlib-ng release tag from deps.yml
-        id: release
-        env:
-          REQUESTED_ZLIB_NG_RELEASE_TAG: ${{ inputs.zlib_ng_release_tag }}
-        run: |
-          if [ -n "${REQUESTED_ZLIB_NG_RELEASE_TAG}" ]; then
-            zlib_ng_release_tag="${REQUESTED_ZLIB_NG_RELEASE_TAG}"
-          else
-            zlib_ng_release_tag="$(.github/scripts/read-deps-release.sh zlib-ng)"
-          fi
-
-          echo "Using zlib-ng release ${zlib_ng_release_tag}"
-          echo "zlib_ng_release_tag=${zlib_ng_release_tag}" >> "$GITHUB_OUTPUT"
-
   build-linux:
     name: Build ${{ matrix.platform_arch }}
-    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -97,7 +73,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform "${{ matrix.zlib_platform }}" \
             --arch "${{ matrix.zlib_arch }}" \
-            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
+            --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
         run: |
@@ -128,7 +104,6 @@ jobs:
 
   build-windows:
     name: Build windows/${{ matrix.arch }}
-    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -155,7 +130,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform windows \
             --arch ${{ matrix.arch }} \
-            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
+            --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
         shell: bash
@@ -177,7 +152,6 @@ jobs:
 
   build-android:
     name: Build android/arm64-v8a
-    needs: prepare
     runs-on: ubuntu-24.04
 
     steps:
@@ -192,7 +166,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform android \
             --arch arm64-v8a \
-            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
+            --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
         run: |
@@ -216,7 +190,6 @@ jobs:
 
   build-apple:
     name: Build ${{ matrix.platform }}/${{ matrix.arch }}
-    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -248,7 +221,7 @@ jobs:
           bash zlib-ng/fetch.sh \
             --platform "${{ matrix.platform }}" \
             --arch "${{ matrix.arch }}" \
-            --release-tag "${{ needs.prepare.outputs.zlib_ng_release_tag }}"
+            --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
         run: |
