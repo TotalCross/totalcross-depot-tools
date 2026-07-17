@@ -4,6 +4,12 @@ name: Release zlib-ng static libraries
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate assets without changing pins, tags, or releases
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -66,6 +72,7 @@ jobs:
           merge-multiple: true
 
       - name: Pin bundle release
+        if: ${{ !inputs.dry_run }}
         id: pin_bundle_release
         uses: ./.github/actions/pin-deps-release
         with:
@@ -73,6 +80,7 @@ jobs:
           tag: ${{ env.TAG_NAME }}
 
       - name: Create release tag
+        if: ${{ !inputs.dry_run }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -80,6 +88,7 @@ jobs:
           git push origin "refs/tags/${TAG_NAME}"
 
       - name: Publish GitHub Release
+        if: ${{ !inputs.dry_run }}
         run: |
           gh release create "${TAG_NAME}" release-assets/* \
             --verify-tag \

@@ -4,6 +4,12 @@ name: Release Skia static libraries
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate assets without changing pins, tags, or releases
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -91,6 +97,7 @@ jobs:
           echo "TAG_NAME=${tag_name}" >> "$GITHUB_ENV"
 
       - name: Commit release metadata
+        if: ${{ !inputs.dry_run }}
         run: |
           if git diff --quiet -- deps.yml skia/manifest.yml skia/manifest.json skia/artifacts.json skia/fetch.sh skia/cmake/AutoFetchSkia.cmake; then
             echo "Skia release metadata already points to ${TAG_NAME}"
@@ -105,6 +112,7 @@ jobs:
           echo "DEPS_PIN_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Create release tag
+        if: ${{ !inputs.dry_run }}
         run: |
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null; then
             echo "Tag ${TAG_NAME} already exists" >&2
@@ -115,6 +123,7 @@ jobs:
           git push origin "refs/tags/${TAG_NAME}"
 
       - name: Publish GitHub Release
+        if: ${{ !inputs.dry_run }}
         run: |
           mapfile -d '' release_files < <(find release-assets -maxdepth 1 -type f -print0 | sort -z)
           if [ "${#release_files[@]}" -eq 0 ]; then
