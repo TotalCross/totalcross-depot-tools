@@ -104,6 +104,10 @@ that includes the changed modules. Verify it resolves dependencies from
 - Do not commit generated build directories.
 - Treat `dist` assets intentionally: include them only when the task is to
   publish or prepare release assets.
+- Commits must follow Conventional Commits, be logical and atomic, and include
+  a descriptive body explaining the change, especially its purpose or
+  motivation. The automated commit-message validation checks the Conventional
+  Commits header; a body is recommended but is not required for validation.
 - When asked for a commit message, write it in English. Use an imperative,
   concise subject line without a trailing period, then a body explaining the
   cause, the fix, and compatibility or workflow impact when relevant. Mention
