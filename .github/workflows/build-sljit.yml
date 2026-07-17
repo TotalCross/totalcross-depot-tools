@@ -100,7 +100,7 @@ jobs:
           cmake --install "${build_dir}" --config Release --prefix "${build_dir}/install"
           dumpbin_path="$(find '/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC' -type f -iname dumpbin.exe | head -n 1)"
           test -n "${dumpbin_path}"
-          "${dumpbin_path}" /directives "$(cygpath -w "${build_dir}/install/lib/sljit.lib")" | tee "${build_dir}/directives.log"
+          MSYS_NO_PATHCONV=1 "${dumpbin_path}" /directives "$(cygpath -w "${build_dir}/install/lib/sljit.lib")" | tee "${build_dir}/directives.log"
           grep -F 'DEFAULTLIB:LIBCMT' "${build_dir}/directives.log"
           ! grep -E 'DEFAULTLIB:(MSVCRT|MSVCRTD)' "${build_dir}/directives.log"
           bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" windows/${{ matrix.arch }}
@@ -135,7 +135,7 @@ jobs:
           library="${build_dir}/install/lib/libsljit.a"
           "${tool_dir}/llvm-nm" -g --defined-only "${library}" | grep -E ' sljit_(create_compiler|generate_code|free_code)$'
           "${tool_dir}/llvm-readelf" -h "${library}" | grep -F 'Machine:                           AArch64'
-          grep -E '^CMAKE_ANDROID_API:.*=23$' "${build_dir}/CMakeCache.txt"
+          grep -E '^ANDROID_PLATFORM:.*=android-23$' "${build_dir}/CMakeCache.txt"
           ninja -C "${build_dir}" -t commands sljit-smoke-test | tee "${build_dir}/smoke-link-command.txt"
           grep -F 'sljit-smoke-test' "${build_dir}/smoke-link-command.txt"
           tar -xOf "${build_dir}/sljit-android-arm64-v8a.tar.gz" sljit/android/arm64-v8a/manifest.txt | grep -Fx 'android_min_sdk=23'
