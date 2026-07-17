@@ -23,6 +23,7 @@ This plan does not change which library features are compiled and does not move 
 - [x] (2026-07-17 21:17Z) Removed push triggers from build and policy workflows and consolidated commit-message and copyright validation into `.github/workflows/validate-commit.yml`, with one checkout and independent failure reporting.
 - [ ] Remove standalone `prepare` jobs that only calculate versions, tags, or dependency release names (completed: dependency-release resolution in `build-minizip.yml`, `build-minizip-ng.yml`, and `build-libpng.yml`; remaining: publication wrappers).
 - [x] (2026-07-17 21:17Z) Added `dry_run=true` as the safe default for individual release workflows; pin, tag, release, and Skia metadata-commit steps are skipped during validation-only dispatches.
+- [x] (2026-07-17 22:42Z) Completed a GitHub Actions zlib dry-run (`29618567589`) across Linux, Windows, Android, macOS, iOS, and iOS Simulator; all build and packaging jobs succeeded and pin/tag/release steps were skipped.
 - [x] (2026-07-17 21:17Z) Added shared native build and target-manifest primitives, plus guarded graphics and small-library dry-run orchestrators.
 - [ ] Keep SQLite isolated while migrating it to the common optimized primitives.
 - [ ] Consolidate Apple builds and XCFramework packaging where measurement shows that runner reuse is preferable to parallel execution.
@@ -102,7 +103,7 @@ Add new observations here as implementation proceeds. Every observation that cha
 
 ## Outcomes & Retrospective
 
-The first implementation pass added semantic dependency routing, Android toolchain verification, minimal image definitions, baseline metrics collection, shared workflow primitives, dry-run stack orchestration, and scoped Skia cache/diagnostic changes. Local YAML, shell, Python, and router tests passed. No cold/warm comparison or Docker image smoke run was measured because this workstation has no Docker; no GitHub run on this commit exists because the requested operation is a local commit, not a push. Metadata-only release jobs, Apple consolidation, SQLite migration, and ARMv7 equivalence remain incomplete and must not be represented as delivered.
+The first implementation pass added semantic dependency routing, Android toolchain verification, minimal image definitions, baseline metrics collection, shared workflow primitives, dry-run stack orchestration, and scoped Skia cache/diagnostic changes. A zlib GitHub Actions dry-run on 2026-07-17 succeeded across its full platform matrix and skipped all state-changing publication steps. Local YAML, shell, Python, and router tests passed. No cold/warm comparison or Docker image smoke run was measured because this workstation has no Docker. Metadata-only release jobs, Apple consolidation, SQLite migration, and ARMv7 equivalence remain incomplete and must not be represented as delivered.
 
 At completion, compare the final state against the purpose of reducing repeated setup while preserving platform coverage and separate releases. State clearly whether the ARMv7 experiment succeeded or whether QEMU remained necessary.
 
