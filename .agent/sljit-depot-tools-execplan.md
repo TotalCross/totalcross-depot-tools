@@ -22,10 +22,10 @@ The Android artifact is intentionally built even though the first TotalCross int
 - [x] (2026-07-17 20:26Z) Inspected SLJIT upstream commit `3907e69005ba6e30b225000f24aaef3632f88347`, recorded its archive SHA-256, allocator options, architecture detection, Android cache-flush path, and Simplified BSD license.
 - [x] (2026-07-17) Added the pinned `sljit/` dependency definition, owned CMake build, tests, documentation, and bundle entry.
 - [x] (2026-07-17) Added artifact packaging, fetching, strict CMake discovery, and auto-fetch support.
-- [ ] Added the Linux, Windows, Android, and macOS build workflow; GitHub Actions matrix execution is pending publication of the implementation commit.
-- [ ] Prove `/MT` in every Windows archive and prove Android ARM64/API 23 metadata and linkability.
-- [ ] Add the release workflow, publish the first complete release, and fetch every published asset into temporary destinations.
-- [ ] Finalize the Editorial Report from the completed implementation and validation evidence.
+- [x] (2026-07-17) Added and ran the Linux, Windows, Android, and macOS build workflow; [run 29612860376](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29612860376) passed all eight jobs.
+- [x] (2026-07-17) Proved `/MT` in every Windows archive and Android ARM64/API 23 metadata and linkability in the successful matrix.
+- [x] (2026-07-17) Added the release workflow, published [sljit-20260717](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/sljit-20260717), and fetched all eight published assets into a temporary destination.
+- [x] (2026-07-17) Finalized the Editorial Report from implementation and validation evidence.
 
 ## Surprises & Discoveries
 
@@ -75,7 +75,7 @@ The Android artifact is intentionally built even though the first TotalCross int
 
 ## Outcomes & Retrospective
 
-The implementation defines one coherent eight-archive release matrix: Linux x86_64, ARMv7, and AArch64; Windows x86, x64, and ARM64; Android ARM64; and macOS ARM64. On 2026-07-17, a native Apple Silicon host configured the wrapper from the independently checksum-verified codeload archive, built and passed `sljit-smoke-test` (1/1), installed the four headers, `libsljit.a`, and the upstream license, then packaged `sljit-macos-arm64.tar.gz`. The extracted package was staged under `sljit/local/macos/arm64`; the independent find-consumer then configured, built, and passed (1/1). GitHub Actions is the remaining source of cross-platform build evidence.
+The implementation produced the intended eight-archive release matrix under tag [`sljit-20260717`](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/sljit-20260717): Linux x86_64, ARMv7, and AArch64; Windows x86, x64, and ARM64; Android ARM64; and macOS ARM64. The final [GitHub Actions matrix](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29612860376) passed all eight jobs. The release workflow reran the same matrix and published all eight release assets in [run 29613100209](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29613100209).
 
 ## Editorial Report
 
@@ -87,31 +87,31 @@ This change packages SLJIT as a reproducible native dependency for TotalCross. T
 
 ### Original Plan versus Actual Outcome
 
-The original plan is to publish the eight-target matrix described above without iOS. Record the actual target matrix and every changed, deferred, or rejected item after CI and release validation.
+The published matrix is exactly the planned eight targets and excludes iOS: Linux x86_64/armv7l/aarch64; Windows x86/x64/arm64; Android arm64-v8a; and macOS arm64. No API-level increase or target-matrix deviation was needed.
 
 ### What Changed
 
-The implementation adds `sljit/**`, `.github/workflows/build-sljit.yml`, and `.github/workflows/release-sljit.yml`, and adds the `sljit` bundle entry in `deps.yml`. The stable imported target is `SLJIT::SLJIT`; each archive is named `sljit-<platform>-<arch>.tar.gz`.
+The implementation adds `sljit/**`, `.github/workflows/build-sljit.yml`, and `.github/workflows/release-sljit.yml`, and adds the `sljit` bundle entry in `deps.yml`. The stable imported target is `SLJIT::SLJIT`; each archive is named `sljit-<platform>-<arch>.tar.gz`. The workflow corrections made during execution derive slash-safe archive filenames, avoid MSYS conversion of `dumpbin` switches, and validate Android's resolved `android-23` setting rather than relying on a compiler-command spelling.
 
 ### Decisions and Trade-offs
 
-The initial decisions are a commit-pinned snapshot, a depot-owned CMake wrapper, W^X executable allocation, Android API 23, Windows `/MT`, and no iOS artifact. Reconcile these decisions with the final implementation rather than copying this planned list unchanged.
+The final implementation retains the initial decisions: the commit-pinned snapshot, depot-owned CMake wrapper, W^X allocation, Android API 23, Windows `/MT`, and no iOS artifact. The imported target propagates the five public allocator/release definitions and `Threads::Threads` outside Windows.
 
 ### Unexpected Problems and Discoveries
 
-The known upstream and platform discoveries are recorded above. Add only problems observed during implementation or CI, with concise evidence.
+The execution-specific CI issues are recorded above. The first validation workflow used a platform string with `/` in an archive filename; the next workflow exposed MSYS conversion of `/directives` and a non-portable Android cache expectation; the release workflow then exposed double-escaped shell expressions. Each failure was corrected, committed, and rerun before publication. No generated cache or build output was committed.
 
 ### Validation and Measurable Results
 
-The local Apple Silicon validation measured 1/1 passing smoke test and 1/1 passing extracted-package consumer test. It verified the package manifest records `platform_arch=macos/arm64` and `executable_allocator=wx`. GitHub Actions must still produce the full architecture, Windows CRT, Android metadata, asset checksum, and fetch evidence. Android runtime execution is not claimed.
+Local Apple Silicon validation measured 1/1 passing smoke test and 1/1 passing extracted-package consumer test. The final matrix measured 1/1 smoke test passes on every executable desktop target, including QEMU ARMv7, and verified ELF machine type for every Linux archive, ARM64 for macOS, `/MT` compile lines plus `DEFAULTLIB:LIBCMT`/no MSVCRT directives for each Windows archive, and AArch64/API 23/required public symbols for Android. The release was fetched successfully for all eight pairs; the fetched macOS package passed the independent consumer (1/1), and the fetched Android package configured and linked the same consumer with NDK r28c/API 23. Android runtime execution is not claimed.
 
 ### Useful Evidence and Examples
 
-The upstream archive hash and source locations in this plan are research evidence. At completion, point to workflow runs, release assets, test output, `dumpbin` output, manifest excerpts, commits, and the release URL.
+Evidence includes the checksum-verified upstream source archive, [final build matrix](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29612860376), [successful release workflow](https://github.com/TotalCross/totalcross-depot-tools/actions/runs/29613100209), and [published release](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/sljit-20260717). The release assets have SHA-256 values: Android `4d9d9b34da966c710c88c5233e088ca0bf2fd329c2886c9d966e240f62423cab`; Linux x86_64 `a4b8905f65ad0bf6e76da5dc0782f0bbabf07aeee41b903a6f8383a5f30b1aa7`, armv7l `8e65491fea9f460ba10686c5476f5bbcdb0e2c5961eb86332b55c8140ac51a01`, aarch64 `e7c8cce7cf286bd4a102d7159bcb179823d3b30e94bde74bccf38a70c3474cda`; macOS `78d23022bd8612033a55dd1a33ddc2afbee833404e3eb4d42e15c5f904123f00`; Windows x86 `2aeb4085711764d992957fcbe8e6949faf1e9d1163f23f13cb25e295596084d5`, x64 `c513edc3b87898ba877445b2d6121c531ae012223d5b2f90b6d6929f47e6a269`, and ARM64 `7f25af441f245a77874bb7b8930be2e8228c9a186cd060868aa94557f66a91ba`.
 
 ### Limitations, Remaining Work, and Open Questions
 
-The depot change alone does not enable TotalCross JIT execution, update `TotalCrossVM/deps/totalcross-depot-tools.ref`, or prove Android runtime executable-memory policy. Those are consumer integration tasks. iOS is explicitly out of scope.
+The depot change does not enable TotalCross JIT execution, update `TotalCrossVM/deps/totalcross-depot-tools.ref`, or prove Android runtime executable-memory policy. Those are consumer integration tasks. iOS remains explicitly out of scope.
 
 ### Possible Article Angles
 
