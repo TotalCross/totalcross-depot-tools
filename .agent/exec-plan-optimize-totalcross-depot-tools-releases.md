@@ -57,6 +57,9 @@ This plan does not change which library features are compiled and does not move 
 - Observation: Bionic's distribution CMake is too old for the repository's `cmake -S/-B` build interface and for CMake projects that require 3.16.
   Evidence: zlib Linux jobs using `v2.0.0` reported `The source directory "/sources/zlib/build/linux-amd64" does not exist`; the prior Bionic Dockerfiles used Kitware's CMake repository, whereas the minimized image had reverted to Bionic's CMake 3.10 package.
 
+- Observation: The Skia Linux and Android dry-run failed before compilation because `ccache` was configured before the environment that supplies it.
+  Evidence: run `29618569655` reported `/home/runner/work/_temp/...sh: line 1: ccache: command not found` in Linux and Android jobs. Linux compiles inside images that contain ccache, while Android installed ccache only in the next step.
+
 Add new observations here as implementation proceeds. Every observation that changes the design must also result in a `Decision Log` entry.
 
 ## Decision Log
@@ -103,6 +106,10 @@ Add new observations here as implementation proceeds. Every observation that cha
 
 - Decision: Resolve release metadata in the publication job, after its existing full-history checkout and before artifact publication.
   Rationale: The tag is only consumed by publication, so a separate metadata runner added latency without sharing useful build state. Visual C++ runtime metadata is read from the packaged x86 artifact rather than downloading the installer a second time on a dedicated Windows runner.
+  Date/Author: 2026-07-17 / OpenAI
+
+- Decision: Run Linux Skia ccache configuration, GN generation, and reporting inside the build image.
+  Rationale: The ccache binary and mounted cache directory belong to the containerized compilation environment. This both fixes the missing-host-tool failure and ensures GN receives the ccache wrapper used for the actual compilation.
   Date/Author: 2026-07-17 / OpenAI
 
 ## Outcomes & Retrospective
