@@ -25,15 +25,15 @@ The implementation also audits the Windows assets already published on GitHub, d
 - [x] (2026-07-17) Wired the verifier into every in-scope Windows build before artifact upload.
 - [x] (2026-07-17) Made the Skia GN configuration explicitly emit `/MT`.
 - [x] (2026-07-17) Made the libjpeg-turbo nested `ExternalProject` configure explicitly emit `/MT`.
-- [ ] Audit the latest published Windows artifacts and calculate the direct and transitive release set.
-- [ ] Run all affected build workflows on the correction branch and confirm x86, x64, and ARM64 artifacts pass.
-- [ ] Commit and push the correction with a Conventional Commits message and descriptive body.
-- [ ] Dispatch independent affected release workflows in parallel.
-- [ ] Wait for `zlib-ng`, update its release pins if it was released, and only then dispatch dependent `libpng`.
-- [ ] Wait for `libpng`, update its release pins if it was released, and only then dispatch dependent `skia`.
-- [ ] Verify every affected GitHub Release, its Windows assets, its tag ancestry, and its final `/MT` directives.
-- [ ] Reconcile `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective`.
-- [ ] Finalize the `Editorial Report` from actual commits, workflow runs, release URLs, tags, assets, and validation output.
+- [x] (2026-07-17) Audited published Windows artifacts and calculated the release set.
+- [x] (2026-07-17) Ran affected builds and confirmed the Windows x86, x64, and ARM64 jobs passed their pre-upload verifier.
+- [x] (2026-07-17) Committed and pushed the correction as `e60aec4 fix(windows): enforce static runtime for static libraries`.
+- [x] (2026-07-17) Dispatched independent releases and recorded their replacement runs.
+- [x] (2026-07-17) Published zlib-ng `r3`, updated its compatible pin, then published libpng `r3`.
+- [x] (2026-07-17) Published Skia `r7` after the verified libpng release and updated all default pins.
+- [x] (2026-07-17) Verified every affected release's tag ancestry, Windows assets, and final `/MT` directives in Windows audit run `29610323140`.
+- [x] (2026-07-17) Reconciled the living sections with observed release and verifier evidence.
+- [x] (2026-07-17) Finalized the factual editorial report below.
 
 ## Surprises & Discoveries
 
@@ -110,7 +110,15 @@ Add new discoveries here as they are observed. Each entry must include a short c
 
 ## Outcomes & Retrospective
 
-This section must be updated after each major milestone and at completion.
+Completed successfully on 2026-07-17.
+
+- Baseline audit found `/DEFAULTLIB:"MSVCRT` in published zlib-ng, zlib, libpng, libjpeg, mbedTLS, and SQLite archives. libjpeg-turbo and Skia also required direct fixes because their nested CMake and GN configurations did not explicitly request `/MT`.
+- Directly affected: zlib-ng, zlib, libpng, libjpeg, libjpeg-turbo, mbedTLS, SQLite, and Skia. No library was release-only transitive because libpng and Skia each required direct runtime configuration changes; the zlib-ng → libpng → Skia order was still enforced.
+- Correction commit: `e60aec4`. Pin and final-artifact audit commit: `d259869`.
+- Successful replacement releases: [zlib-ng r3](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/zlib-ng-2.1.6-r3), [zlib r3](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/zlib-1.3.1-r3), [libjpeg r2](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/libjpeg-10-r2), [libjpeg-turbo r2](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/libjpeg-turbo-3.1.4.1-r2), [mbedTLS r3](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/mbedtls-3.5.2-r3), [SQLite r2](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/sqlite3-3.32.3-r2), [libpng r3](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/libpng-1.6.48-r3), and [Skia r7](https://github.com/TotalCross/totalcross-depot-tools/releases/tag/skia-158dc9d7-r7).
+- Successful release runs: `29605170354`, `29605054935`, `29606010028`, `29606135534`, `29606468341`, `29606928070`, `29608719359`, and `29609085247`.
+- Every release contains Windows x86, x64, and ARM64 assets. Audit run `29610323140` downloaded the exact release assets and passed `dumpbin /DIRECTIVES` verification for 39 `.lib` files, each with `LIBCMT` evidence and no dynamic or Debug CRT default.
+- `vcruntime` remains intentionally excluded; DLL-only assets were not inspected. No size or performance measurement was taken.
 
 At completion, state:
 
@@ -128,7 +136,13 @@ Do not describe planned results as completed results.
 
 ## Editorial Report
 
-This section is mandatory at completion. Replace the guidance below with factual, evidence-based content from the executed work.
+### Completed Report
+
+Windows static archives can carry `/DEFAULTLIB` linker directives from their member object files, so a `.lib` alone does not prove that it uses the static runtime. The repository now forces `/MT` before CMake projects enable MSVC, forwards the policy through libjpeg-turbo's nested CMake invocation, sets `/MT` in Skia GN flags, and inspects final artifacts with `dumpbin` before upload.
+
+The published replacement set is the eight releases listed in Outcomes. The implementation added `cmake/TotalCrossWindowsStaticRuntime.cmake`, `.github/scripts/verify-windows-static-runtime.ps1`, fixture tests, a published-release audit workflow, Windows workflow gates, and repository guidance. The external artifact audit, not only configuration flags, is retained as the acceptance criterion: run `29610323140` proved all 39 inspected libraries contain `LIBCMT` and none selected dynamic or Debug CRT defaults.
+
+The only implementation adaptation was the fixture workflow's need to initialize the MSVC developer environment before invoking `cl.exe`. Later release metadata work established `deps.yml` as the compatible source of internal release pins, so the verified libpng r3 and Skia r7 defaults are now aligned. Normal technical and editorial review remains appropriate; no claim about production incidents, redistribution obligations, size, or performance was measured.
 
 ### Editorial Summary
 
