@@ -53,7 +53,7 @@ dependencies:
     path: libjpeg-turbo
   skia:
     version: 158dc9d7
-    release: skia-158dc9d7-r5
+    release: skia-158dc9d7-r6
     path: skia
   vcruntime:
     version: 14
