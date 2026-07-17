@@ -150,93 +150,74 @@ jobs:
           path: libjpeg/build/android-arm64-v8a/libjpeg-*.tar.gz
 
   build-apple:
-    name: Build ${{ matrix.platform }}/${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos
-            arch: arm64
-            build_dir: macos-arm64
-            cmake_generator: Ninja
-            cmake_args: -DCMAKE_OSX_ARCHITECTURES=arm64
-          - platform: ios
-            arch: arm64
-            build_dir: ios-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-          - platform: ios-simulator
-            arch: arm64
-            build_dir: ios-simulator-arm64
-            cmake_generator: Xcode
-            cmake_args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
-
+    name: Build and package Apple arm64 artifacts
     runs-on: macos-15
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Build static libraries
-        run: |
-          cmake -S libjpeg -B libjpeg/build/${{ matrix.build_dir }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            ${{ matrix.cmake_args }} \
-            -G "${{ matrix.cmake_generator }}"
-          cmake --build libjpeg/build/${{ matrix.build_dir }} --config Release
-          cmake --install libjpeg/build/${{ matrix.build_dir }} --config Release --prefix libjpeg/build/${{ matrix.build_dir }}/install
-          bash libjpeg/scripts/package-artifact.sh libjpeg/build/${{ matrix.build_dir }} libjpeg/build/${{ matrix.build_dir }}/install ${{ matrix.platform }}/${{ matrix.arch }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
+      - name: Build macOS static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libjpeg-${{ matrix.build_dir }}
-          path: libjpeg/build/${{ matrix.build_dir }}/libjpeg-*.tar.gz
+          source-dir: libjpeg
+          build-dir: libjpeg/build/macos-arm64
+          install-dir: libjpeg/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DCMAKE_OSX_ARCHITECTURES=arm64
+          package-script: libjpeg/scripts/package-artifact.sh
 
-  package-ios:
-    name: Package iOS XCFramework
-    needs: build-apple
-    runs-on: macos-15
-
-    steps:
-      - name: Download iOS device artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS device static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libjpeg-ios-arm64
-          path: package-input/ios
+          source-dir: libjpeg
+          build-dir: libjpeg/build/ios-arm64
+          install-dir: libjpeg/build/ios-arm64/install
+          platform-arch: ios/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: libjpeg/scripts/package-artifact.sh
 
-      - name: Download iOS simulator artifact
-        uses: actions/download-artifact@v7
+      - name: Build iOS simulator static library
+        uses: ./.github/actions/build-native-library
         with:
-          name: libjpeg-ios-simulator-arm64
-          path: package-input/ios-simulator
+          source-dir: libjpeg
+          build-dir: libjpeg/build/ios-simulator-arm64
+          install-dir: libjpeg/build/ios-simulator-arm64/install
+          platform-arch: ios-simulator/arm64
+          generator: Xcode
+          cmake-args: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO
+          package-script: libjpeg/scripts/package-artifact.sh
 
       - name: Create XCFramework
         run: |
-          mkdir -p package-work package-output
-          tar -xzf package-input/ios/libjpeg-ios-arm64.tar.gz -C package-work
-          tar -xzf package-input/ios-simulator/libjpeg-ios-simulator-arm64.tar.gz -C package-work
-
-          device_root="${PWD}/package-work/libjpeg/ios/arm64"
-          simulator_root="${PWD}/package-work/libjpeg/ios-simulator/arm64"
-          device_lib="$(find "${device_root}/lib" -type f \( -name "libjpeg.a" -o -name "jpeg*.a" \) | head -n 1)"
-          simulator_lib="$(find "${simulator_root}/lib" -type f \( -name "libjpeg.a" -o -name "jpeg*.a" \) | head -n 1)"
-
-          if [ -z "${device_lib}" ] || [ -z "${simulator_lib}" ]; then
-            echo "Unable to locate libjpeg iOS static libraries" >&2
-            exit 1
-          fi
-
           xcodebuild -create-xcframework \
-            -library "${device_lib}" -headers "${device_root}/include" \
-            -library "${simulator_lib}" -headers "${simulator_root}/include" \
-            -output package-output/libjpeg-ios.xcframework
+            -library libjpeg/build/ios-arm64/install/lib/libjpeg.a -headers libjpeg/build/ios-arm64/install/include \
+            -library libjpeg/build/ios-simulator-arm64/install/lib/libjpeg.a -headers libjpeg/build/ios-simulator-arm64/install/include \
+            -output libjpeg/build/libjpeg-ios.xcframework
+          ditto -c -k --sequesterRsrc --keepParent libjpeg/build/libjpeg-ios.xcframework libjpeg/build/libjpeg-ios.xcframework.zip
 
-          cd package-output
-          ditto -c -k --sequesterRsrc --keepParent libjpeg-ios.xcframework libjpeg-ios.xcframework.zip
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libjpeg-macos-arm64
+          path: libjpeg/build/macos-arm64/libjpeg-*.tar.gz
+
+      - name: Upload iOS device artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libjpeg-ios-arm64
+          path: libjpeg/build/ios-arm64/libjpeg-*.tar.gz
+
+      - name: Upload iOS simulator artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: libjpeg-ios-simulator-arm64
+          path: libjpeg/build/ios-simulator-arm64/libjpeg-*.tar.gz
 
       - name: Upload XCFramework artifact
         uses: actions/upload-artifact@v7
         with:
           name: libjpeg-ios-xcframework
-          path: package-output/libjpeg-ios.xcframework.zip
+          path: libjpeg/build/libjpeg-ios.xcframework.zip
