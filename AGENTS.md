@@ -60,13 +60,13 @@ change explicitly adds more release assets and updates the consumer filters.
 Do not make local Android builds request `armeabi-v7a` unless the corresponding
 SQLite3, mbedTLS, and Skia artifacts exist in the target releases.
 
-## iOS packaging runners
+## macOS runners
 
-Every `package-ios` job in a build workflow must run on `macos-15`. GitHub maps
-that hosted-runner label to Apple Silicon (`arm64`); do not replace it with
-`macos-15-intel`. The packaging jobs only combine already-built iOS artifacts
-into XCFrameworks, so keeping them on the standard ARM64 macOS pool avoids
-unnecessary waits for Intel macOS capacity.
+Unless macOS Intel is explicitly required, every job that runs on macOS must
+use an ARM64 runner. For GitHub-hosted runners, use an ARM64 label such as
+`macos-15`; use labels ending in `-intel` only when Intel is explicitly
+required. Intel macOS runner capacity is limited, so do not select it by
+default.
 
 ## Windows static runtime
 
