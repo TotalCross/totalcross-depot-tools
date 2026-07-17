@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 get_filename_component(QRCode_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(QRCode_LOCAL_ROOT "${QRCode_DEPENDENCY_DIR}/local")
 

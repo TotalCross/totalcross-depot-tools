@@ -1,6 +1,6 @@
-# Copyright (C) 2026 Amalgam Solucoes em TI Ltda
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 #
-# SPDX-License-Identifier: LGPL-2.1-only
 
 get_filename_component(PNG_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(PNG_LOCAL_ROOT "${PNG_DEPENDENCY_DIR}/local")

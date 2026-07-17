@@ -1,6 +1,6 @@
-# Copyright (C) 2026 Amalgam Solucoes em TI Ltda
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 #
-# SPDX-License-Identifier: LGPL-2.1-only
 
 get_filename_component(TCVM_MINIZIP_NG_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TCVM_MINIZIP_NG_AUTOFETCH_DEP_DIR "${TCVM_MINIZIP_NG_AUTOFETCH_DIR}/.." ABSOLUTE)

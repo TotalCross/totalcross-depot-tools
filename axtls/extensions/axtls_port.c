@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+ * SPDX-License-Identifier: MIT
+ */
 #include "axtls_port.h"
 
 #include <stdio.h>

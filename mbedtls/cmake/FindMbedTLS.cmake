@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 get_filename_component(MbedTLS_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(MbedTLS_LOCAL_ROOT "${MbedTLS_DEPENDENCY_DIR}/local")
 

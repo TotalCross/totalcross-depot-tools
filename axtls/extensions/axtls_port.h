@@ -1,4 +1,8 @@
 /*
+ * SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+ * SPDX-License-Identifier: MIT
+ */
+/*
  * axTLS portable integration hooks.
  *
  * Create a hook table and pass it to ssl_ctx_new_with_port(). Hooks are

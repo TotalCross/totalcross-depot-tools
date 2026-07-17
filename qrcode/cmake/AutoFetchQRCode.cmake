@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 get_filename_component(TC_QRCODE_AUTOFETCH_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 get_filename_component(TC_QRCODE_DEP_DIR "${TC_QRCODE_AUTOFETCH_DIR}/.." ABSOLUTE)
 

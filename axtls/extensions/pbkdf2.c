@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2026 Amalgam Solucoes em TI Ltda
+ * SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+ * SPDX-License-Identifier: MIT
  *
- * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Derived from OpenBSD lib/libutil/pkcs5_pbkdf2.c. The original
  * implementation is documented at:

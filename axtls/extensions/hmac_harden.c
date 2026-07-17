@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2026 Amalgam Solucoes em TI Ltda
+ * SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+ * SPDX-License-Identifier: MIT
  *
- * SPDX-License-Identifier: LGPL-2.1-only
  *
  * The upstream axTLS hmac.c is compiled below with its SHA-1 entry point
  * renamed. This preserves the upstream MD5 and SHA-256 implementations while

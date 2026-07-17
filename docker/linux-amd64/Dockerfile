@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 FROM ubuntu:bionic
 
 MAINTAINER Allan César "acmlira@gmail.com"

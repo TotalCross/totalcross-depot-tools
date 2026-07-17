@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 name: mbedtls
 version: 3.5.2
 release: mbedtls-3.5.2-r2

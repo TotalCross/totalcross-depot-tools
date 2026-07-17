@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 param(
   [Parameter(Mandatory = $true)]
   [ValidateSet("x86", "x64", "arm64")]

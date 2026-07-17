@@ -18,6 +18,14 @@ Skia is the exception on the build side: it is built with GN/Ninja through
 scripts, and consumed through the CMake fetch/find modules imported from 
 TotalCrossVM.
 
+## Maintainer
+
+Created and maintained by [Fabio Sobral](https://github.com/flsobral).
+
+Copyright © 2026 Amalgam Solucoes em TI Ltda.
+
+Licensed under the MIT License.
+
 TotalCross can consume this repository as a submodule or as an unpacked package:
 
 ```cmake

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 name: sqlite3
 version: 3.32.3
 release: sqlite3-3.32.3

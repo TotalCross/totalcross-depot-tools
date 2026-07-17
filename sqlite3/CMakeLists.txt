@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.10)
 
 project(totalcross-sqlite3-static

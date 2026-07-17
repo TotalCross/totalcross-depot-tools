@@ -1,7 +1,6 @@
-# Copyright (C) 2000-2013 SuperWaba Ltda.
-# Copyright (C) 2014-2020 TotalCross Global Mobile Platform Ltda.
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
 #
-# SPDX-License-Identifier: LGPL-2.1-only
 
 include(FindPackageHandleStandardArgs)
 
