@@ -5,11 +5,6 @@ name: Build axTLS static libraries
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - axtls/**
-      - .github/workflows/build-axtls.yml
   pull_request:
     branches: [ master ]
     paths:

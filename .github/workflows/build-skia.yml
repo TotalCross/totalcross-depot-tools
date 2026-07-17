@@ -5,16 +5,6 @@ name: Build Skia static libraries
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
-    paths:
-      - skia/**
-      - .github/scripts/verify-windows-static-runtime.ps1
-      - zlib-ng/fetch.sh
-      - zlib-ng/manifest.yml
-      - libpng/fetch.sh
-      - libpng/manifest.yml
-      - .github/workflows/build-skia.yml
   pull_request:
     branches: [ main, master ]
     paths:

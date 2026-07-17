@@ -20,6 +20,7 @@ This plan does not change which library features are compiled and does not move 
 - [x] (2026-07-17 21:17Z) Captured compact baseline metrics for successful libpng and Skia workflows in `artifacts/ci-performance/baseline/` and added reproducible collection and Markdown-summary commands.
 - [x] (2026-07-17 21:17Z) Replaced native-workflow Android SDK/NDK installation steps with `.github/actions/setup-android-native`, which verifies NDK 28.2.13676358 and exports its path.
 - [x] (2026-07-17 21:17Z) Created minimal Bionic native CMake image definitions, a Skia amd64 image definition, image smoke coverage, and migrated native workflow image tags to `v2.0.0`.
+- [x] (2026-07-17 21:17Z) Removed push triggers from build and policy workflows and consolidated commit-message and copyright validation into `.github/workflows/validate-commit.yml`, with one checkout and independent failure reporting.
 - [ ] Remove standalone `prepare` jobs that only calculate versions, tags, or dependency release names.
 - [x] (2026-07-17 21:17Z) Added shared native build and target-manifest primitives, plus guarded graphics and small-library dry-run orchestrators.
 - [ ] Keep SQLite isolated while migrating it to the common optimized primitives.

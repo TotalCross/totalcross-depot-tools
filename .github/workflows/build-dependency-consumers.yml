@@ -3,9 +3,6 @@
 name: Build dependency consumers
 
 on:
-  push:
-    branches: [main, master]
-    paths: [deps.yml]
   pull_request:
     branches: [main, master]
     paths: [deps.yml]

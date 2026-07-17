@@ -14,13 +14,6 @@ on:
         description: Optional zlib release tag to use
         required: false
         type: string
-  push:
-    branches: [ master ]
-    paths:
-      - minizip/**
-      - zlib/fetch.sh
-      - .github/scripts/read-deps-release.sh
-      - .github/workflows/build-minizip.yml
   pull_request:
     branches: [ master ]
     paths:

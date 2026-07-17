@@ -5,11 +5,6 @@ name: Build Visual C++ runtime DLLs
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - vcruntime/**
-      - .github/workflows/build-vcruntime.yml
   pull_request:
     branches: [ master ]
     paths:

@@ -4,14 +4,6 @@ name: Validate Windows static runtime policy
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
-    paths:
-      - cmake/TotalCrossWindowsStaticRuntime.cmake
-      - .github/scripts/verify-windows-static-runtime.ps1
-      - .github/scripts/test-windows-static-runtime-validator.ps1
-      - .github/workflows/validate-windows-static-runtime-policy.yml
-      - AGENTS.md
   pull_request:
     branches: [ main, master ]
     paths:

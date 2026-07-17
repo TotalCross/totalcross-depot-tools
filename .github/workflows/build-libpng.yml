@@ -14,15 +14,6 @@ on:
         description: Optional zlib-ng release tag to use
         required: false
         type: string
-  push:
-    branches: [ main, master ]
-    paths:
-      - libpng/**
-      - cmake/TotalCrossWindowsStaticRuntime.cmake
-      - .github/scripts/verify-windows-static-runtime.ps1
-      - zlib-ng/fetch.sh
-      - .github/scripts/read-deps-release.sh
-      - .github/workflows/build-libpng.yml
   pull_request:
     branches: [ main, master ]
     paths:

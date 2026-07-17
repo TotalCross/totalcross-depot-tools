@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Validate commit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate commit metadata and copyright
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate Conventional Commits
+        id: commit_messages
+        continue-on-error: true
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            ./.github/scripts/validate-commit-message.sh --range "${BASE_SHA}..${HEAD_SHA}"
+          elif [ "${EVENT_NAME}" = "push" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
+            ./.github/scripts/validate-commit-message.sh --range "${BEFORE_SHA}..${SHA}"
+          else
+            ./.github/scripts/validate-commit-message.sh "${SHA}"
+          fi
+
+      - name: Validate copyright headers
+        id: copyright
+        continue-on-error: true
+        run: python3 tools/check-copyright.py
+
+      - name: Report validation results
+        if: always()
+        env:
+          COMMIT_MESSAGES_OUTCOME: ${{ steps.commit_messages.outcome }}
+          COPYRIGHT_OUTCOME: ${{ steps.copyright.outcome }}
+        run: |
+          echo "## Commit validation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Conventional Commits: ${COMMIT_MESSAGES_OUTCOME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Copyright headers: ${COPYRIGHT_OUTCOME}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${COMMIT_MESSAGES_OUTCOME}" != "success" ]; then
+            echo "Conventional Commit validation failed; see the dedicated step above." >&2
+          fi
+          if [ "${COPYRIGHT_OUTCOME}" != "success" ]; then
+            echo "Copyright validation failed; see the dedicated step above." >&2
+          fi
+          if [ "${COMMIT_MESSAGES_OUTCOME}" != "success" ] || [ "${COPYRIGHT_OUTCOME}" != "success" ]; then
+            exit 1
+          fi

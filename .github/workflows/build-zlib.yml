@@ -5,13 +5,6 @@ name: Build zlib static libraries
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
-    paths:
-      - zlib/**
-      - cmake/TotalCrossWindowsStaticRuntime.cmake
-      - .github/scripts/verify-windows-static-runtime.ps1
-      - .github/workflows/build-zlib.yml
   pull_request:
     branches: [ main, master ]
     paths:

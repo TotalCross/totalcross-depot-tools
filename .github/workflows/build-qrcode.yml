@@ -5,9 +5,6 @@ name: Build qrcode static libraries
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths: [qrcode/**, .github/workflows/build-qrcode.yml, .github/workflows/build-qrcode-common.yml]
   pull_request:
     branches: [master]
     paths: [qrcode/**, .github/workflows/build-qrcode.yml, .github/workflows/build-qrcode-common.yml]

@@ -5,9 +5,6 @@ name: Build SLJIT static libraries
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths: [sljit/**, .github/workflows/build-sljit.yml]
   pull_request:
     branches: [master]
     paths: [sljit/**, .github/workflows/build-sljit.yml]

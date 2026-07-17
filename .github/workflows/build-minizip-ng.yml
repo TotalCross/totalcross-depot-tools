@@ -14,13 +14,6 @@ on:
         description: Optional zlib-ng release tag to use
         required: false
         type: string
-  push:
-    branches: [ master ]
-    paths:
-      - minizip-ng/**
-      - zlib-ng/fetch.sh
-      - .github/scripts/read-deps-release.sh
-      - .github/workflows/build-minizip-ng.yml
   pull_request:
     branches: [ master ]
     paths:
