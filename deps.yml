@@ -45,7 +45,7 @@ dependencies:
     path: libpng
   libjpeg:
     version: 10
-    release: libjpeg-10
+    release: libjpeg-10-r2
     path: libjpeg
   libjpeg-turbo:
     version: 3.1.4.1
