@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [master]
-    paths: [sljit/**, .github/workflows/build-sljit.yml]
+    paths: [sljit/**, .github/actions/build-native-library/action.yml, .github/workflows/build-sljit.yml]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -145,13 +145,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build, test, install, and package
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: sljit
+          build-dir: sljit/build/macos-arm64
+          install-dir: sljit/build/macos-arm64/install
+          platform-arch: macos/arm64
+          generator: Ninja
+          cmake-args: -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_TESTING=ON
+          run-tests: true
+          package-script: sljit/scripts/package-artifact.sh
+
+      - name: Verify macOS static library architecture
         run: |
           build_dir=sljit/build/macos-arm64
-          cmake -S sljit -B "${build_dir}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_TESTING=ON -G Ninja
-          cmake --build "${build_dir}"
-          ctest --test-dir "${build_dir}" --output-on-failure
-          cmake --install "${build_dir}" --prefix "${build_dir}/install"
-          bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" macos/arm64
           file "${build_dir}/install/lib/libsljit.a" | grep -i arm64
       - uses: actions/upload-artifact@v7
         with:
