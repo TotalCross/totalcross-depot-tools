@@ -165,18 +165,14 @@ jobs:
             --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
-        run: |
-          cmake -S minizip-ng -B minizip-ng/build/android-arm64-v8a \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/android/arm64-v8a" \
-            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_HOME}/ndk/28.2.13676358/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-23 \
-            -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF \
-            -G Ninja
-          cmake --build minizip-ng/build/android-arm64-v8a
-          cmake --install minizip-ng/build/android-arm64-v8a --prefix minizip-ng/build/android-arm64-v8a/install
-          bash minizip-ng/scripts/package-artifact.sh minizip-ng/build/android-arm64-v8a minizip-ng/build/android-arm64-v8a/install android/arm64-v8a
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: minizip-ng
+          build-dir: minizip-ng/build/android-arm64-v8a
+          install-dir: minizip-ng/build/android-arm64-v8a/install
+          platform-arch: android/arm64-v8a
+          cmake-args: -DZLIB_DIR=$PWD/zlib-ng/local/android/arm64-v8a -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk/28.2.13676358/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF
+          package-script: minizip-ng/scripts/package-artifact.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

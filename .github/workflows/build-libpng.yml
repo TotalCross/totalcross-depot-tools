@@ -166,18 +166,14 @@ jobs:
             --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
-        run: |
-          cmake -S libpng -B libpng/build/android-arm64-v8a \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/android/arm64-v8a" \
-            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_HOME}/ndk/28.2.13676358/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-23 \
-            -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF \
-            -G Ninja
-          cmake --build libpng/build/android-arm64-v8a
-          cmake --install libpng/build/android-arm64-v8a --prefix libpng/build/android-arm64-v8a/install
-          bash libpng/scripts/package-artifact.sh libpng/build/android-arm64-v8a libpng/build/android-arm64-v8a/install android/arm64-v8a
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: libpng
+          build-dir: libpng/build/android-arm64-v8a
+          install-dir: libpng/build/android-arm64-v8a/install
+          platform-arch: android/arm64-v8a
+          cmake-args: -DZLIB_DIR=$PWD/zlib-ng/local/android/arm64-v8a -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk/28.2.13676358/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF
+          package-script: libpng/scripts/package-artifact.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

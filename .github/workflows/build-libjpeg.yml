@@ -123,17 +123,14 @@ jobs:
         uses: ./.github/actions/setup-android-native
 
       - name: Build static libraries
-        run: |
-          cmake -S libjpeg -B libjpeg/build/android-arm64-v8a \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_HOME}/ndk/28.2.13676358/build/cmake/android.toolchain.cmake" \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-23 \
-            -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF \
-            -G Ninja
-          cmake --build libjpeg/build/android-arm64-v8a
-          cmake --install libjpeg/build/android-arm64-v8a --prefix libjpeg/build/android-arm64-v8a/install
-          bash libjpeg/scripts/package-artifact.sh libjpeg/build/android-arm64-v8a libjpeg/build/android-arm64-v8a/install android/arm64-v8a
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: libjpeg
+          build-dir: libjpeg/build/android-arm64-v8a
+          install-dir: libjpeg/build/android-arm64-v8a/install
+          platform-arch: android/arm64-v8a
+          cmake-args: -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk/28.2.13676358/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DANDROID_USE_LEGACY_TOOLCHAIN_FILE=OFF
+          package-script: libjpeg/scripts/package-artifact.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
