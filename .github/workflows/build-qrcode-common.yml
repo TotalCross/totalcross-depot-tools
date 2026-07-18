@@ -78,12 +78,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build static library
-        shell: bash
-        run: |
-          cmake -S ${{ inputs.dependency }} -B ${{ inputs.dependency }}/build/windows-${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A ${{ matrix.cmake_platform }}
-          cmake --build ${{ inputs.dependency }}/build/windows-${{ matrix.arch }} --config Release
-          cmake --install ${{ inputs.dependency }}/build/windows-${{ matrix.arch }} --config Release --prefix ${{ inputs.dependency }}/build/windows-${{ matrix.arch }}/install
-          bash ${{ inputs.dependency }}/scripts/package-artifact.sh ${{ inputs.dependency }}/build/windows-${{ matrix.arch }} ${{ inputs.dependency }}/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: ${{ inputs.dependency }}
+          build-dir: ${{ inputs.dependency }}/build/windows-${{ matrix.arch }}
+          install-dir: ${{ inputs.dependency }}/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          package-script: ${{ inputs.dependency }}/scripts/package-artifact.sh
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 ${{ inputs.dependency }}/build/windows-${{ matrix.arch }}/${{ inputs.dependency }}-*.tar.gz
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.dependency }}-windows-${{ matrix.arch }}

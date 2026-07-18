@@ -86,21 +86,30 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build, test, install, and package with /MT
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: sljit
+          build-dir: sljit/build/windows-${{ matrix.arch }}
+          install-dir: sljit/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_TESTING=ON
+          run-tests: true
+          package-script: sljit/scripts/package-artifact.sh
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 sljit/build/windows-${{ matrix.arch }}/sljit-*.tar.gz
+
+      - name: Verify SLJIT static runtime directives
         shell: bash
         run: |
           build_dir="sljit/build/windows-${{ matrix.arch }}"
-          cmake -S sljit -B "${build_dir}" -G "Visual Studio 17 2022" -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_TESTING=ON
-          cmake --build "${build_dir}" --config Release --verbose 2>&1 | tee "${build_dir}/compile.log"
-          grep -E '(^|[[:space:]])/MT([[:space:]]|$)' "${build_dir}/compile.log"
-          ! grep -E '(^|[[:space:]])/MD(d)?([[:space:]]|$)' "${build_dir}/compile.log"
-          ctest --test-dir "${build_dir}" -C Release --output-on-failure
-          cmake --install "${build_dir}" --config Release --prefix "${build_dir}/install"
           dumpbin_path="$(find '/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC' -type f -iname dumpbin.exe | head -n 1)"
           test -n "${dumpbin_path}"
           MSYS_NO_PATHCONV=1 "${dumpbin_path}" /directives "$(cygpath -w "${build_dir}/install/lib/sljit.lib")" | tee "${build_dir}/directives.log"
           grep -F 'DEFAULTLIB:LIBCMT' "${build_dir}/directives.log"
           ! grep -E 'DEFAULTLIB:(MSVCRT|MSVCRTD)' "${build_dir}/directives.log"
-          bash sljit/scripts/package-artifact.sh "${build_dir}" "${build_dir}/install" windows/${{ matrix.arch }}
       - name: Validate package contents
         shell: bash
         run: tar -tzf "sljit/build/windows-${{ matrix.arch }}/sljit-windows-${{ matrix.arch }}.tar.gz" | grep -qx 'sljit/windows/${{ matrix.arch }}/share/licenses/sljit/LICENSE'

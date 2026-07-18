@@ -8,6 +8,7 @@ inputs:
   install-dir: { required: true }
   platform-arch: { required: true }
   generator: { required: false, default: Ninja }
+  configuration: { required: false, default: Release }
   cmake-args: { required: false, default: '' }
   run-tests: { required: false, default: 'false' }
   package-script: { required: true }
@@ -17,9 +18,9 @@ runs:
     - shell: bash
       run: |
         cmake -S "${{ inputs.source-dir }}" -B "${{ inputs.build-dir }}" -DCMAKE_BUILD_TYPE=Release ${{ inputs.cmake-args }} -G "${{ inputs.generator }}"
-        cmake --build "${{ inputs.build-dir }}" --config Release
+        cmake --build "${{ inputs.build-dir }}" --config "${{ inputs.configuration }}"
         if [ "${{ inputs.run-tests }}" = true ]; then
-          ctest --test-dir "${{ inputs.build-dir }}" --output-on-failure
+          ctest --test-dir "${{ inputs.build-dir }}" -C "${{ inputs.configuration }}" --output-on-failure
         fi
-        cmake --install "${{ inputs.build-dir }}" --config Release --prefix "${{ inputs.install-dir }}"
+        cmake --install "${{ inputs.build-dir }}" --config "${{ inputs.configuration }}" --prefix "${{ inputs.install-dir }}"
         bash "${{ inputs.package-script }}" "${{ inputs.build-dir }}" "${{ inputs.install-dir }}" "${{ inputs.platform-arch }}"

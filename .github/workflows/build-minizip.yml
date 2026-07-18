@@ -19,6 +19,8 @@ on:
     paths:
       - deps.yml
       - minizip/**
+      - .github/actions/build-native-library/action.yml
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib/fetch.sh
       - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip.yml
@@ -133,16 +135,19 @@ jobs:
             --release-tag "${REQUESTED_ZLIB_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib)}"
 
       - name: Build static libraries
-        shell: bash
-        run: |
-          cmake -S minizip -B minizip/build/windows-${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib/local/windows/${{ matrix.arch }}" \
-            -G "Visual Studio 17 2022" \
-            -A ${{ matrix.cmake_platform }}
-          cmake --build minizip/build/windows-${{ matrix.arch }} --config Release
-          cmake --install minizip/build/windows-${{ matrix.arch }} --config Release --prefix minizip/build/windows-${{ matrix.arch }}/install
-          bash minizip/scripts/package-artifact.sh minizip/build/windows-${{ matrix.arch }} minizip/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: minizip
+          build-dir: minizip/build/windows-${{ matrix.arch }}
+          install-dir: minizip/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DZLIB_DIR=$PWD/zlib/local/windows/${{ matrix.arch }}
+          package-script: minizip/scripts/package-artifact.sh
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 minizip/build/windows-${{ matrix.arch }}/minizip-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

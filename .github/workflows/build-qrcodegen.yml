@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [master]
-    paths: [qrcodegen/**, .github/workflows/build-qrcodegen.yml, .github/workflows/build-qrcode-common.yml]
+    paths: [qrcodegen/**, .github/actions/build-native-library/action.yml, .github/workflows/build-qrcodegen.yml, .github/workflows/build-qrcode-common.yml, .github/scripts/verify-windows-static-runtime.ps1]
 
 jobs:
   build:

@@ -9,6 +9,7 @@ on:
     branches: [ main, master ]
     paths:
       - libjpeg-turbo/**
+      - .github/actions/build-native-library/action.yml
       - cmake/TotalCrossWindowsStaticRuntime.cmake
       - .github/scripts/verify-windows-static-runtime.ps1
       - .github/workflows/build-libjpeg-turbo.yml
@@ -99,15 +100,15 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build static libraries
-        shell: bash
-        run: |
-          cmake -S libjpeg-turbo -B libjpeg-turbo/build/windows-${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -G "Visual Studio 17 2022" \
-            -A ${{ matrix.cmake_platform }}
-          cmake --build libjpeg-turbo/build/windows-${{ matrix.arch }} --config Release
-          cmake --install libjpeg-turbo/build/windows-${{ matrix.arch }} --config Release --prefix libjpeg-turbo/build/windows-${{ matrix.arch }}/install
-          bash libjpeg-turbo/scripts/package-artifact.sh libjpeg-turbo/build/windows-${{ matrix.arch }} libjpeg-turbo/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: libjpeg-turbo
+          build-dir: libjpeg-turbo/build/windows-${{ matrix.arch }}
+          install-dir: libjpeg-turbo/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          package-script: libjpeg-turbo/scripts/package-artifact.sh
 
       - name: Verify static MSVC runtime
         shell: pwsh

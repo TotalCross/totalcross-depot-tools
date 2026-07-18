@@ -19,6 +19,7 @@ on:
     paths:
       - deps.yml
       - libpng/**
+      - .github/actions/build-native-library/action.yml
       - cmake/TotalCrossWindowsStaticRuntime.cmake
       - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
@@ -135,16 +136,15 @@ jobs:
             --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
-        shell: bash
-        run: |
-          cmake -S libpng -B libpng/build/windows-${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/windows/${{ matrix.arch }}" \
-            -G "Visual Studio 17 2022" \
-            -A ${{ matrix.cmake_platform }}
-          cmake --build libpng/build/windows-${{ matrix.arch }} --config Release
-          cmake --install libpng/build/windows-${{ matrix.arch }} --config Release --prefix libpng/build/windows-${{ matrix.arch }}/install
-          bash libpng/scripts/package-artifact.sh libpng/build/windows-${{ matrix.arch }} libpng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: libpng
+          build-dir: libpng/build/windows-${{ matrix.arch }}
+          install-dir: libpng/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DZLIB_DIR=$PWD/zlib-ng/local/windows/${{ matrix.arch }}
+          package-script: libpng/scripts/package-artifact.sh
 
       - name: Verify static MSVC runtime
         shell: pwsh

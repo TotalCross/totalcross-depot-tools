@@ -19,6 +19,8 @@ on:
     paths:
       - deps.yml
       - minizip-ng/**
+      - .github/actions/build-native-library/action.yml
+      - .github/scripts/verify-windows-static-runtime.ps1
       - zlib-ng/fetch.sh
       - .github/scripts/read-deps-release.sh
       - .github/workflows/build-minizip-ng.yml
@@ -133,16 +135,19 @@ jobs:
             --release-tag "${REQUESTED_ZLIB_NG_RELEASE_TAG:-$(.github/scripts/read-deps-release.sh zlib-ng)}"
 
       - name: Build static libraries
-        shell: bash
-        run: |
-          cmake -S minizip-ng -B minizip-ng/build/windows-${{ matrix.arch }} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DZLIB_DIR="$PWD/zlib-ng/local/windows/${{ matrix.arch }}" \
-            -G "Visual Studio 17 2022" \
-            -A ${{ matrix.cmake_platform }}
-          cmake --build minizip-ng/build/windows-${{ matrix.arch }} --config Release
-          cmake --install minizip-ng/build/windows-${{ matrix.arch }} --config Release --prefix minizip-ng/build/windows-${{ matrix.arch }}/install
-          bash minizip-ng/scripts/package-artifact.sh minizip-ng/build/windows-${{ matrix.arch }} minizip-ng/build/windows-${{ matrix.arch }}/install windows/${{ matrix.arch }}
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: minizip-ng
+          build-dir: minizip-ng/build/windows-${{ matrix.arch }}
+          install-dir: minizip-ng/build/windows-${{ matrix.arch }}/install
+          platform-arch: windows/${{ matrix.arch }}
+          generator: Visual Studio 17 2022
+          cmake-args: -A ${{ matrix.cmake_platform }} -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DZLIB_DIR=$PWD/zlib-ng/local/windows/${{ matrix.arch }}
+          package-script: minizip-ng/scripts/package-artifact.sh
+
+      - name: Verify static MSVC runtime
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 minizip-ng/build/windows-${{ matrix.arch }}/minizip-ng-*.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
