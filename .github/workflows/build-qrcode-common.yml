@@ -47,12 +47,15 @@ jobs:
         if: ${{ matrix.use_qemu }}
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Build static library
-        run: |
-          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.1 bash -lc "
-            cmake -S /sources/${{ inputs.dependency }} -B /sources/${{ inputs.dependency }}/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -G Ninja &&
-            cmake --build /sources/${{ inputs.dependency }}/build/${{ matrix.project }} &&
-            cmake --install /sources/${{ inputs.dependency }}/build/${{ matrix.project }} --prefix /sources/${{ inputs.dependency }}/build/${{ matrix.project }}/install &&
-            bash /sources/${{ inputs.dependency }}/scripts/package-artifact.sh /sources/${{ inputs.dependency }}/build/${{ matrix.project }} /sources/${{ inputs.dependency }}/build/${{ matrix.project }}/install ${{ matrix.platform_arch }}"
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: ${{ inputs.dependency }}
+          build-dir: ${{ inputs.dependency }}/build/${{ matrix.project }}
+          install-dir: ${{ inputs.dependency }}/build/${{ matrix.project }}/install
+          platform-arch: ${{ matrix.platform_arch }}
+          docker-image: totalcross/${{ matrix.project }}:v2.0.1
+          docker-platform: ${{ matrix.docker_platform }}
+          package-script: ${{ inputs.dependency }}/scripts/package-artifact.sh
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.dependency }}-${{ matrix.project }}

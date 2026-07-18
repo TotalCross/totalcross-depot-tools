@@ -52,24 +52,15 @@ jobs:
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Build static libraries
-        run: |
-          docker run \
-            --platform ${{ matrix.docker_platform }} \
-            -v "${PWD}:/sources" \
-            -w /sources \
-            -t totalcross/${{ matrix.project }}:v2.0.1 \
-            bash -lc "
-              cmake --version &&
-              cmake -S /sources/zlib-ng -B /sources/zlib-ng/build/${{ matrix.project }} \
-                -DCMAKE_BUILD_TYPE=Release \
-                -G Ninja &&
-              cmake --build /sources/zlib-ng/build/${{ matrix.project }} &&
-              cmake --install /sources/zlib-ng/build/${{ matrix.project }} --prefix /sources/zlib-ng/build/${{ matrix.project }}/install &&
-              bash /sources/zlib-ng/scripts/package-artifact.sh \
-                /sources/zlib-ng/build/${{ matrix.project }} \
-                /sources/zlib-ng/build/${{ matrix.project }}/install \
-                ${{ matrix.platform_arch }}
-            "
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: zlib-ng
+          build-dir: zlib-ng/build/${{ matrix.project }}
+          install-dir: zlib-ng/build/${{ matrix.project }}/install
+          platform-arch: ${{ matrix.platform_arch }}
+          docker-image: totalcross/${{ matrix.project }}:v2.0.1
+          docker-platform: ${{ matrix.docker_platform }}
+          package-script: zlib-ng/scripts/package-artifact.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

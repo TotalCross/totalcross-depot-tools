@@ -44,13 +44,17 @@ jobs:
         if: ${{ matrix.use_qemu }}
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - name: Build, test, install, and package
-        run: |
-          docker run --platform ${{ matrix.docker_platform }} -v "${PWD}:/sources" -w /sources -t totalcross/${{ matrix.project }}:v2.0.1 bash -lc '
-            cmake -S /sources/sljit -B /sources/sljit/build/${{ matrix.project }} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -G Ninja &&
-            cmake --build /sources/sljit/build/${{ matrix.project }} &&
-            ctest --test-dir /sources/sljit/build/${{ matrix.project }} --output-on-failure &&
-            cmake --install /sources/sljit/build/${{ matrix.project }} --prefix /sources/sljit/build/${{ matrix.project }}/install &&
-            bash /sources/sljit/scripts/package-artifact.sh /sources/sljit/build/${{ matrix.project }} /sources/sljit/build/${{ matrix.project }}/install ${{ matrix.platform_arch }}'
+        uses: ./.github/actions/build-native-library
+        with:
+          source-dir: sljit
+          build-dir: sljit/build/${{ matrix.project }}
+          install-dir: sljit/build/${{ matrix.project }}/install
+          platform-arch: ${{ matrix.platform_arch }}
+          cmake-args: -DBUILD_TESTING=ON
+          run-tests: true
+          docker-image: totalcross/${{ matrix.project }}:v2.0.1
+          docker-platform: ${{ matrix.docker_platform }}
+          package-script: sljit/scripts/package-artifact.sh
       - name: Validate ELF architecture and package contents
         run: |
           artifact_name_platform="${{ matrix.platform_arch }}"
