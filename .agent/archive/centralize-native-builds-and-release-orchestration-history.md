@@ -149,3 +149,17 @@ When publication is required, they validate downloaded assets, recheck under a
 per-library concurrency group, write and commit metadata before creating a tag,
 then publish the release. The shared publication action also serves VCRuntime
 and Skia. No remote workflow, tag, push, or publication was executed.
+
+## Milestone 7 selective stack planning (2026-07-19)
+
+`scripts/native-stack.py` turns a graphics or others request into a deterministic
+plan. It follows only real dependency edges, distinguishes a selected in-run
+dependency from an external pinned release, groups selected CMake libraries by
+compatible target/runner lane, and exposes a topological publication order.
+Release mode excludes existing releases; force-release selects every requested
+member with the next allowed per-library suffix.
+
+The graphics and others shell scripts and workflows all call that planner.
+Seven focused scenarios prove all-existing, one-missing leaf, local dependency
+handoff, unrelated stack member, force-release, lane grouping, and recovery
+cases. No remote lane or publication was dispatched.

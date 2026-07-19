@@ -34,6 +34,8 @@ artifact contract.
 - Added fixture-tested individual release idempotence, force-tag selection,
   recovery diagnostics, asset verification, and metadata-before-tag workflow
   orchestration.
+- Added selective graphics/others stack planning with external/local dependency
+  handoff, compatible target lanes, and topological publication order.
 
 ## Decisions and Trade-offs
 
@@ -61,6 +63,10 @@ idempotence implementation and a later remote equivalence gate.
 Milestone 6 uses `deps.yml` as the effective release identity. Existing
 non-draft releases short-circuit successfully; ambiguous partial state is an
 explicit recovery condition, never a reason to invent another suffix.
+
+Milestone 7 models stack membership as scheduling scope only. The plan follows
+real dependency edges, so an already-published dependency is fetched instead of
+rebuilt and unrelated stack members remain untouched.
 
 ## Unexpected Problems and Discoveries
 
@@ -90,6 +96,10 @@ Milestone 6 passed 27 focused native build/release tests, including nine release
 fixtures for suffix, idempotence, recovery, and asset contracts. Its workflows
 and composite action parsed locally; no remote state change was attempted.
 
+Milestone 7 expanded the focused suite to 34 tests, including seven stack
+scenarios. Graphics and others scripts produce offline build plans; the matching
+workflows use the same planning contract.
+
 ## Useful Evidence and Examples
 
 Run `python3 scripts/inventory-native-build-orchestration.py --format json` to
@@ -106,9 +116,10 @@ new dependency scaffold before it writes files.
 Executor migration and workflow changes are intentionally deferred to later
 milestones.
 
-The next milestone is selective stack planning. Before production publication,
-the eight inherited manifest/bundle pin mismatches need deliberate recovery and
-the individual release implementation needs authorized remote validation.
+The next milestone preserves Skia target parallelism while using eligible stack
+lanes. Before production publication, the eight inherited manifest/bundle pin
+mismatches need deliberate recovery and the individual release implementation
+needs authorized remote validation.
 
 Windows runtime verification, Android execution, and Docker/QEMU execution
 remain host-dependent validations for a later platform-capable checkpoint.

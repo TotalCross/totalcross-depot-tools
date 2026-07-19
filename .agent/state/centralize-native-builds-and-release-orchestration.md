@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 7 — not started; stop before implementation.
-- Current slice: individual release state and publication orchestration are
-  implemented; stack selection remains deferred.
-- Last pre-milestone revision: `c9292d6`.
-- Last logical commit: `3ce7070 feat(release): add idempotent native release orchestration`.
+- Active milestone: Milestone 8 — not started; stop before implementation.
+- Current slice: selective stack planning is available; Skia lane topology is
+  deferred.
+- Last pre-milestone revision: `cfccd78`.
+- Last logical commit: `698d3c9 feat(stacks): add selective native stack planning`.
 
 ## Active paths
 
@@ -38,6 +38,13 @@ SPDX-License-Identifier: MIT
 - `scripts/native-release.py`
 - `scripts/tests/test_native_release.py`
 - `.github/actions/publish-native-release/action.yml`
+- `scripts/native-stack.py`
+- `scripts/build-graphics-stack.sh`
+- `scripts/build-other-libraries-stack.sh`
+- `scripts/tests/test_native_stack.py`
+- `.github/workflows/native-stack-plan.yml`
+- `.github/workflows/graphics-stack.yml`
+- `.github/workflows/others-stack.yml`
 
 ## Completed work
 
@@ -60,6 +67,8 @@ SPDX-License-Identifier: MIT
   while preserving their specialized build implementations.
 - Added shared release inspection, force-tag selection, metadata preparation,
   asset verification, recovery diagnostics, and per-library publication guards.
+- Added selective graphics/others planning with external/local dependency
+  handoff, compatible target lanes, and true topological publication order.
 
 ## Focused validation
 
@@ -88,6 +97,9 @@ SPDX-License-Identifier: MIT
 - `python3 -m unittest discover -s scripts/tests -p 'test_native_*.py'` —
   passed (27 tests), including release fixtures for suffix gaps, existing and
   draft releases, tag-only states, metadata recovery, and asset verification.
+- The same focused suite passed with 34 tests after stack planning, including
+  all-existing, one-missing leaf, local dependency handoff, unrelated others,
+  force-release, lane grouping, and recovery plans.
 
 ## Deferred validation
 
@@ -99,6 +111,8 @@ SPDX-License-Identifier: MIT
   equivalent remote validation and later obsolete-path removal gate. The new
   workflows now contain idempotence and publication logic, but no remote
   workflow, tag, push, or release has been executed.
+- Stack workflows expose the shared plan; no remote lane execution or
+  publication was dispatched.
 
 ## Decisions and blockers
 
@@ -116,10 +130,9 @@ SPDX-License-Identifier: MIT
 
 ## Next action and resume command
 
-Start Milestone 7 only when authorized by the user. Begin by reading this state
-file, then inspect stacks and true dependency edges before adding selective
-stack orchestration.
+Start Milestone 8 only when authorized by the user. Begin by reading this state
+file, then inspect the existing Skia topology and new lane plan before adding
+any platform-lane reuse.
 
-Do not delete legacy workflow pairs or dispatch remote workflows as part of the
-completed Milestone 6 checkpoint. Production publication requires explicit
-user authorization.
+Do not dispatch remote workflows, remove legacy paths, or change Skia target
+parallelism as part of the completed Milestone 7 checkpoint.
