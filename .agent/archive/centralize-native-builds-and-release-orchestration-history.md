@@ -112,3 +112,25 @@ the skill metadata and a TotalCross behavior reference. A temporary consumer
 used its pinned-bootstrap pattern with `zlib-1.3.1-r3`, fetched the published
 macOS arm64 zlib artifact, configured a CMake target through `FindZlib.cmake`,
 linked it, and executed it successfully.
+
+## Milestone 5 operation workflow contract (2026-07-19)
+
+`.github/workflows/native-library-operation.yml` contains the common CMake
+operation contract. Its planning job invokes `scripts/native-build.py plan`,
+resolves the target matrix through the central resolver, fetches only declared
+dependencies at their `deps.yml` pins, delegates builds to
+`scripts/build-native-target.sh`, verifies Windows static runtime archives, and
+uploads the existing artifact identities. Apple targets remain on one runner;
+their configured XCFramework composition is handled by
+`scripts/package-native-ios-xcframework.sh`.
+
+Each library now has `.github/workflows/<library>.yml` with reusable and manual
+operation inputs plus machine-readable result outputs. The CMake libraries call
+the common workflow. VCRuntime and Skia preserve their existing specialized
+implementations behind equivalent planning and summary adapters, avoiding a
+change to the custom Windows packaging or Skia parallel topology.
+
+The new release-related inputs are deliberately build-only placeholders. The
+legacy build/release pairs are retained pending the later remote equivalence and
+obsolete-path gates; no remote workflow was dispatched and no release behavior
+was changed in this milestone.

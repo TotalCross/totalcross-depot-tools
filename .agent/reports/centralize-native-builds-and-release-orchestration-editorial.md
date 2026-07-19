@@ -28,6 +28,9 @@ artifact contract.
   and zlib published-target wrappers that delegate to the executor.
 - Added focused/staged header-validation modes, scaffold dry-run and central
   target adaptation, onboarding links, and the distributable consumer skill.
+- Added operation entry workflows for all 15 libraries, with a shared CMake
+  planner/executor path, pinned dependency fetching, Apple packaging policy,
+  and specialized VCRuntime/Skia adapters.
 
 ## Decisions and Trade-offs
 
@@ -48,6 +51,10 @@ were already tracked as a coherent earlier onboarding series. Milestone 4 kept
 that newer material, connected the remaining mechanics, and avoided replacing
 it with an older untracked proposal.
 
+Milestone 5 keeps the old workflow pairs available while the operation contract
+is introduced. This preserves existing release behavior until its dedicated
+idempotence implementation and a later remote equivalence gate.
+
 ## Unexpected Problems and Discoveries
 
 The state file named by the plan did not exist at resumption. The plan's fresh
@@ -67,6 +74,11 @@ Milestone 4 passed 15 scaffold lifecycle tests and focused header-validator
 tests. A temporary consumer pinned to published `zlib-1.3.1-r3` fetched the
 artifact, configured, built, linked, and ran through the documented CMake path.
 
+Milestone 5 passed central configuration validation, 13 resolver tests, shell
+syntax checks, dependency-fetch dry runs, operation planner checks, local YAML
+parsing, focused SPDX validation, and whitespace checks. Remote workflow runs
+were intentionally not dispatched.
+
 ## Useful Evidence and Examples
 
 Run `python3 scripts/inventory-native-build-orchestration.py --format json` to
@@ -82,6 +94,11 @@ new dependency scaffold before it writes files.
 
 Executor migration and workflow changes are intentionally deferred to later
 milestones.
+
+Release inputs on the new workflows currently use build-only behavior. The next
+milestone must implement existing-release detection, force-release suffix
+selection, metadata-before-tag ordering, and publication recovery before old
+release workflows can be retired.
 
 Windows runtime verification, Android execution, and Docker/QEMU execution
 remain host-dependent validations for a later platform-capable checkpoint.

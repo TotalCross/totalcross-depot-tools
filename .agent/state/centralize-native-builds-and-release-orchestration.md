@@ -7,10 +7,11 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 5 — not started; stop before implementation.
-- Current slice: awaiting authorization to replace build/release workflow pairs.
-- Last pre-milestone revision: `056f44db05c69475f71011cb29b22ffc93b5bbdc`.
-- Last logical commit: `f5c77cc feat(onboarding): complete dependency adoption contract`.
+- Active milestone: Milestone 6 — not started; stop before implementation.
+- Current slice: operation-based build workflows are in place; release semantics
+  remain intentionally deferred.
+- Last pre-milestone revision: `daeea34`.
+- Last logical commit: `6e0d76d feat(workflows): add specialized native operation adapters`.
 
 ## Active paths
 
@@ -30,6 +31,10 @@ SPDX-License-Identifier: MIT
 - `docs/CONSUMING_DEPOT_TOOLS.md`
 - `tools/new-native-dependency.py`
 - `consumer-skill/adopt-totalcross-depot-tools/`
+- `.github/workflows/native-library-operation.yml`
+- `.github/workflows/<library>.yml`
+- `scripts/fetch-native-dependencies.sh`
+- `scripts/package-native-ios-xcframework.sh`
 
 ## Completed work
 
@@ -45,6 +50,11 @@ SPDX-License-Identifier: MIT
   sequence, zlib published-target wrappers, and 17 executor-focused tests.
 - Completed the onboarding contract with central scaffold targets, dry-run,
   focused header validation, concise README links, and consumer skill package.
+- Added operation-based entry workflows for all 15 libraries. The 13 CMake
+  libraries share planner-driven target matrices, pinned dependency fetching,
+  central execution, Windows validation, unchanged artifact names, and Apple
+  XCFramework packaging. VCRuntime and Skia expose the same inputs and outputs
+  while preserving their specialized build implementations.
 
 ## Focused validation
 
@@ -65,13 +75,22 @@ SPDX-License-Identifier: MIT
   tests), including dry-run, overwrite refusal, executable bits, and TODO checks.
 - A temporary consumer pinned to published `zlib-1.3.1-r3` fetched its macOS
   arm64 artifact and configured, built, linked, and ran through `FindZlib.cmake`.
+- `python3 scripts/native-build.py validate` and the 13 focused resolver tests
+  passed after adding the Apple packaging policy.
+- Shell syntax checks, dependency-fetch dry runs, operation planner checks for
+  build/release/force-release, YAML parsing for all 16 new workflows, changed
+  file SPDX validation, and staged whitespace checks passed.
 
 ## Deferred validation
 
 - Windows runtime verification, Android execution, and Docker/QEMU execution
   remain deferred because this host cannot provide those platform facilities.
-  Dry-run tests cover their resolved arguments. No workflow dispatch, release
-  dry run, or remote publication was run.
+  Dry-run tests cover their resolved arguments. No workflow dispatch, remote
+  build, release dry run, or remote publication was run.
+- Legacy `build-*.yml`/`release-*.yml` workflows remain until the planned
+  equivalent remote validation and later obsolete-path removal gate. The new
+  `release` and `force-release` inputs deliberately run build-only work and
+  return `built`; idempotence and publication are Milestone 6 responsibilities.
 
 ## Decisions and blockers
 
@@ -80,11 +99,14 @@ SPDX-License-Identifier: MIT
 - No blocker remains. The non-published zlib Android armv7 and macOS x86_64
   wrappers were removed under the published-target policy. Preserve unrelated
   untracked proposal directories and the SDL3 ExecPlan.
+- macOS runners use Bash 3, which lacks `mapfile`; the shared Apple helpers use
+  portable read loops instead.
 
 ## Next action and resume command
 
-Start Milestone 5 only when authorized by the user. Begin by reading this state
-file, then inspect the library workflow family selected for the first migration.
+Start Milestone 6 only when authorized by the user. Begin by reading this state
+file, then inspect the existing release helpers and captured baseline metadata
+behavior before adding idempotence or publication logic.
 
-Do not change workflow or release behavior as part of this completed onboarding
-milestone.
+Do not delete legacy workflow pairs, dispatch remote workflows, tag, push, or
+publish as part of the completed Milestone 5 checkpoint.
