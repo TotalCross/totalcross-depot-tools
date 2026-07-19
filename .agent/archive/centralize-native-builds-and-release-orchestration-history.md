@@ -134,3 +134,18 @@ The new release-related inputs are deliberately build-only placeholders. The
 legacy build/release pairs are retained pending the later remote equivalence and
 obsolete-path gates; no remote workflow was dispatched and no release behavior
 was changed in this milestone.
+
+## Milestone 6 individual release idempotence (2026-07-19)
+
+`scripts/native-release.py` is the release-state contract. It reads the
+bundle's effective pin, preserves the base/`-rN` suffix rule, inspects release
+and tag snapshots, selects force-release suffixes, prepares manifest and bundle
+metadata, and verifies declared assets. Fixture tests cover existing non-draft
+releases, drafts, tags without releases, suffix gaps, metadata commits without
+a tag, mismatched metadata, and concurrent rechecks.
+
+The operation workflows now short-circuit an existing release before build work.
+When publication is required, they validate downloaded assets, recheck under a
+per-library concurrency group, write and commit metadata before creating a tag,
+then publish the release. The shared publication action also serves VCRuntime
+and Skia. No remote workflow, tag, push, or publication was executed.

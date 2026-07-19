@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 6 — not started; stop before implementation.
-- Current slice: operation-based build workflows are in place; release semantics
-  remain intentionally deferred.
-- Last pre-milestone revision: `daeea34`.
-- Last logical commit: `6e0d76d feat(workflows): add specialized native operation adapters`.
+- Active milestone: Milestone 7 — not started; stop before implementation.
+- Current slice: individual release state and publication orchestration are
+  implemented; stack selection remains deferred.
+- Last pre-milestone revision: `c9292d6`.
+- Last logical commit: `3ce7070 feat(release): add idempotent native release orchestration`.
 
 ## Active paths
 
@@ -35,6 +35,9 @@ SPDX-License-Identifier: MIT
 - `.github/workflows/<library>.yml`
 - `scripts/fetch-native-dependencies.sh`
 - `scripts/package-native-ios-xcframework.sh`
+- `scripts/native-release.py`
+- `scripts/tests/test_native_release.py`
+- `.github/actions/publish-native-release/action.yml`
 
 ## Completed work
 
@@ -55,6 +58,8 @@ SPDX-License-Identifier: MIT
   central execution, Windows validation, unchanged artifact names, and Apple
   XCFramework packaging. VCRuntime and Skia expose the same inputs and outputs
   while preserving their specialized build implementations.
+- Added shared release inspection, force-tag selection, metadata preparation,
+  asset verification, recovery diagnostics, and per-library publication guards.
 
 ## Focused validation
 
@@ -80,6 +85,9 @@ SPDX-License-Identifier: MIT
 - Shell syntax checks, dependency-fetch dry runs, operation planner checks for
   build/release/force-release, YAML parsing for all 16 new workflows, changed
   file SPDX validation, and staged whitespace checks passed.
+- `python3 -m unittest discover -s scripts/tests -p 'test_native_*.py'` —
+  passed (27 tests), including release fixtures for suffix gaps, existing and
+  draft releases, tag-only states, metadata recovery, and asset verification.
 
 ## Deferred validation
 
@@ -89,8 +97,8 @@ SPDX-License-Identifier: MIT
   build, release dry run, or remote publication was run.
 - Legacy `build-*.yml`/`release-*.yml` workflows remain until the planned
   equivalent remote validation and later obsolete-path removal gate. The new
-  `release` and `force-release` inputs deliberately run build-only work and
-  return `built`; idempotence and publication are Milestone 6 responsibilities.
+  workflows now contain idempotence and publication logic, but no remote
+  workflow, tag, push, or release has been executed.
 
 ## Decisions and blockers
 
@@ -101,12 +109,17 @@ SPDX-License-Identifier: MIT
   untracked proposal directories and the SDL3 ExecPlan.
 - macOS runners use Bash 3, which lacks `mapfile`; the shared Apple helpers use
   portable read loops instead.
+- Eight inherited manifests have a release field older than their `deps.yml`
+  pin: libjpeg, libjpeg-turbo, mbedtls, minizip, minizip-ng, sqlite3, zlib, and
+  zlib-ng. The new helper reports this as `metadata_mismatch` and requires a
+  deliberate recovery rather than silently selecting a new suffix.
 
 ## Next action and resume command
 
-Start Milestone 6 only when authorized by the user. Begin by reading this state
-file, then inspect the existing release helpers and captured baseline metadata
-behavior before adding idempotence or publication logic.
+Start Milestone 7 only when authorized by the user. Begin by reading this state
+file, then inspect stacks and true dependency edges before adding selective
+stack orchestration.
 
-Do not delete legacy workflow pairs, dispatch remote workflows, tag, push, or
-publish as part of the completed Milestone 5 checkpoint.
+Do not delete legacy workflow pairs or dispatch remote workflows as part of the
+completed Milestone 6 checkpoint. Production publication requires explicit
+user authorization.
