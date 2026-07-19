@@ -24,6 +24,8 @@ artifact contract.
 - Added state, evidence, archive, and editorial support files for this ExecPlan.
 - Added `config/native-builds.yml`, `scripts/native-build.py`, and 12 focused
   resolver tests.
+- Added the shared native target executor, wrapper validator, consumer fixture,
+  and zlib published-target wrappers that delegate to the executor.
 
 ## Decisions and Trade-offs
 
@@ -34,6 +36,10 @@ does not assert remote GitHub state; a later release milestone must do that.
 The operational resolver also uses only the Python standard library. It accepts
 the intentionally small YAML subset used by the checked-in policy file, keeping
 its behavior deterministic across the repository's supported local environments.
+
+The CMake action and local target executor now share one lower-level execution
+sequence. This preserves existing action inputs while making centrally resolved
+local paths available for incremental wrapper migration.
 
 ## Unexpected Problems and Discoveries
 
@@ -46,17 +52,26 @@ Python compilation, the focused inventory command, resolver validation, and 12
 resolver tests passed. The baseline has 15 libraries, 39 workflows, and seven
 named Skia jobs. See the evidence JSONL entry for exact commands and digests.
 
+Milestone 3 expanded the focused suite to 17 tests, validated ten zlib wrappers,
+built and packaged four representative libraries on macOS arm64, and built a
+temporary CMake consumer against generated zlib output.
+
 ## Useful Evidence and Examples
 
 Run `python3 scripts/inventory-native-build-orchestration.py --format json` to
 inspect the complete baseline; use `--format summary` for its compact counts.
 Run `python3 scripts/native-build.py show minizip android-arm64 --format json`
 to inspect an effective target policy without building it.
+Run `scripts/build-native-target.sh zlib macos-arm64 --dry-run` to inspect the
+shared execution command without creating a build directory.
 
 ## Limitations, Remaining Work, and Open Questions
 
 Executor migration and workflow changes are intentionally deferred to later
 milestones.
+
+Windows runtime verification, Android execution, and Docker/QEMU execution
+remain host-dependent validations for a later platform-capable checkpoint.
 
 ## Possible Article Angles
 

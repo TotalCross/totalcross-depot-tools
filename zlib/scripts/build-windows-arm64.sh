@@ -6,11 +6,4 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${repo_root}"
 
-exec scripts/build-cmake-multi.sh \
-  --source-dir zlib \
-  --build-dir zlib/build/windows-arm64 \
-  --install-dir zlib/build/windows-arm64/install \
-  --platform-arch windows/arm64 \
-  --generator 'Visual Studio 17 2022' \
-  --cmake-args '-A ARM64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded' \
-  --package-script zlib/scripts/package-artifact.sh
+exec "${repo_root}/scripts/build-native-target.sh" zlib windows-arm64 "$@"

@@ -31,57 +31,68 @@ targets:
   linux-x86_64:
     platform: linux
     arch: x86_64
+    build_dir_name: linux-amd64
     image: linux-amd64
     docker_platform: linux/amd64
   linux-armv7l:
     platform: linux
     arch: armv7l
+    build_dir_name: linux-arm32v7
     image: linux-arm32v7
     docker_platform: linux/arm/v7
     qemu: true
   linux-aarch64:
     platform: linux
     arch: aarch64
+    build_dir_name: linux-arm64
     runner: ubuntu-22.04-arm
     image: linux-arm64
     docker_platform: linux/arm64
   android-arm64:
     platform: android
     arch: arm64-v8a
+    build_dir_name: android-arm64-v8a
   windows-x86:
     platform: windows
     arch: x86
+    build_dir_name: windows-x86
     cmake_platform: Win32
   windows-x64:
     platform: windows
     arch: x64
+    build_dir_name: windows-x64
     cmake_platform: x64
   windows-arm64:
     platform: windows
     arch: arm64
+    build_dir_name: windows-arm64
     runner: windows-11-arm
     cmake_platform: ARM64
   macos-arm64:
     platform: apple
     artifact_platform: macos
     arch: arm64
+    build_dir_name: macos-arm64
     generator: Ninja
   ios-arm64:
     platform: apple
     artifact_platform: ios
     arch: arm64
+    build_dir_name: ios-arm64
     generator: Xcode
     sysroot: iphoneos
   ios-simulator-arm64:
     platform: apple
     artifact_platform: ios-simulator
     arch: arm64
+    build_dir_name: ios-simulator-arm64
     generator: Xcode
     sysroot: iphonesimulator
   wasm:
     platform: web
     artifact_platform: wasm
     arch: wasm32
+    build_dir_name: wasm32
 
 libraries:
   axtls:

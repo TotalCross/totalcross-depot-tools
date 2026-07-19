@@ -102,7 +102,8 @@ printf -v configuration_quoted '%q' "${configuration}"
 printf -v package_script_quoted '%q' "${package_script}"
 
 build_command=$(cat <<EOF
-cmake -S ${source_dir_quoted} -B ${build_dir_quoted} -DCMAKE_BUILD_TYPE=Release ${cmake_args} -G ${generator_quoted}
+set -euo pipefail
+cmake -S ${source_dir_quoted} -B ${build_dir_quoted} -DCMAKE_BUILD_TYPE=${configuration_quoted} ${cmake_args} -G ${generator_quoted}
 cmake --build ${build_dir_quoted} --config ${configuration_quoted}
 if [ ${run_tests} = true ]; then
   ctest --test-dir ${build_dir_quoted} -C ${configuration_quoted} --output-on-failure

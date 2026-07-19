@@ -19,27 +19,15 @@ runs:
   steps:
     - shell: bash
       run: |
-        docker_image='${{ inputs.docker-image }}'
-        docker_platform='${{ inputs.docker-platform }}'
-        if { [ -n "${docker_image}" ] && [ -z "${docker_platform}" ]; } || { [ -z "${docker_image}" ] && [ -n "${docker_platform}" ]; }; then
-          echo '::error::docker-image and docker-platform must either both be empty or both be set.'
-          exit 1
-        fi
-
-        build_command=$(cat <<'EOF'
-        cmake -S "${{ inputs.source-dir }}" -B "${{ inputs.build-dir }}" -DCMAKE_BUILD_TYPE=Release ${{ inputs.cmake-args }} -G "${{ inputs.generator }}"
-        cmake --build "${{ inputs.build-dir }}" --config "${{ inputs.configuration }}"
-        if [ "${{ inputs.run-tests }}" = true ]; then
-          ctest --test-dir "${{ inputs.build-dir }}" -C "${{ inputs.configuration }}" --output-on-failure
-        fi
-        cmake --install "${{ inputs.build-dir }}" --config "${{ inputs.configuration }}" --prefix "${{ inputs.install-dir }}"
-        bash "${{ inputs.package-script }}" "${{ inputs.build-dir }}" "${{ inputs.install-dir }}" "${{ inputs.platform-arch }}"
-        EOF
-        )
-
-        if [ -n "${docker_image}" ]; then
-          workspace="${GITHUB_WORKSPACE:-$PWD}"
-          docker run --rm --platform "${docker_platform}" -v "${workspace}:/sources" -w /sources -t "${docker_image}" bash -lc "${build_command}"
-        else
-          bash -lc "${build_command}"
-        fi
+        scripts/build-cmake-multi.sh \
+          --source-dir '${{ inputs.source-dir }}' \
+          --build-dir '${{ inputs.build-dir }}' \
+          --install-dir '${{ inputs.install-dir }}' \
+          --platform-arch '${{ inputs.platform-arch }}' \
+          --generator '${{ inputs.generator }}' \
+          --configuration '${{ inputs.configuration }}' \
+          --cmake-args '${{ inputs.cmake-args }}' \
+          --run-tests '${{ inputs.run-tests }}' \
+          --docker-image '${{ inputs.docker-image }}' \
+          --docker-platform '${{ inputs.docker-platform }}' \
+          --package-script '${{ inputs.package-script }}'

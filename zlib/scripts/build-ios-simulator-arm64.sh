@@ -6,11 +6,4 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${repo_root}"
 
-exec scripts/build-cmake-multi.sh \
-  --source-dir zlib \
-  --build-dir zlib/build/ios-simulator-arm64 \
-  --install-dir zlib/build/ios-simulator-arm64/install \
-  --platform-arch ios-simulator/arm64 \
-  --generator Xcode \
-  --cmake-args '-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO' \
-  --package-script zlib/scripts/package-artifact.sh
+exec "${repo_root}/scripts/build-native-target.sh" zlib ios-simulator-arm64 "$@"

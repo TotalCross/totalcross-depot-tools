@@ -203,7 +203,7 @@ def validate_config(config: dict[str, Any]) -> None:
         _reject_unknown_keys(
             target,
             f"targets.{name}",
-            {"platform", "artifact_platform", "arch", "runner", "image", "docker_platform", "qemu", "cmake_platform", "generator", "sysroot"},
+            {"platform", "artifact_platform", "arch", "build_dir_name", "runner", "image", "docker_platform", "qemu", "cmake_platform", "generator", "sysroot"},
         )
         if target["platform"] not in platforms:
             raise NativeBuildError(f"targets.{name} references unknown platform {target['platform']}")
@@ -310,6 +310,7 @@ def resolve(config: dict[str, Any], library_name: str, target_name: str) -> dict
         "platform": target.get("artifact_platform", platform_name),
         "platform_family": platform_name,
         "arch": target["arch"],
+        "build_dir_name": target.get("build_dir_name", target_name),
         "runner": target.get("runner", platform["runner"]),
         "build_system": library["build_system"],
         "configuration": config["defaults"]["configuration"],
@@ -346,7 +347,7 @@ def resolve(config: dict[str, Any], library_name: str, target_name: str) -> dict
             }
         )
     if platform_name == "apple":
-        result["apple_sysroot"] = target.get("sysroot")
+        result["apple_sysroot"] = target.get("sysroot", "") or ""
     return result
 
 
@@ -390,12 +391,12 @@ def _emit(value: Any, output_format: str) -> None:
         return
     if output_format == "text":
         for key in sorted(value):
-            encoded = json.dumps(value[key], sort_keys=True) if isinstance(value[key], (dict, list)) else value[key]
+            encoded = json.dumps(value[key], sort_keys=True) if isinstance(value[key], (dict, list)) else str(value[key]).lower() if isinstance(value[key], bool) else value[key]
             print(f"{key}={encoded}")
         return
     if output_format == "github-output":
         for key in sorted(value):
-            encoded = json.dumps(value[key], separators=(",", ":"), sort_keys=True) if isinstance(value[key], (dict, list)) else value[key]
+            encoded = json.dumps(value[key], separators=(",", ":"), sort_keys=True) if isinstance(value[key], (dict, list)) else str(value[key]).lower() if isinstance(value[key], bool) else value[key]
             print(f"{key}={encoded}")
         return
     if output_format == "mermaid":
