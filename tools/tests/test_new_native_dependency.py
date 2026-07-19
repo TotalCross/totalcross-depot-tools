@@ -174,6 +174,17 @@ class NativeDependencyToolTest(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("fetch.sh: script is not executable", result.stderr)
 
+    def test_check_fails_when_wrapper_lacks_spdx_header(self) -> None:
+        self.create_and_complete("linux-x86_64")
+        wrapper = self.dependency / "scripts" / "build-linux-x86_64.sh"
+        wrapper.write_text("#!/usr/bin/env bash\nset -euo pipefail\n", encoding="utf-8")
+        os.chmod(wrapper, 0o755)
+
+        result = self.run_tool("check", "example")
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("build-linux-x86_64.sh: missing valid SPDX", result.stderr)
+
     def test_check_fails_when_manifest_and_scripts_diverge(self) -> None:
         self.create_and_complete("linux-x86_64")
         extra = self.dependency / "scripts" / "build-windows-x64.sh"
@@ -197,6 +208,17 @@ class NativeDependencyToolTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         self.assertIn("wrapper must not define CMAKE_MSVC_RUNTIME_LIBRARY", result.stderr)
+
+    def test_check_rejects_generated_directory_and_workflow_placeholder(self) -> None:
+        self.assertEqual(0, self.create("linux-x86_64").returncode)
+        (self.dependency / "build").mkdir()
+        (self.dependency / "nested" / "local").mkdir(parents=True)
+
+        result = self.run_tool("check", "example")
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("example/build: generated directory must not exist", result.stderr)
+        self.assertIn(".github/workflows/example.yml: contains unresolved scaffold placeholder", result.stderr)
 
     def test_check_succeeds_after_placeholders_are_resolved_and_is_idempotent(self) -> None:
         self.create_and_complete("linux-x86_64", "windows-x64", "android-arm64")

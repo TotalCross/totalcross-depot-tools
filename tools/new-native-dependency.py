@@ -378,16 +378,21 @@ def check(dependency_arg: str, root: Path) -> int:
         if path.is_file() and not has_spdx(path):
             fail(path, "missing valid SPDX copyright and MIT license header")
 
-    for generated in ("build", "dist", "local"):
-        if (dependency / generated).exists():
-            fail(dependency / generated, "generated directory must not exist in a scaffold")
+    for path in dependency.rglob("*"):
+        if path.is_dir() and path.name in ("build", "dist", "local"):
+            fail(path, "generated directory must not exist in a scaffold")
     for path in dependency.rglob("*"):
         if path.is_file():
             text = path.read_text(encoding="utf-8", errors="replace")
             if PLACEHOLDER in text:
                 fail(path, "contains unresolved scaffold placeholder")
-            if path.suffix == ".sh" and not os.access(path, os.X_OK):
-                fail(path, "script is not executable")
+            if path.suffix == ".sh":
+                if not os.access(path, os.X_OK):
+                    fail(path, "script is not executable")
+                if not has_spdx(path):
+                    fail(path, "missing valid SPDX copyright and MIT license header")
+    if workflow_path.is_file() and PLACEHOLDER in workflow_path.read_text(encoding="utf-8", errors="replace"):
+        fail(workflow_path, "contains unresolved scaffold placeholder")
 
     wrappers = sorted((dependency / "scripts").glob("build-*.sh")) if (dependency / "scripts").is_dir() else []
     expected_wrappers = {f"build-{target}.sh" for target in targets}

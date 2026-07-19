@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 
 ## Status
 
-Final documentation and focused validation are complete pending the final
-documentation commit.
+Implementation is complete pending the final validator follow-up commit.
 
 ## Completed commits
 
 - abda645 feat(tools): add native dependency scaffold
 - 53bf773 test(tools): cover dependency scaffold lifecycle
+- 08896f5 docs(dependencies): document scaffold workflow
 
 The first commit provides explicit commands, deterministic templates, the target
 adapter, non-overwrite behavior, and read-only structural checks. The second
@@ -27,6 +27,7 @@ dependency pin, or platform build has run.
 
 ## Final validation
 
-Run the documented unittest module, all three help commands, copyright and diff
-checks. Platform builds, releases, and consumer CMake checks remain deliberately
-deferred because no real dependency implementation replaces the scaffold.
+The focused lifecycle tests now also cover wrapper SPDX headers, workflow
+placeholders, and nested generated directories. Platform builds, releases, and
+consumer CMake checks remain deliberately deferred because no real dependency
+implementation replaces the scaffold.
