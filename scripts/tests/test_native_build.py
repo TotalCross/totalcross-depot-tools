@@ -81,6 +81,14 @@ class NativeBuildConfigurationTests(unittest.TestCase):
         with self.assertRaisesRegex(NATIVE_BUILD.NativeBuildError, "invalid operation publish"):
             NATIVE_BUILD.plan(self.config, "zlib", "publish")
 
+    def test_apple_xcframework_policy_is_resolved(self) -> None:
+        resolved = NATIVE_BUILD.resolve(self.config, "mbedtls", "ios-arm64")
+        self.assertEqual(
+            ["libmbedtls.a", "libmbedx509.a", "libmbedcrypto.a"],
+            resolved["apple_xcframework"]["libraries"],
+        )
+        self.assertTrue(resolved["apple_xcframework"]["merge"])
+
     def test_graph_has_only_real_dependency_edges_in_order(self) -> None:
         graph = NATIVE_BUILD.graph(self.config, "graphics")
         order = graph["order"]

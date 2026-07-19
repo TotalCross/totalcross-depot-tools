@@ -220,7 +220,7 @@ def validate_config(config: dict[str, Any]) -> None:
         _reject_unknown_keys(
             library,
             f"libraries.{name}",
-            {"build_system", "package_script", "targets", "dependencies", "target_overrides", "tests", "cmake_arguments", "long_running", "preserve_target_parallelism"},
+            {"build_system", "package_script", "targets", "dependencies", "target_overrides", "tests", "cmake_arguments", "long_running", "preserve_target_parallelism", "apple_xcframework"},
         )
         if library["build_system"] not in ("cmake", "gn", "custom"):
             raise NativeBuildError(f"libraries.{name}.build_system is unsupported")
@@ -243,6 +243,25 @@ def validate_config(config: dict[str, Any]) -> None:
         arguments = _list(library.get("cmake_arguments", []), f"libraries.{name}.cmake_arguments")
         if not all(isinstance(argument, str) for argument in arguments):
             raise NativeBuildError(f"libraries.{name}.cmake_arguments must contain strings")
+        apple_xcframework = _mapping(
+            library.get("apple_xcframework", {}), f"libraries.{name}.apple_xcframework"
+        )
+        if apple_xcframework:
+            _reject_unknown_keys(
+                apple_xcframework,
+                f"libraries.{name}.apple_xcframework",
+                {"libraries", "merge"},
+            )
+            xcframework_libraries = _list(
+                apple_xcframework.get("libraries", []),
+                f"libraries.{name}.apple_xcframework.libraries",
+            )
+            if not xcframework_libraries or not all(
+                isinstance(item, str) and item for item in xcframework_libraries
+            ):
+                raise NativeBuildError(f"libraries.{name}.apple_xcframework.libraries is invalid")
+            if "merge" in apple_xcframework and not isinstance(apple_xcframework["merge"], bool):
+                raise NativeBuildError(f"libraries.{name}.apple_xcframework.merge is invalid")
         overrides = _mapping(library.get("target_overrides", {}), f"libraries.{name}.target_overrides")
         for target, override in overrides.items():
             if target not in targets or target not in library_targets:
@@ -319,6 +338,7 @@ def resolve(config: dict[str, Any], library_name: str, target_name: str) -> dict
         "tests": override.get("tests", library.get("tests", False)),
         "dependencies": copy.deepcopy(library.get("dependencies", {})),
         "cmake_arguments": list(library.get("cmake_arguments", [])) + list(override.get("cmake_arguments", [])),
+        "apple_xcframework": copy.deepcopy(library.get("apple_xcframework", {})),
     }
     if platform_name == "android":
         result.update(

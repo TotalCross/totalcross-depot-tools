@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: axTLS native operation
+
+on:
+  workflow_call:
+    inputs:
+      operation:
+        required: false
+        default: build
+        type: string
+    outputs:
+      status:
+        value: ${{ jobs.operation.outputs.status }}
+      effective_release_tag:
+        value: ${{ jobs.operation.outputs.effective_release_tag }}
+      release_url:
+        value: ${{ jobs.operation.outputs.release_url }}
+      artifact_manifest:
+        value: ${{ jobs.operation.outputs.artifact_manifest }}
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Build, release, or force-release. Publication is added in a later milestone.
+        required: true
+        default: build
+        type: choice
+        options: [build, release, force-release]
+
+jobs:
+  operation:
+    uses: ./.github/workflows/native-library-operation.yml
+    with:
+      library: axtls
+      operation: ${{ inputs.operation }}

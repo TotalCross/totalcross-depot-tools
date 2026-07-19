@@ -1,0 +1,219 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Native library operation
+
+on:
+  workflow_call:
+    inputs:
+      library:
+        required: true
+        type: string
+      operation:
+        required: false
+        default: build
+        type: string
+    outputs:
+      status:
+        description: Build-only status; release publication is introduced separately.
+        value: ${{ jobs.summary.outputs.status }}
+      effective_release_tag:
+        description: Empty until release orchestration supplies an effective tag.
+        value: ${{ jobs.summary.outputs.effective_release_tag }}
+      release_url:
+        description: Empty until release orchestration publishes a release.
+        value: ${{ jobs.summary.outputs.release_url }}
+      artifact_manifest:
+        description: JSON list of artifact names produced by the selected library.
+        value: ${{ jobs.summary.outputs.artifact_manifest }}
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  plan:
+    name: Plan ${{ inputs.library }}
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      apple_targets: ${{ steps.plan.outputs.apple_targets }}
+      has_ios: ${{ steps.plan.outputs.has_ios }}
+      artifact_manifest: ${{ steps.plan.outputs.artifact_manifest }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: plan
+        env:
+          LIBRARY: ${{ inputs.library }}
+          OPERATION: ${{ inputs.operation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/native-build.py plan "${LIBRARY}" --operation "${OPERATION}" --format json > native-build-plan.json
+          python3 - "${LIBRARY}" native-build-plan.json >> "${GITHUB_OUTPUT}" <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          library, plan_path = sys.argv[1:]
+          plan = json.load(open(plan_path, encoding="utf-8"))
+          matrix = []
+          apple_targets = []
+          artifacts = []
+          for target in plan["targets"][library]:
+              resolved = json.loads(subprocess.check_output(
+                  ["python3", "scripts/native-build.py", "show", library, target, "--format", "json"],
+                  text=True,
+              ))
+              artifact = f"{library}-{resolved['build_dir_name']}"
+              artifacts.append(artifact)
+              if resolved["platform_family"] == "apple":
+                  apple_targets.append(target)
+              else:
+                  matrix.append({
+                      "artifact_name": artifact,
+                      "build_dir_name": resolved["build_dir_name"],
+                      "platform_family": resolved["platform_family"],
+                      "runner": resolved["runner"],
+                      "target": target,
+                  })
+          if "ios-arm64" in apple_targets:
+              artifacts.append(f"{library}-ios-xcframework")
+          compact = lambda value: json.dumps(value, separators=(",", ":"), sort_keys=True)
+          print(f"matrix={compact(matrix)}")
+          print(f"apple_targets={compact(apple_targets)}")
+          print(f"has_ios={'true' if 'ios-arm64' in apple_targets else 'false'}")
+          print(f"artifact_manifest={compact(artifacts)}")
+          PY
+      - name: Publish planning summary
+        shell: bash
+        run: |
+          {
+            echo '### Native build plan'
+            echo
+            echo '```json'
+            cat native-build-plan.json
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  build:
+    name: Build ${{ inputs.library }} ${{ matrix.target }}
+    needs: plan
+    if: ${{ needs.plan.outputs.matrix != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Android native toolchain
+        if: ${{ matrix.platform_family == 'android' }}
+        uses: ./.github/actions/setup-android-native
+      - name: Fetch repository-pinned dependencies
+        shell: bash
+        run: scripts/fetch-native-dependencies.sh "${{ inputs.library }}" "${{ matrix.target }}"
+      - name: Build, validate, install, and package
+        shell: bash
+        run: scripts/build-native-target.sh "${{ inputs.library }}" "${{ matrix.target }}"
+      - name: Verify Windows static runtime
+        if: ${{ matrix.platform_family == 'windows' }}
+        shell: pwsh
+        run: ./.github/scripts/verify-windows-static-runtime.ps1 "${{ inputs.library }}/build/${{ matrix.build_dir_name }}/${{ inputs.library }}-*.tar.gz"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ inputs.library }}/build/${{ matrix.build_dir_name }}/${{ inputs.library }}-*.tar.gz
+
+  apple:
+    name: Build ${{ inputs.library }} Apple artifacts
+    needs: plan
+    if: ${{ needs.plan.outputs.apple_targets != '[]' }}
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build Apple targets
+        env:
+          APPLE_TARGETS: ${{ needs.plan.outputs.apple_targets }}
+          LIBRARY: ${{ inputs.library }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=()
+          while IFS= read -r target; do
+            [ -n "${target}" ] || continue
+            targets+=("${target}")
+          done < <(python3 - "${APPLE_TARGETS}" <<'PY'
+          import json
+          import sys
+          print("\n".join(json.loads(sys.argv[1])))
+          PY
+          )
+          for target in "${targets[@]}"; do
+            scripts/fetch-native-dependencies.sh "${LIBRARY}" "${target}"
+            scripts/build-native-target.sh "${LIBRARY}" "${target}"
+          done
+      - name: Package iOS XCFramework
+        if: ${{ needs.plan.outputs.has_ios == 'true' }}
+        shell: bash
+        run: scripts/package-native-ios-xcframework.sh "${{ inputs.library }}"
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.library }}-macos-arm64
+          path: ${{ inputs.library }}/build/macos-arm64/${{ inputs.library }}-*.tar.gz
+      - name: Upload iOS device artifact
+        if: ${{ needs.plan.outputs.has_ios == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.library }}-ios-arm64
+          path: ${{ inputs.library }}/build/ios-arm64/${{ inputs.library }}-*.tar.gz
+      - name: Upload iOS simulator artifact
+        if: ${{ needs.plan.outputs.has_ios == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.library }}-ios-simulator-arm64
+          path: ${{ inputs.library }}/build/ios-simulator-arm64/${{ inputs.library }}-*.tar.gz
+      - name: Upload iOS XCFramework
+        if: ${{ needs.plan.outputs.has_ios == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.library }}-ios-xcframework
+          path: ${{ inputs.library }}/build/${{ inputs.library }}-ios.xcframework.zip
+
+  summary:
+    name: Summarize ${{ inputs.library }}
+    needs: [plan, build, apple]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.apple.result == 'success' || needs.apple.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      effective_release_tag: ${{ steps.summary.outputs.effective_release_tag }}
+      release_url: ${{ steps.summary.outputs.release_url }}
+      artifact_manifest: ${{ steps.summary.outputs.artifact_manifest }}
+    steps:
+      - id: summary
+        env:
+          ARTIFACT_MANIFEST: ${{ needs.plan.outputs.artifact_manifest }}
+          OPERATION: ${{ inputs.operation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=built\n' >> "${GITHUB_OUTPUT}"
+          printf 'effective_release_tag=\nrelease_url=\n' >> "${GITHUB_OUTPUT}"
+          printf 'artifact_manifest=%s\n' "${ARTIFACT_MANIFEST}" >> "${GITHUB_OUTPUT}"
+          {
+            echo '### Native build result'
+            echo
+            echo "Operation: \`${OPERATION}\`"
+            echo 'Status: `built`'
+            echo
+            echo 'Artifact manifest:'
+            echo '```json'
+            echo "${ARTIFACT_MANIFEST}"
+            echo '```'
+            echo
+            echo 'Release publication is intentionally deferred to the release orchestration milestone.'
+          } >> "${GITHUB_STEP_SUMMARY}"

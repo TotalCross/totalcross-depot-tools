@@ -98,6 +98,9 @@ libraries:
   axtls:
     build_system: cmake
     package_script: axtls/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libaxtls.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -112,6 +115,9 @@ libraries:
   libjpeg:
     build_system: cmake
     package_script: libjpeg/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libjpeg.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -126,6 +132,11 @@ libraries:
   libjpeg-turbo:
     build_system: cmake
     package_script: libjpeg-turbo/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libjpeg.a
+        - libturbojpeg.a
+      merge: true
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -140,6 +151,9 @@ libraries:
   libpng:
     build_system: cmake
     package_script: libpng/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libpng*.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -157,6 +171,12 @@ libraries:
   mbedtls:
     build_system: cmake
     package_script: mbedtls/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libmbedtls.a
+        - libmbedx509.a
+        - libmbedcrypto.a
+      merge: true
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -171,6 +191,9 @@ libraries:
   minizip:
     build_system: cmake
     package_script: minizip/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libminizip.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -191,6 +214,9 @@ libraries:
   minizip-ng:
     build_system: cmake
     package_script: minizip-ng/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libminizip.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -208,6 +234,9 @@ libraries:
   qrcode:
     build_system: cmake
     package_script: qrcode/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libqrcode.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -219,6 +248,9 @@ libraries:
   qrcodegen:
     build_system: cmake
     package_script: qrcodegen/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libqrcodegen.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -272,6 +304,9 @@ libraries:
   sqlite3:
     build_system: cmake
     package_script: sqlite3/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libsqlite3.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -292,6 +327,9 @@ libraries:
   zlib:
     build_system: cmake
     package_script: zlib/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libz.a
     targets:
       - linux-x86_64
       - linux-armv7l
@@ -306,6 +344,9 @@ libraries:
   zlib-ng:
     build_system: cmake
     package_script: zlib-ng/scripts/package-artifact.sh
+    apple_xcframework:
+      libraries:
+        - libz.a
     targets:
       - linux-x86_64
       - linux-armv7l
