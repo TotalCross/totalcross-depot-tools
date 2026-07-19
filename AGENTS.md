@@ -1,142 +1,382 @@
+<!--
+SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+SPDX-License-Identifier: MIT
+-->
+
 # Repository Guidelines
 
 ## Purpose
 
-This repository owns the native dependency toolchain consumed by TotalCross.
-Each dependency should be self-contained: source fetching, build files,
-packaging scripts, CMake find/auto-fetch modules, manifests, and documentation
-live under that dependency directory.
+This repository owns the reproducible native dependency toolchain consumed by
+TotalCross and other CMake projects. Each dependency must remain independently
+buildable, fetchable, packageable, releasable, and consumable.
 
-The root `deps.yml` is only the compatible bundle index. Keep dependency
-versions, release tags, and paths aligned with the dependency manifests.
+The repository must provide three stable contracts:
 
-Builds that consume another dependency from this repository must use that
-dependency's `release` pin in `deps.yml` by default. Do not resolve the latest
-GitHub release or read a separate dependency manifest as an alternative source
-of truth. Use `.github/scripts/read-deps-release.sh` for shell and workflow
-resolution; explicit workflow inputs may override it only for a deliberate
-release handoff.
+1. published native artifacts with predictable platform and architecture names;
+2. CMake modules that fetch and resolve only those artifacts;
+3. release metadata in `deps.yml` that identifies one compatible set of
+   dependency releases.
 
-## Layout
+## Instruction precedence
 
-- `deps.yml`: bundle index for compatible dependency releases.
-- `<dep>/manifest.yml`: source version, build flags, release tag, and archive
-  names.
-- `<dep>/fetch.sh`: downloads published release artifacts into the local cache.
-- `<dep>/CMakeLists.txt`: builds the dependency in isolation.
-- `<dep>/cmake/AutoFetch*.cmake`: fetches missing prebuilts for consumers.
-- `<dep>/cmake/Find*.cmake`: resolves only this repository's prebuilts.
-- `<dep>/scripts/package-artifact.sh`: creates release archives.
-- `skia/scripts`: Skia-specific GN/Ninja source build scripts.
-- `docker`: shared images used by workflows.
-- `.github/workflows`: build and release automation.
+Apply instructions in this order:
 
-Do not add per-dependency `docker` directories. Builds should use the shared
-images from the root `docker` setup and the published `totalcross/*` images.
+1. safety and data-preservation requirements;
+2. explicit user instructions for the current task;
+3. the token, tool-output, and validation budget in this file;
+4. `.agent/PLANS.md` when an ExecPlan is being created or executed;
+5. instructions specific to the active ExecPlan or skill.
 
-## Dependency Conventions
+An ExecPlan cannot require expensive validation after every small edit merely
+because the validation was useful at a previous checkpoint. Use the smallest
+validation that proves the current change unless the user requests more, a
+milestone is closing, an ABI or release contract changed, or a recorded failure
+justifies escalation.
 
-- Install fetched prebuilts in platform-specific directories:
+## ExecPlans and resumption
+
+Use an ExecPlan for significant refactors, release-process changes, new platform
+support, dependency-format changes, or work expected to span several logical
+commits.
+
+When creating a plan, read this file and `.agent/PLANS.md` in full. When resuming
+an existing plan, read its state file first when one exists. Otherwise locate the
+active headings and read only the sections needed for the next action. Do not
+routinely reread the complete plan, evidence archive, historical milestones, or
+large architecture documents.
+
+A long-running plan should use:
+
+- `.agent/state/<plan>.md` as the first resume read;
+- `.agent/evidence/<plan>.md` or `.jsonl` for compact append-only evidence;
+- `.agent/archive/<plan>-history.md` for completed detail;
+- `.agent/reports/<plan>-editorial.md` for milestone and final factual reporting.
+
+Keep the active plan concise. Move completed detail and raw evidence out instead
+of repeatedly appending it.
+
+## Repository layout
+
+- `deps.yml`: compatible bundle index and effective release pins.
+- `config/native-builds.yml`: canonical platform, target, library, dependency,
+  and stack configuration once introduced.
+- `<dependency>/manifest.yml`: source version, effective release tag, build
+  metadata, and artifact names.
+- `<dependency>/fetch.sh`: downloads published artifacts into
   `local/<platform>/<arch>`.
-- Archive contents should also be platform-specific:
-  `<dep>/<platform>/<arch>/{include,lib,manifest.txt}`.
-- `Find*.cmake` modules must not silently fall back to system libraries.
-  Prefer repository-local paths and use `NO_DEFAULT_PATH` /
-  `NO_CMAKE_FIND_ROOT_PATH` when appropriate.
-- `AutoFetch*.cmake` should derive paths from `CMAKE_CURRENT_LIST_FILE`, not
-  from the caller's `CMAKE_CURRENT_LIST_DIR`.
-- Auto-fetch should check whether this repository already exists locally before
-  trying to clone or update it. When it exists, skip repository fetching and
-  fetch only the required library artifacts.
-- Keep artifact names consistent across `manifest.yml`, `fetch.sh`,
-  packaging scripts, and release workflows.
+- `<dependency>/CMakeLists.txt`: builds the dependency in isolation.
+- `<dependency>/cmake/AutoFetch*.cmake`: fetches missing repository artifacts.
+- `<dependency>/cmake/Find*.cmake`: resolves only repository artifacts.
+- `<dependency>/scripts/package-artifact.sh`: creates release archives.
+- `<dependency>/scripts/build-<target>.sh`: explicit local build wrappers.
+- `scripts/`: shared build, release, graph, configuration, and logging helpers.
+- `docker/`: shared build images. Do not add per-dependency Docker directories.
+- `.github/workflows/`: one workflow per library plus stack orchestrators.
+- `.agents/skills/`: focused repository workflows loaded only when needed.
+
+## Source-of-truth rules
+
+`deps.yml` is the compatible release index. A dependency that consumes another
+repository dependency must use the consumed dependency's `release` pin from
+`deps.yml` by default. Do not resolve the latest GitHub Release. Explicit release
+handoff inputs may override a pin only for a deliberate release operation.
+
+Platform policy must come from `config/native-builds.yml` after that file is
+introduced. Do not repeat these values in workflows or per-target wrappers:
+
+- Android NDK version;
+- default Android API level;
+- Linux Docker registry and image version;
+- Visual Studio generator;
+- Windows static-runtime policy;
+- shared runner labels or target architecture mappings.
+
+Library-specific exceptions belong in library target overrides. Until the global
+Android minimum changes, Android API 23 is the default and minizip Android uses
+an explicit API 24 override.
+
+## Standard dependency structure
+
+New native dependencies must follow `docs/DEPENDENCY_STANDARD.md`. Use the
+`add-native-dependency` skill and `tools/new-native-dependency.py` instead of
+copying an arbitrary existing directory.
+
+Only create explicit target scripts for targets that the dependency will publish.
+The scripts remain discoverable by name, but contain only the dependency and
+target identity. They must delegate policy and command construction to shared
+scripts.
+
+Every dependency must document:
+
+- upstream source and license;
+- source version or commit;
+- supported published targets;
+- archive contents and imported CMake target names;
+- build options that affect compatibility;
+- direct local build commands;
+- consumer CMake usage;
+- release and fetch behavior.
+
+## Dependency and artifact conventions
+
+Install fetched artifacts under `local/<platform>/<arch>`.
+
+Archive contents must use:
+
+    <dependency>/<platform>/<arch>/{include,lib,manifest.txt}
+
+Keep artifact names consistent across `manifest.yml`, `fetch.sh`, package
+scripts, workflows, and documentation.
+
+`Find*.cmake` must not silently select system, Homebrew, SDK, or unrelated
+package-manager libraries. Prefer repository-local paths and use
+`NO_DEFAULT_PATH` and `NO_CMAKE_FIND_ROOT_PATH` where appropriate.
+
+`AutoFetch*.cmake` must derive its own location from `CMAKE_CURRENT_LIST_FILE`.
+When the depot-tools checkout already exists, it must fetch only missing
+artifacts rather than recloning the repository.
+
+## Artifact consumers
+
+The supported consumption model is documented in
+`docs/CONSUMING_DEPOT_TOOLS.md`.
+
+Consumers should keep:
+
+- a bootstrap script such as `deps/fetch-depot-tools.sh`;
+- a committed `deps/totalcross-depot-tools.ref` containing a tag or immutable
+  ref;
+- a checkout/cache at `deps/totalcross-depot-tools` or an explicitly configured
+  equivalent;
+- CMake integration through the dependency's `AutoFetch*.cmake`, `Find*.cmake`,
+  and imported targets.
+
+Encourage pinned tags. Do not recommend consuming the default branch for normal
+builds. Preserve environment overrides for controlled testing and release
+handoffs.
+
+Use the distributable `adopt-totalcross-depot-tools` skill when integrating a
+published dependency into another repository.
 
 ## Android
 
-Only generate or consume Android ABIs that have published artifacts. At the
-moment the TotalCross Android consumer is expected to use `arm64-v8a` unless a
-change explicitly adds more release assets and updates the consumer filters.
+Only build or consume ABIs with published artifacts.
 
-Do not make local Android builds request `armeabi-v7a` unless the corresponding
-SQLite3, mbedTLS, and Skia artifacts exist in the target releases.
+The Android NDK path must be resolved from the central NDK version and exported
+through `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, and `NDK_BUNDLE`. Per-library
+scripts must not embed an NDK version.
 
-## macOS runners
+The default Android API remains 23 for the next release. Minizip may override it
+to 24 through central library configuration. Do not copy that override to other
+libraries.
 
-Unless macOS Intel is explicitly required, every job that runs on macOS must
-use an ARM64 runner. For GitHub-hosted runners, use an ARM64 label such as
-`macos-15`; use labels ending in `-intel` only when Intel is explicitly
-required. Intel macOS runner capacity is limited, so do not select it by
-default.
+## Linux and Docker
+
+Linux image tags must be composed from central registry, image name, and image
+version fields. A version update must require one edit, not one edit per target.
+
+QEMU setup belongs to target policy and must run once per job when required.
+Do not place QEMU bootstrap commands in each dependency wrapper.
+
+Keep full Docker build logs in files or CI artifacts and print only a concise
+summary and relevant failure tail.
+
+## Apple
+
+Use ARM64 GitHub-hosted macOS runners unless Intel is explicitly required.
+Build non-Skia macOS, iOS, and iOS Simulator libraries sequentially on a shared
+Apple runner when this reduces setup without changing artifacts.
+
+Skia targets remain parallel. Reuse the shared Apple runner for Skia macOS only
+when iOS and iOS Simulator Skia jobs can still run concurrently.
 
 ## Windows static runtime
 
-- Every Windows static library must use the static MSVC runtime (`/MT`).
-- CMake wrappers must include `cmake/TotalCrossWindowsStaticRuntime.cmake`
-  before `project()`; nested CMake builds must also receive
-  `CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded` explicitly.
-- Non-CMake builds must set the equivalent compiler option explicitly.
-- Every Windows build must run `.github/scripts/verify-windows-static-runtime.ps1`
-  against its final artifact before upload, for x86, x64, and ARM64.
-- `vcruntime` is excluded: it packages prebuilt DLLs rather than static libraries.
+Every Windows static library must use `/MT`.
 
-## Skia Notes
+CMake wrappers must include `cmake/TotalCrossWindowsStaticRuntime.cmake` before
+`project()`. Nested upstream CMake builds may still need
+`CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded` propagated by the wrapper.
 
-Skia is different from the CMake-built dependencies:
+The Visual Studio generator and target platform mapping belong in central
+configuration. Per-library scripts must not repeat the generator or runtime
+value.
 
-- Release assets are described by `skia/artifacts.json`.
-- Source/build pins are described by `skia/manifest.json`.
-- `skia/fetch.sh` should perform the artifact fetch directly.
-- Do not reintroduce a separate `scripts/fetch-skia.sh` wrapper.
-- References should point to `TotalCross/totalcross-depot-tools`, not the old
-  `TotalCross/totalcross-skia-build` repository.
-- GN/Ninja builds must run Ninja through the repository log wrapper instead of
-  invoking `ninja` directly. Preserve complete raw logs and structured
-  summaries as CI artifacts, keep console output compact, and publish full
-  diagnostics as a separate release archive when release assets are produced.
+Every final Windows static archive must be checked with
+`.github/scripts/verify-windows-static-runtime.ps1`. `vcruntime` is excluded
+because it packages DLLs rather than static libraries.
 
-## Workflows
+## Skia
 
-- Reusable build workflows should contain the build matrix and artifact upload
-  steps.
-- Release workflows should call the reusable build workflows instead of
-  duplicating build commands.
-- Keep Docker image tags current and consistent across workflows.
-- Release assets should be generated from `dist` or dependency build output
-  exactly as declared by the manifest.
+Skia uses GN and Ninja rather than the shared CMake executor.
+
+- `skia/manifest.json` owns source/build pins.
+- `skia/artifacts.json` owns release assets.
+- `skia/fetch.sh` fetches published artifacts directly.
+- GN/Ninja execution must use the repository log wrapper.
+- Full diagnostics are stored as artifacts; console output stays compact.
+- Skia target jobs must remain mutually parallel.
+- A platform lane may continue into one matching Skia target, but must not
+  serialize unrelated Skia targets that were previously concurrent.
+
+## Workflows and releases
+
+Each library should have one workflow with an operation input:
+
+- `build` is the default and never changes Git or release state;
+- `release` returns the existing release URL and succeeds when the effective
+  version already exists, otherwise it builds and publishes;
+- `force-release` always builds and publishes using the next allowed suffix.
+
+A new release must update the library manifest and `deps.yml` with the effective
+release tag before creating the release tag. The metadata commit, tag, and GitHub
+Release must refer to the same revision.
+
+Release jobs must use concurrency guards and recheck release existence before
+creating a tag.
+
+Stack workflows may reuse platform runners across libraries, but releases remain
+individual. Stack `release` mode builds only missing releases and fetches existing
+dependency releases instead of rebuilding them. Stack `force-release` rebuilds
+and republishes every selected library.
 
 ## Scripts
 
-- Every script in the repository must have the executable permission bit set.
-- New scripts must be created with executable permissions and must retain `+x`
-  when committed.
+Every script must be executable in Git.
 
-## Validation
+Prefer one shared implementation used by local scripts and GitHub Actions. A
+composite action should call the shared script rather than duplicate its command
+sequence.
 
-Before handing off dependency changes, run the checks that fit the scope:
+Shell scripts must use `set -euo pipefail` when Bash is required, quote paths,
+avoid leaking tokens or authenticated URLs, and emit compact summaries.
 
-```bash
-bash -n sqlite3/fetch.sh mbedtls/fetch.sh skia/fetch.sh
-ruby -e 'require "yaml"; ARGV.each { |f| YAML.load_file(f) }; puts "ok"' deps.yml */manifest.yml
-git diff --check
-```
+## Repository skills
 
-For CMake module changes, configure a tiny consumer or the TotalCrossVM build
-that includes the changed modules. Verify it resolves dependencies from
-`local/<platform>/<arch>` and does not pick up Homebrew, system, or SDK copies.
+Use skills for repeated workflows rather than expanding this file with procedural
+detail:
 
-## Git Hygiene
+- `validate-headers` before committing new or modified first-party files;
+- `logical-commits` when the user requests commits or a plan requires logical
+  checkpoints;
+- `add-native-dependency` when adding a dependency directory and workflow;
+- `adopt-totalcross-depot-tools` when integrating this repository into a consumer.
 
-- Keep changes scoped to the dependency or workflow being modified.
-- Do not commit generated build directories.
-- Treat `dist` assets intentionally: include them only when the task is to
-  publish or prepare release assets.
-- Commits must follow Conventional Commits, be logical and atomic, and include
-  a descriptive body explaining the change, especially its purpose or
-  motivation. The automated commit-message validation checks the Conventional
-  Commits header; a body is recommended but is not required for validation.
-- When asked for a commit message, write it in English. Use an imperative,
-  concise subject line without a trailing period, then a body explaining the
-  cause, the fix, and compatibility or workflow impact when relevant. Mention
-  concrete error messages or platform details when they motivated the change.
-- Never revert unrelated local changes. This repository is often edited in
-  parallel with the TotalCross consumer repository.
+Skills may reference scripts and documentation. Keep each `SKILL.md` focused so
+its name and description are enough for correct selection.
+
+## Copyright headers
+
+New first-party repository files must contain:
+
+    SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+    SPDX-License-Identifier: MIT
+
+Use the correct comment syntax. `.agent/PLANS.md` is excluded from automated
+header validation only when its adopted format requires that exclusion.
+
+Before committing, use the `validate-headers` skill. Prefer changed-file or staged
+validation; run the repository-wide check only for validator changes or release
+gates.
+
+## Commit policy
+
+Commits must be logical, reviewable, and reasonably frequent during an ExecPlan.
+Do not create a commit for every tiny edit, and do not combine unrelated layers.
+
+Use English Conventional Commits with a scope and an explanatory body for every
+non-trivial commit:
+
+    <type>(<scope>): imperative description
+
+The body explains motivation, behavior, compatibility or release impact, and
+important validation. Use the `logical-commits` skill when committing.
+
+Do not amend, rebase, force-push, or rewrite history unless the user explicitly
+requests it.
+
+## Token and tool-output budget
+
+Operate in token-efficient mode by default.
+
+### File reading
+
+Use `rg`, `rg --files`, headings, exact searches, and narrow line ranges. Inspect
+a diff summary before opening full diffs. Do not repeatedly dump `AGENTS.md`,
+`PLANS.md`, manifests, generated matrices, logs, or evidence files.
+
+Read one or two representative dependency implementations selected by similarity.
+Do not inspect every library when the shared contract is already established.
+
+### Git inspection
+
+Prefer:
+
+    git status --short -- <paths>
+    git diff --stat
+    git diff -- <paths>
+
+Avoid broad status output in a noisy worktree. Preserve unrelated user changes.
+
+### Build and validation output
+
+Redirect full CMake, Ninja, CTest, Docker, sanitizer, static-analysis, benchmark,
+and workflow-emulation output to task-specific log files.
+
+On success, report one concise summary with status, counts or artifacts, duration
+when useful, and log path. On failure, report the command, exit code, first
+relevant error, short context, at most the final 100 lines, and log path.
+
+Do not use verbose flags by default. Do not use `cat` on large logs, generated
+files, matrices, or evidence archives.
+
+### Validation levels
+
+Stop at the first sufficient level:
+
+1. **Implementation:** syntax, configuration resolution, focused unit test, or a
+   single affected build script.
+2. **Functional commit:** changed-file header checks, focused tests, artifact
+   layout validation, and `git diff --check`.
+3. **Operation family or ABI:** complete relevant target family, release dry run,
+   CMake consumer fixture, or directly affected cross-builds.
+4. **Milestone or release gate:** available platform matrix, packaging, release
+   idempotence, dependency graph, and end-to-end consumer validation.
+
+Do not run clean builds by default. Escalate for stale-output suspicion, ABI or
+platform changes, milestone closure, release gates, explicit user request, or a
+recorded prior failure.
+
+### Plan updates
+
+Update state after a logical commit or when interruption would otherwise make
+resumption unsafe. Update the active plan at a functional-family, architecture,
+ABI, release-policy, or milestone checkpoint, not after each command.
+
+Record raw evidence once and point to it. Do not duplicate the same hashes,
+counts, logs, and conclusions in state, plan, report, commit body, and chat.
+
+## Safety
+
+Never run destructive Git commands or remove local caches and generated output
+merely to obtain a clean status.
+
+Do not print secrets, token values, private authenticated URLs, or sensitive
+repository locations.
+
+Treat release, tag, push, commit, and `deps.yml` updates as state-changing actions.
+Perform them only when explicitly requested by the user or required by an active
+ExecPlan whose execution the user requested.
+
+## Final handoff
+
+Report:
+
+- files changed;
+- focused validations actually run and their status;
+- generated artifacts or release URLs;
+- expensive validations skipped and the reason;
+- remaining risks or follow-up work.
+
+Do not include full logs unless explicitly requested.
