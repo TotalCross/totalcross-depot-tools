@@ -1,0 +1,64 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Native stack plan
+
+on:
+  workflow_call:
+    inputs:
+      stack:
+        required: true
+        type: string
+      operation:
+        required: false
+        default: build
+        type: string
+      libraries:
+        required: false
+        default: all
+        type: string
+    outputs:
+      plan:
+        value: ${{ jobs.plan.outputs.plan }}
+      recoveries:
+        value: ${{ jobs.plan.outputs.recoveries }}
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
+      recoveries: ${{ steps.plan.outputs.recoveries }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: plan
+        env:
+          STACK: ${{ inputs.stack }}
+          OPERATION: ${{ inputs.operation }}
+          LIBRARIES: ${{ inputs.libraries }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/native-stack.py --repository "${REPOSITORY}" --libraries "${LIBRARIES}" "${STACK}" "${OPERATION}" > native-stack-plan.json
+          python3 - native-stack-plan.json >> "${GITHUB_OUTPUT}" <<'PY'
+          import json
+          import sys
+
+          plan = json.load(open(sys.argv[1], encoding="utf-8"))
+          compact = json.dumps(plan, separators=(",", ":"), sort_keys=True)
+          print(f"plan={compact}")
+          print(f"recoveries={json.dumps(plan['recoveries'], separators=(',', ':'), sort_keys=True)}")
+          PY
+      - name: Publish stack plan summary
+        shell: bash
+        run: |
+          {
+            echo '### Native stack plan'
+            echo
+            echo '```json'
+            cat native-stack-plan.json
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"

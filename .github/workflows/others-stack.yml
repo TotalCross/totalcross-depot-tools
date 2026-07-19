@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Others stack operation
+
+on:
+  workflow_call:
+    inputs:
+      operation:
+        required: false
+        default: build
+        type: string
+      libraries:
+        required: false
+        default: all
+        type: string
+    outputs:
+      plan:
+        value: ${{ jobs.plan.outputs.plan }}
+      recoveries:
+        value: ${{ jobs.plan.outputs.recoveries }}
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Build, release, or force-release.
+        required: true
+        default: build
+        type: choice
+        options: [build, release, force-release]
+      libraries:
+        description: Comma-separated others members or all.
+        required: true
+        default: all
+        type: string
+
+jobs:
+  plan:
+    uses: ./.github/workflows/native-stack-plan.yml
+    with:
+      stack: others
+      operation: ${{ inputs.operation }}
+      libraries: ${{ inputs.libraries }}

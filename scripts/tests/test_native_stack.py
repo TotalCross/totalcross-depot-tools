@@ -1,0 +1,90 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+"""Focused selective-stack planning contracts."""
+
+from __future__ import annotations
+
+import importlib.util
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+MODULE_PATH = ROOT / "scripts" / "native-stack.py"
+SPEC = importlib.util.spec_from_file_location("native_stack", MODULE_PATH)
+assert SPEC and SPEC.loader
+NATIVE_STACK = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(NATIVE_STACK)
+
+
+class NativeStackTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.config = NATIVE_STACK.NATIVE_BUILD.load_config()
+
+    @staticmethod
+    def release_info(library: str) -> dict[str, str]:
+        tag = f"{library}-1"
+        return {
+            "library": library,
+            "version": "1",
+            "base_tag": tag,
+            "deps_release": tag,
+            "manifest_release": tag,
+        }
+
+    def plan(self, stack: str, operation: str, releases: list[dict[str, object]], requested: str = "all") -> dict[str, object]:
+        tags = [str(item["tag"]) for item in releases]
+        return NATIVE_STACK.plan_stack(
+            self.config, stack, operation, requested, self.release_info, tags, releases
+        )
+
+    def existing(self, libraries: list[str]) -> list[dict[str, object]]:
+        return [
+            {"tag": f"{library}-1", "draft": False, "url": f"https://example.test/{library}"}
+            for library in libraries
+        ]
+
+    def test_all_existing_releases_have_no_build_or_publication_jobs(self) -> None:
+        members = self.config["stacks"]["graphics"]["libraries"]
+        plan = self.plan("graphics", "release", self.existing(members))
+        self.assertEqual([], plan["publication_order"])
+        self.assertTrue(all(item["action"] == "external" for item in plan["libraries"]))
+
+    def test_only_libpng_missing_fetches_external_zlib_ng(self) -> None:
+        members = self.config["stacks"]["graphics"]["libraries"]
+        plan = self.plan("graphics", "release", self.existing([item for item in members if item != "libpng"]))
+        libpng = next(item for item in plan["libraries"] if item["library"] == "libpng")
+        self.assertEqual(["libpng"], plan["publication_order"])
+        self.assertEqual("build-and-release", libpng["action"])
+        self.assertEqual("external", libpng["dependencies"][0]["source"])
+        self.assertEqual("zlib-ng", libpng["dependencies"][0]["library"])
+
+    def test_missing_dependency_and_consumer_build_once_in_topological_order(self) -> None:
+        plan = self.plan("graphics", "release", [], requested="minizip")
+        self.assertEqual(["zlib", "minizip"], plan["publication_order"])
+        minizip = next(item for item in plan["libraries"] if item["library"] == "minizip")
+        self.assertEqual("local", minizip["dependencies"][0]["source"])
+
+    def test_one_missing_others_library_does_not_select_unrelated_members(self) -> None:
+        members = self.config["stacks"]["others"]["libraries"]
+        plan = self.plan("others", "release", self.existing([item for item in members if item != "sljit"]))
+        self.assertEqual(["sljit"], plan["publication_order"])
+
+    def test_force_release_selects_every_graphics_member_and_next_tags(self) -> None:
+        plan = self.plan("graphics", "force-release", self.existing(self.config["stacks"]["graphics"]["libraries"]))
+        self.assertEqual(plan["order"], plan["publication_order"])
+        self.assertTrue(all(item["effective_release_tag"].endswith("-r2") for item in plan["libraries"]))
+
+    def test_lanes_group_selected_cmake_libraries_by_target_and_runner(self) -> None:
+        plan = self.plan("graphics", "build", [], requested="zlib,minizip")
+        linux_x64 = next(lane for lane in plan["lanes"] if lane["target"] == "linux-x86_64")
+        self.assertEqual(["zlib", "minizip"], linux_x64["libraries"])
+
+    def test_recovery_state_is_reported_without_selecting_publication(self) -> None:
+        plan = self.plan("graphics", "release", [{"tag": "libpng-1", "draft": True, "url": "https://example.test/draft"}], requested="libpng")
+        self.assertEqual([{"library": "libpng", "reason": "draft_release"}], plan["recoveries"])
+        self.assertNotIn("libpng", plan["publication_order"])
+
+
+if __name__ == "__main__":
+    unittest.main()
