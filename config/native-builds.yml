@@ -1,0 +1,329 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+# Operational native build policy. Values are resolved by scripts/native-build.py.
+schema: 1
+
+defaults:
+  configuration: Release
+  cmake_generator: Ninja
+
+platforms:
+  android:
+    runner: ubuntu-24.04
+    ndk_version: 28.2.13676358
+    default_api: 23
+    use_legacy_toolchain: false
+  linux:
+    runner: ubuntu-22.04
+    image_registry: totalcross
+    image_version: v2.0.1
+  windows:
+    runner: windows-2022
+    generator: Visual Studio 17 2022
+    runtime_policy: cmake/TotalCrossWindowsStaticRuntime.cmake
+    expected_runtime: MultiThreaded
+  apple:
+    runner: macos-15
+  web:
+    runner: ubuntu-24.04
+
+targets:
+  linux-x86_64:
+    platform: linux
+    arch: x86_64
+    image: linux-amd64
+    docker_platform: linux/amd64
+  linux-armv7l:
+    platform: linux
+    arch: armv7l
+    image: linux-arm32v7
+    docker_platform: linux/arm/v7
+    qemu: true
+  linux-aarch64:
+    platform: linux
+    arch: aarch64
+    runner: ubuntu-22.04-arm
+    image: linux-arm64
+    docker_platform: linux/arm64
+  android-arm64:
+    platform: android
+    arch: arm64-v8a
+  windows-x86:
+    platform: windows
+    arch: x86
+    cmake_platform: Win32
+  windows-x64:
+    platform: windows
+    arch: x64
+    cmake_platform: x64
+  windows-arm64:
+    platform: windows
+    arch: arm64
+    runner: windows-11-arm
+    cmake_platform: ARM64
+  macos-arm64:
+    platform: apple
+    artifact_platform: macos
+    arch: arm64
+    generator: Ninja
+  ios-arm64:
+    platform: apple
+    artifact_platform: ios
+    arch: arm64
+    generator: Xcode
+    sysroot: iphoneos
+  ios-simulator-arm64:
+    platform: apple
+    artifact_platform: ios-simulator
+    arch: arm64
+    generator: Xcode
+    sysroot: iphonesimulator
+  wasm:
+    platform: web
+    artifact_platform: wasm
+    arch: wasm32
+
+libraries:
+  axtls:
+    build_system: cmake
+    package_script: axtls/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  libjpeg:
+    build_system: cmake
+    package_script: libjpeg/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  libjpeg-turbo:
+    build_system: cmake
+    package_script: libjpeg-turbo/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  libpng:
+    build_system: cmake
+    package_script: libpng/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+    dependencies:
+      zlib-ng:
+        cmake_variable: ZLIB_DIR
+  mbedtls:
+    build_system: cmake
+    package_script: mbedtls/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  minizip:
+    build_system: cmake
+    package_script: minizip/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+    dependencies:
+      zlib:
+        cmake_variable: ZLIB_DIR
+    target_overrides:
+      android-arm64:
+        android_api: 24
+  minizip-ng:
+    build_system: cmake
+    package_script: minizip-ng/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+    dependencies:
+      zlib-ng:
+        cmake_variable: ZLIB_DIR
+  qrcode:
+    build_system: cmake
+    package_script: qrcode/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  qrcodegen:
+    build_system: cmake
+    package_script: qrcodegen/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  skia:
+    build_system: gn
+    long_running: true
+    preserve_target_parallelism: true
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+      - wasm
+    dependencies:
+      zlib-ng:
+      libpng:
+  sljit:
+    build_system: cmake
+    package_script: sljit/scripts/package-artifact.sh
+    tests: true
+    cmake_arguments:
+      - -DBUILD_TESTING=ON
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+    target_overrides:
+      android-arm64:
+        tests: false
+        cmake_arguments:
+          - -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON
+  sqlite3:
+    build_system: cmake
+    package_script: sqlite3/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  vcruntime:
+    build_system: custom
+    targets:
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+  zlib:
+    build_system: cmake
+    package_script: zlib/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+  zlib-ng:
+    build_system: cmake
+    package_script: zlib-ng/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - android-arm64
+      - macos-arm64
+      - ios-arm64
+      - ios-simulator-arm64
+
+stacks:
+  graphics:
+    libraries:
+      - zlib
+      - zlib-ng
+      - minizip
+      - minizip-ng
+      - libpng
+      - libjpeg
+      - libjpeg-turbo
+      - skia
+  others:
+    libraries:
+      - qrcode
+      - qrcodegen
+      - axtls
+      - mbedtls
+      - sqlite3
+      - sljit
+      - vcruntime

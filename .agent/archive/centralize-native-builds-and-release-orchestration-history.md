@@ -42,3 +42,23 @@ Release behavior is currently rooted in
 `<dependency>-<version>` is followed by `-r<N>` after matching tags exist.
 Metadata pinning and release preparation remain in the `.github/actions` and
 `.github/scripts` helper paths listed by the inventory.
+
+## Milestone 2 central configuration and resolver (2026-07-19)
+
+`config/native-builds.yml` is now the operational policy source. It defines one
+Linux image version, Android NDK/API defaults, Windows generator/runtime policy,
+Apple and Web runners, the published targets, all 15 libraries, true dependency
+edges, and the `graphics` and `others` co-scheduling groups.
+
+`scripts/native-build.py` is deliberately standard-library only. Its restricted
+YAML reader accepts the checked-in policy syntax and its validator rejects
+missing references, unknown keys, cycles, duplicate stack members, invalid or
+unsupported overrides, and complete image tags in target overrides. The CLI
+provides `validate`, `show`, `list-targets`, `graph`, and `plan`; it resolves
+policy but does not invoke a build.
+
+The 12 focused tests in `scripts/tests/test_native_build.py` cover Linux image
+composition, Android defaults and the minizip API 24 exception, central Windows
+policy, error cases, dependency ordering, and the absence of false dependency
+edges caused by stack membership. The exact command and input digests are in the
+Milestone 2 evidence record.

@@ -35,7 +35,7 @@ At a fresh start, read `AGENTS.md`, `.agent/PLANS.md`, this plan, and the curren
 - [x] (2026-07-18T01:10:00Z) Reviewed the implementation from `2ddd981` through `4cdaddd` and the follow-up commits through `67cd3bc`; confirmed that shared CMake execution exists but platform policy and runner reuse remain incomplete.
 - [x] (2026-07-18T01:10:00Z) Confirmed required policy decisions: Android API 23 remains the default for the next release; minizip retains an Android API 24 override; explicit target script names remain; Skia target parallelism remains; sqlite3 and SLJIT join the unrelated/rarely-updated stack.
 - [x] (2026-07-19T05:57:47Z) Created the state, evidence, archive, and editorial files and added a reproducible baseline inventory of workflow contracts, manifest archives, policy literals, release helpers, stack topology, and Skia jobs. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
-- [ ] Introduce and validate central native-build configuration and resolution without changing existing workflow behavior.
+- [x] (2026-07-19T15:16:54Z) Introduced `config/native-builds.yml`, the standard-library resolver CLI, and 12 focused contract tests. Existing workflows remain the production path. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
 - [ ] Make local explicit scripts and the composite action use one shared executor and central target resolution.
 - [ ] Add repository guidance, standard dependency documentation, scaffold tooling, consumer documentation, and repository/consumer skills.
 - [ ] Replace each build/release workflow pair with one operation-based workflow while preserving build artifacts and release names.
@@ -574,6 +574,8 @@ Keep old workflows available until replacement dry runs pass. Remove them in a s
 The analysis phase established that the repository has useful shared build primitives but not yet an operational central policy or same-runner stack architecture. The chosen design preserves explicit local commands, immediate Android compatibility, individual releases, and Skia target concurrency while removing duplicated toolchain and workflow policy.
 
 Milestone 1 completed without changing build or release behavior. `scripts/inventory-native-build-orchestration.py` now captures the baseline from static repository files; at the recorded baseline it found 15 library manifests, 39 workflow files, and seven Skia jobs. The supporting state, evidence, archive, and editorial records are in place for Milestone 2 resumption. No native builds or remote workflow operations were needed or run.
+
+Milestone 2 added the operational configuration and a deterministic resolver without changing a workflow, wrapper, artifact, or release. The resolver exposes validated `validate`, `show`, `list-targets`, `graph`, and `plan` commands. Its focused tests confirm central Linux image composition, Android API policy including the minizip override, Windows policy, true dependency order, stack membership, and invalid-configuration failures.
 
 Update this section at each completed milestone with actual behavior and evidence references. At completion, state which workflows were removed, how many policy literals remain, which release scenarios were proven, whether runner reuse reduced observed allocations or duration, and which platforms or production releases were not validated.
 
