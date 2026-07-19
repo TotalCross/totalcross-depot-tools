@@ -1,0 +1,103 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Publish native release
+description: Recheck, commit metadata, tag, and publish one verified native release.
+inputs:
+  library:
+    required: true
+  operation:
+    required: true
+  effective-release-tag:
+    required: true
+  assets-directory:
+    required: true
+outputs:
+  status:
+    value: ${{ steps.result.outputs.status }}
+  effective-release-tag:
+    value: ${{ steps.result.outputs.effective_release_tag }}
+  release-url:
+    value: ${{ steps.result.outputs.release_url }}
+runs:
+  using: composite
+  steps:
+    - name: Verify declared release assets
+      shell: bash
+      run: python3 scripts/native-release.py verify-assets "${{ inputs.library }}" --paths "${{ inputs.assets-directory }}/*"
+    - id: recheck
+      shell: bash
+      env:
+        LIBRARY: ${{ inputs.library }}
+        OPERATION: ${{ inputs.operation }}
+        REQUESTED_TAG: ${{ inputs.effective-release-tag }}
+        REPOSITORY: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        if [ "${OPERATION}" = force-release ]; then
+          decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" select-tag "${LIBRARY}" --operation force-release)"
+        else
+          decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" inspect "${LIBRARY}" --effective-tag "${REQUESTED_TAG}")"
+        fi
+        python3 - "${decision}" >> "${GITHUB_OUTPUT}" <<'PY'
+        import json
+        import sys
+
+        decision = json.loads(sys.argv[1])
+        if decision["status"] == "recovery-required":
+            raise SystemExit(f"native release recovery required: {decision['reason']}")
+        print(f"status={decision['status']}")
+        print(f"effective_release_tag={decision['effective_release_tag']}")
+        print(f"release_url={decision.get('release_url', '')}")
+        PY
+    - name: Prepare metadata before tagging
+      if: ${{ steps.recheck.outputs.status == 'build-required' }}
+      id: metadata
+      shell: bash
+      env:
+        LIBRARY: ${{ inputs.library }}
+        EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+      run: python3 scripts/native-release.py prepare-metadata "${LIBRARY}" --effective-tag "${EFFECTIVE_TAG}" > native-release-metadata.json
+    - name: Commit and push release metadata
+      if: ${{ steps.recheck.outputs.status == 'build-required' }}
+      shell: bash
+      env:
+        LIBRARY: ${{ inputs.library }}
+        EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+      run: |
+        set -euo pipefail
+        paths=()
+        while IFS= read -r path; do paths+=("${path}"); done < <(python3 -c 'import json; print("\n".join(json.load(open("native-release-metadata.json"))["paths"]))')
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add "${paths[@]}"
+        git commit -m "chore(${LIBRARY}): prepare ${EFFECTIVE_TAG} release" -m "Pin the effective release in the dependency manifest and compatible bundle index before tagging."
+        git push origin "HEAD:${GITHUB_REF_NAME}"
+    - name: Create immutable release tag
+      if: ${{ steps.recheck.outputs.status == 'build-required' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        git tag -a "${{ steps.recheck.outputs.effective_release_tag }}" -m "${{ inputs.library }} ${{ steps.recheck.outputs.effective_release_tag }}"
+        git push origin "refs/tags/${{ steps.recheck.outputs.effective_release_tag }}"
+    - name: Publish GitHub Release
+      if: ${{ steps.recheck.outputs.status == 'build-required' }}
+      shell: bash
+      run: gh release create "${{ steps.recheck.outputs.effective_release_tag }}" "${{ inputs.assets-directory }}"/* --verify-tag --title "${{ inputs.library }} ${{ steps.recheck.outputs.effective_release_tag }}" --generate-notes
+    - id: result
+      shell: bash
+      env:
+        OPERATION: ${{ inputs.operation }}
+        STATUS: ${{ steps.recheck.outputs.status }}
+        EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+        EXISTING_URL: ${{ steps.recheck.outputs.release_url }}
+        REPOSITORY: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        release_url="${EXISTING_URL}"
+        if [ "${STATUS}" = build-required ]; then
+          release_url="$(gh release view "${EFFECTIVE_TAG}" --repo "${REPOSITORY}" --json url --jq .url)"
+          if [ "${OPERATION}" = force-release ]; then status=forced-release; else status=released; fi
+        else
+          status=existing-release
+        fi
+        printf 'status=%s\neffective_release_tag=%s\nrelease_url=%s\n' "${status}" "${EFFECTIVE_TAG}" "${release_url}" >> "${GITHUB_OUTPUT}"

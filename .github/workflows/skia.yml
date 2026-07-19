@@ -28,22 +28,77 @@ on:
         options: [build, release, force-release]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   plan:
     name: Plan Skia
     runs-on: ubuntu-24.04
+    outputs:
+      status: ${{ steps.release.outputs.status }}
+      effective_release_tag: ${{ steps.release.outputs.effective_release_tag }}
+      release_url: ${{ steps.release.outputs.release_url }}
+      should_build: ${{ steps.release.outputs.should_build }}
     steps:
       - uses: actions/checkout@v6
       - env:
           OPERATION: ${{ inputs.operation }}
         run: python3 scripts/native-build.py plan skia --operation "${OPERATION}" --format json
+      - id: release
+        env:
+          OPERATION: ${{ inputs.operation }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${OPERATION}" = build ]; then
+            printf 'status=built\neffective_release_tag=\nrelease_url=\nshould_build=true\n' >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" select-tag skia --operation "${OPERATION}")"
+          python3 - "${decision}" >> "${GITHUB_OUTPUT}" <<'PY'
+          import json
+          import sys
+          decision = json.loads(sys.argv[1])
+          if decision["status"] == "recovery-required": raise SystemExit(f"native release recovery required: {decision['reason']}")
+          print(f"status={decision['status']}")
+          print(f"effective_release_tag={decision['effective_release_tag']}")
+          print(f"release_url={decision.get('release_url', '')}")
+          print(f"should_build={'true' if decision['status'] == 'build-required' else 'false'}")
+          PY
   build:
     needs: plan
+    if: ${{ needs.plan.outputs.should_build == 'true' }}
     uses: ./.github/workflows/build-skia.yml
+  publish:
+    needs: [plan, build]
+    if: ${{ (inputs.operation == 'release' || inputs.operation == 'force-release') && needs.plan.outputs.should_build == 'true' && needs.build.result == 'success' }}
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: native-release-skia
+      cancel-in-progress: false
+    outputs:
+      status: ${{ steps.release.outputs.status }}
+      effective_release_tag: ${{ steps.release.outputs.effective-release-tag }}
+      release_url: ${{ steps.release.outputs.release-url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          name: skia-release-assets
+          path: release-assets
+      - id: release
+        uses: ./.github/actions/publish-native-release
+        with:
+          library: skia
+          operation: ${{ inputs.operation }}
+          effective-release-tag: ${{ needs.plan.outputs.effective_release_tag }}
+          assets-directory: release-assets
   summary:
-    needs: build
+    needs: [plan, build, publish]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.publish.result == 'success' || needs.publish.result == 'skipped') }}
     runs-on: ubuntu-24.04
     outputs:
       status: ${{ steps.summary.outputs.status }}
@@ -53,8 +108,17 @@ jobs:
     steps:
       - id: summary
         shell: bash
+        env:
+          PLAN_STATUS: ${{ needs.plan.outputs.status }}
+          PLAN_TAG: ${{ needs.plan.outputs.effective_release_tag }}
+          PLAN_URL: ${{ needs.plan.outputs.release_url }}
+          PUBLISH_STATUS: ${{ needs.publish.outputs.status }}
+          PUBLISH_TAG: ${{ needs.publish.outputs.effective_release_tag }}
+          PUBLISH_URL: ${{ needs.publish.outputs.release_url }}
         run: |
           set -euo pipefail
           artifacts='["skia-release-assets"]'
-          printf 'status=built\neffective_release_tag=\nrelease_url=\nartifact_manifest=%s\n' "${artifacts}" >> "${GITHUB_OUTPUT}"
-          printf '### Native build result\n\nStatus: `built`\n\n```json\n%s\n```\n' "${artifacts}" >> "${GITHUB_STEP_SUMMARY}"
+          status="${PLAN_STATUS}"; tag="${PLAN_TAG}"; release_url="${PLAN_URL}"
+          if [ -n "${PUBLISH_STATUS}" ]; then status="${PUBLISH_STATUS}"; tag="${PUBLISH_TAG}"; release_url="${PUBLISH_URL}"; fi
+          printf 'status=%s\neffective_release_tag=%s\nrelease_url=%s\nartifact_manifest=%s\n' "${status}" "${tag}" "${release_url}" "${artifacts}" >> "${GITHUB_OUTPUT}"
+          printf '### Native build result\n\nStatus: `%s`\n\n```json\n%s\n```\n' "${status}" "${artifacts}" >> "${GITHUB_STEP_SUMMARY}"

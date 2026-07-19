@@ -14,23 +14,24 @@ on:
         type: string
     outputs:
       status:
-        description: Build-only status; release publication is introduced separately.
+        description: Build or release result status.
         value: ${{ jobs.summary.outputs.status }}
       effective_release_tag:
-        description: Empty until release orchestration supplies an effective tag.
+        description: Effective tag selected for a release operation.
         value: ${{ jobs.summary.outputs.effective_release_tag }}
       release_url:
-        description: Empty until release orchestration publishes a release.
+        description: Existing or newly published GitHub Release URL.
         value: ${{ jobs.summary.outputs.release_url }}
       artifact_manifest:
         description: JSON list of artifact names produced by the selected library.
         value: ${{ jobs.summary.outputs.artifact_manifest }}
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   plan:
@@ -41,6 +42,10 @@ jobs:
       apple_targets: ${{ steps.plan.outputs.apple_targets }}
       has_ios: ${{ steps.plan.outputs.has_ios }}
       artifact_manifest: ${{ steps.plan.outputs.artifact_manifest }}
+      release_status: ${{ steps.release.outputs.status }}
+      effective_release_tag: ${{ steps.release.outputs.effective_release_tag }}
+      release_url: ${{ steps.release.outputs.release_url }}
+      should_build: ${{ steps.release.outputs.should_build }}
     steps:
       - uses: actions/checkout@v6
       - id: plan
@@ -86,6 +91,33 @@ jobs:
           print(f"has_ios={'true' if 'ios-arm64' in apple_targets else 'false'}")
           print(f"artifact_manifest={compact(artifacts)}")
           PY
+      - id: release
+        env:
+          LIBRARY: ${{ inputs.library }}
+          OPERATION: ${{ inputs.operation }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${OPERATION}" = build ]; then
+            printf 'status=built\neffective_release_tag=\nrelease_url=\nshould_build=true\n' >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" select-tag "${LIBRARY}" --operation "${OPERATION}")"
+          python3 - "${decision}" >> "${GITHUB_OUTPUT}" <<'PY'
+          import json
+          import sys
+
+          decision = json.loads(sys.argv[1])
+          status = decision["status"]
+          if status == "recovery-required":
+              raise SystemExit(f"native release recovery required: {decision['reason']}")
+          should_build = "true" if status == "build-required" else "false"
+          print(f"status={status}")
+          print(f"effective_release_tag={decision['effective_release_tag']}")
+          print(f"release_url={decision.get('release_url', '')}")
+          print(f"should_build={should_build}")
+          PY
       - name: Publish planning summary
         shell: bash
         run: |
@@ -100,7 +132,7 @@ jobs:
   build:
     name: Build ${{ inputs.library }} ${{ matrix.target }}
     needs: plan
-    if: ${{ needs.plan.outputs.matrix != '[]' }}
+    if: ${{ needs.plan.outputs.should_build == 'true' && needs.plan.outputs.matrix != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -130,7 +162,7 @@ jobs:
   apple:
     name: Build ${{ inputs.library }} Apple artifacts
     needs: plan
-    if: ${{ needs.plan.outputs.apple_targets != '[]' }}
+    if: ${{ needs.plan.outputs.should_build == 'true' && needs.plan.outputs.apple_targets != '[]' }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
@@ -183,10 +215,108 @@ jobs:
           name: ${{ inputs.library }}-ios-xcframework
           path: ${{ inputs.library }}/build/${{ inputs.library }}-ios.xcframework.zip
 
+  publish:
+    name: Publish ${{ inputs.library }} release
+    needs: [plan, build, apple]
+    if: ${{ (inputs.operation == 'release' || inputs.operation == 'force-release') && needs.plan.outputs.should_build == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.apple.result == 'success' || needs.apple.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: native-release-${{ inputs.library }}
+      cancel-in-progress: false
+    outputs:
+      status: ${{ steps.result.outputs.status }}
+      effective_release_tag: ${{ steps.result.outputs.effective_release_tag }}
+      release_url: ${{ steps.result.outputs.release_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Download release artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Verify declared release assets
+        shell: bash
+        run: python3 scripts/native-release.py verify-assets "${{ inputs.library }}" --paths 'release-assets/*'
+      - id: recheck
+        env:
+          LIBRARY: ${{ inputs.library }}
+          OPERATION: ${{ inputs.operation }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${OPERATION}" = force-release ]; then
+            decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" select-tag "${LIBRARY}" --operation force-release)"
+          else
+            decision="$(python3 scripts/native-release.py --repository "${REPOSITORY}" inspect "${LIBRARY}" --effective-tag "${{ needs.plan.outputs.effective_release_tag }}")"
+          fi
+          python3 - "${decision}" >> "${GITHUB_OUTPUT}" <<'PY'
+          import json
+          import sys
+
+          decision = json.loads(sys.argv[1])
+          status = decision["status"]
+          if status == "recovery-required":
+              raise SystemExit(f"native release recovery required: {decision['reason']}")
+          print(f"status={status}")
+          print(f"effective_release_tag={decision['effective_release_tag']}")
+          print(f"release_url={decision.get('release_url', '')}")
+          PY
+      - name: Prepare metadata before tagging
+        if: ${{ steps.recheck.outputs.status == 'build-required' }}
+        shell: bash
+        run: python3 scripts/native-release.py prepare-metadata "${{ inputs.library }}" --effective-tag "${{ steps.recheck.outputs.effective_release_tag }}"
+      - name: Commit and push release metadata
+        if: ${{ steps.recheck.outputs.status == 'build-required' }}
+        shell: bash
+        env:
+          LIBRARY: ${{ inputs.library }}
+          EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deps.yml "${LIBRARY}/manifest.yml"
+          git commit -m "chore(${LIBRARY}): prepare ${EFFECTIVE_TAG} release" -m "Pin the effective release in the dependency manifest and compatible bundle index before tagging."
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Create immutable release tag
+        if: ${{ steps.recheck.outputs.status == 'build-required' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag -a "${{ steps.recheck.outputs.effective_release_tag }}" -m "${{ inputs.library }} ${{ steps.recheck.outputs.effective_release_tag }}"
+          git push origin "refs/tags/${{ steps.recheck.outputs.effective_release_tag }}"
+      - name: Publish GitHub Release
+        if: ${{ steps.recheck.outputs.status == 'build-required' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.recheck.outputs.effective_release_tag }}" release-assets/* --verify-tag --title "${{ inputs.library }} ${{ steps.recheck.outputs.effective_release_tag }}" --generate-notes
+      - id: result
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+          STATUS: ${{ steps.recheck.outputs.status }}
+          EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+          EXISTING_URL: ${{ steps.recheck.outputs.release_url }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          release_url="${EXISTING_URL}"
+          if [ "${STATUS}" = build-required ]; then
+            release_url="$(gh release view "${EFFECTIVE_TAG}" --repo "${REPOSITORY}" --json url --jq .url)"
+            if [ "${OPERATION}" = force-release ]; then status=forced-release; else status=released; fi
+          else
+            status=existing-release
+          fi
+          printf 'status=%s\neffective_release_tag=%s\nrelease_url=%s\n' "${status}" "${EFFECTIVE_TAG}" "${release_url}" >> "${GITHUB_OUTPUT}"
+
   summary:
     name: Summarize ${{ inputs.library }}
-    needs: [plan, build, apple]
-    if: ${{ always() && needs.plan.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.apple.result == 'success' || needs.apple.result == 'skipped') }}
+    needs: [plan, build, apple, publish]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.apple.result == 'success' || needs.apple.result == 'skipped') && (needs.publish.result == 'success' || needs.publish.result == 'skipped') }}
     runs-on: ubuntu-24.04
     outputs:
       status: ${{ steps.summary.outputs.status }}
@@ -198,22 +328,37 @@ jobs:
         env:
           ARTIFACT_MANIFEST: ${{ needs.plan.outputs.artifact_manifest }}
           OPERATION: ${{ inputs.operation }}
+          PLAN_STATUS: ${{ needs.plan.outputs.release_status }}
+          PLAN_TAG: ${{ needs.plan.outputs.effective_release_tag }}
+          PLAN_URL: ${{ needs.plan.outputs.release_url }}
+          PUBLISH_STATUS: ${{ needs.publish.outputs.status }}
+          PUBLISH_TAG: ${{ needs.publish.outputs.effective_release_tag }}
+          PUBLISH_URL: ${{ needs.publish.outputs.release_url }}
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=built\n' >> "${GITHUB_OUTPUT}"
-          printf 'effective_release_tag=\nrelease_url=\n' >> "${GITHUB_OUTPUT}"
+          status="${PLAN_STATUS}"
+          tag="${PLAN_TAG}"
+          release_url="${PLAN_URL}"
+          if [ -n "${PUBLISH_STATUS}" ]; then
+            status="${PUBLISH_STATUS}"
+            tag="${PUBLISH_TAG}"
+            release_url="${PUBLISH_URL}"
+          fi
+          printf 'status=%s\n' "${status}" >> "${GITHUB_OUTPUT}"
+          printf 'effective_release_tag=%s\nrelease_url=%s\n' "${tag}" "${release_url}" >> "${GITHUB_OUTPUT}"
           printf 'artifact_manifest=%s\n' "${ARTIFACT_MANIFEST}" >> "${GITHUB_OUTPUT}"
           {
             echo '### Native build result'
             echo
             echo "Operation: \`${OPERATION}\`"
-            echo 'Status: `built`'
+            echo "Status: \`${status}\`"
             echo
             echo 'Artifact manifest:'
             echo '```json'
             echo "${ARTIFACT_MANIFEST}"
             echo '```'
             echo
-            echo 'Release publication is intentionally deferred to the release orchestration milestone.'
+            if [ -n "${tag}" ]; then echo "Effective release tag: \`${tag}\`"; fi
+            if [ -n "${release_url}" ]; then echo "Release URL: ${release_url}"; fi
           } >> "${GITHUB_STEP_SUMMARY}"

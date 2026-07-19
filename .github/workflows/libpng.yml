@@ -27,6 +27,9 @@ on:
         type: choice
         options: [build, release, force-release]
 
+permissions:
+  contents: write
+
 jobs:
   operation:
     uses: ./.github/workflows/native-library-operation.yml
