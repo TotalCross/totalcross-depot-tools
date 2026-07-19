@@ -27,6 +27,10 @@ Only requested targets receive a scripts/build-<target>.sh wrapper. The command
 refuses an existing dependency directory, generated file, or library workflow.
 It has no force mode.
 
+Add `--dry-run` to print the exact files that would be generated without writing
+anything. Use it to review target wrappers and archive names before creating a
+scaffold.
+
 Every generated file has an SPDX header. The CMake, fetch, package, auto-fetch,
 find, README, and workflow files deliberately contain the
 TC_DEPOT_SCAFFOLD_TODO marker. Replace every marker with a real implementation
@@ -47,12 +51,11 @@ runtime-policy ordering, and generated directories. It is a structural check,
 not a successful native build: completing it does not replace build, package,
 fetch, CMake-consumer, workflow, or release validation.
 
-Until config/native-builds.yml exists, accepted target names and canonical
-archive suffixes live in tools/native_dependency_targets.py. Add a new target
-there with its archive suffix, then extend focused tests and central build
-configuration when it is introduced. The scaffold and check use that one
-adapter, so the command interface will remain stable when it becomes an adapter
-to central configuration.
+Accepted target names and canonical archive suffixes are derived from
+`config/native-builds.yml` through `tools/native_dependency_targets.py`. Add a
+new target to central configuration first, then extend focused tests and any
+target-specific scaffold contract. The scaffold and check keep one adapter, so
+their command interface remains stable as policy evolves.
 
 The scaffold never publishes a release, creates a tag, or updates deps.yml. Do
 those operations only after the dependency has a real compatible release.

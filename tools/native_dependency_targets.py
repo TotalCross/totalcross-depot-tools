@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
 # SPDX-License-Identifier: MIT
-"""Temporary target adapter for the native dependency scaffold.
-
-Replace this module with an adapter to config/native-builds.yml when that
-configuration becomes the repository source of truth. Keep the public helpers so
-the scaffold command line and structural validator do not need to change.
-"""
+"""Adapter from the native dependency scaffold to central build policy."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib.util
+from pathlib import Path
+import sys
 
 
 @dataclass(frozen=True)
@@ -21,21 +19,35 @@ class Target:
     archive_suffix: str
 
 
-_TARGETS = (
-    Target("android-arm64", "android-arm64-v8a"),
-    Target("ios-arm64", "ios-arm64"),
-    Target("ios-simulator-arm64", "ios-simulator-arm64"),
-    Target("linux-aarch64", "linux-aarch64"),
-    Target("linux-armv7l", "linux-armv7l"),
-    Target("linux-x86_64", "linux-x86_64"),
-    Target("macos-arm64", "macos-arm64"),
-    Target("windows-arm64", "windows-arm64"),
-    Target("windows-x64", "windows-x64"),
-    Target("windows-x86", "windows-x86"),
-)
+def central_configuration() -> dict[str, object]:
+    """Load the resolver without changing its command-line public interface."""
+    script = Path(__file__).resolve().parents[1] / "scripts" / "native-build.py"
+    spec = importlib.util.spec_from_file_location("native_build_for_scaffold", script)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load scripts/native-build.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.load_config()
+
+
+def configured_targets() -> tuple[Target, ...]:
+    config = central_configuration()
+    targets = config["targets"]
+    return tuple(
+        Target(
+            name,
+            f"{target.get('artifact_platform', target['platform'])}-{target['arch']}",
+        )
+        for name, target in targets.items()
+    )
+
+
+CONFIGURATION = central_configuration()
+_TARGETS = configured_targets()
 
 TARGETS = {target.name: target for target in _TARGETS}
-KNOWN_STACKS = frozenset(("graphics", "others"))
+KNOWN_STACKS = frozenset(CONFIGURATION["stacks"])
 
 
 def target_names() -> tuple[str, ...]:

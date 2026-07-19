@@ -100,6 +100,30 @@ def tracked_paths(root: pathlib.Path) -> list[str]:
     return sorted(path for path in result.stdout.decode().split("\0") if path)
 
 
+def staged_paths(root: pathlib.Path) -> list[str]:
+    """Return added, copied, modified, or renamed paths staged for commit."""
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"],
+        cwd=root,
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+    return sorted(path for path in result.stdout.decode().split("\0") if path)
+
+
+def selected_paths(root: pathlib.Path, paths: list[str]) -> list[str]:
+    """Normalize user paths and reject values outside the selected root."""
+    normalized: list[str] = []
+    for path in paths:
+        candidate = pathlib.Path(path)
+        resolved = (candidate if candidate.is_absolute() else root / candidate).resolve()
+        try:
+            normalized.append(str(resolved.relative_to(root)))
+        except ValueError as error:
+            raise ValueError(f"path is outside --root: {path}") from error
+    return sorted(set(normalized))
+
+
 def header_lines(candidate: Candidate) -> tuple[str, str]:
     if candidate.style == "block":
         return (
@@ -143,13 +167,21 @@ def validate(root: pathlib.Path, paths: list[str] | None = None) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=pathlib.Path, default=pathlib.Path.cwd())
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--paths", nargs="+", metavar="PATH", help="validate only these repository paths")
+    selection.add_argument("--staged", action="store_true", help="validate only staged added, copied, modified, or renamed paths")
     args = parser.parse_args()
     root = args.root.resolve()
-    diagnostics = validate(root)
+    try:
+        paths = selected_paths(root, args.paths) if args.paths is not None else staged_paths(root) if args.staged else None
+    except ValueError as error:
+        parser.error(str(error))
+    diagnostics = validate(root, paths)
     if diagnostics:
         print("\n".join(diagnostics), file=sys.stderr)
         return 1
-    applicable = sum(classify(path) is not None for path in tracked_paths(root))
+    applicable_paths = tracked_paths(root) if paths is None else paths
+    applicable = sum(classify(path) is not None for path in applicable_paths)
     print(
         f"Copyright validation passed: {applicable} applicable files checked; "
         f"{len(EXCLUDED_PATHS)} explicit path excluded."

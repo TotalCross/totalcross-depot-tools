@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+interface:
+  display_name: "Adopt TotalCross depot-tools"
+  short_description: "Add a pinned native depot-tools dependency to CMake"
+policy:
+  allow_implicit_invocation: true

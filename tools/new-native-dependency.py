@@ -224,7 +224,7 @@ def spec_from(args: argparse.Namespace) -> Spec:
                 args.imported_target, args.library_name, args.stack, tuple(args.targets))
 
 
-def create(spec: Spec, root: Path) -> int:
+def create(spec: Spec, root: Path, dry_run: bool = False) -> int:
     generated = files(spec)
     dependency = root / spec.name
     workflow_path = root / ".github/workflows" / f"{spec.name}.yml"
@@ -235,13 +235,19 @@ def create(spec: Spec, root: Path) -> int:
             print(f"{path.relative_to(root)}: refusing to overwrite existing path", file=sys.stderr)
         return 1
     for relative_path, (content, is_script) in generated.items():
+        if dry_run:
+            print(relative_path)
+            continue
         path = root / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
         if is_script:
             executable(path)
         print(relative_path)
-    print("Scaffold created; resolve all TC_DEPOT_SCAFFOLD_TODO markers before check can pass.")
+    if dry_run:
+        print("Dry run; no files created.")
+    else:
+        print("Scaffold created; resolve all TC_DEPOT_SCAFFOLD_TODO markers before check can pass.")
     return 0
 
 
@@ -446,6 +452,7 @@ def build_parser() -> argparse.ArgumentParser:
     create_parser.add_argument("--library-name", required=True)
     create_parser.add_argument("--stack", choices=sorted(KNOWN_STACKS), required=True)
     create_parser.add_argument("--targets", nargs="+", choices=target_names(), required=True)
+    create_parser.add_argument("--dry-run", action="store_true", help="print generated paths without creating files")
     check_parser = commands.add_parser("check", help="validate one dependency scaffold")
     check_parser.add_argument("dependency", help="dependency name or absolute path")
     return result
@@ -456,7 +463,7 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     if args.command == "create":
         try:
-            return create(spec_from(args), root)
+            return create(spec_from(args), root, args.dry_run)
         except ValueError as error:
             print(str(error), file=sys.stderr)
             return 2

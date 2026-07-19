@@ -22,6 +22,13 @@ Skia is the exception on the build side: it is built with GN/Ninja through
 scripts, and consumed through the CMake fetch/find modules imported from 
 TotalCrossVM.
 
+## Dependency onboarding and consumption
+
+- [Native dependency standard](docs/DEPENDENCY_STANDARD.md) explains the
+  scaffold, structural contract, build targets, packaging, and release boundary.
+- [Consuming depot-tools](docs/CONSUMING_DEPOT_TOOLS.md) explains how a CMake
+  consumer pins this repository, fetches artifacts, and links imported targets.
+
 ## Maintainer
 
 Created and maintained by [Fabio Sobral](https://github.com/flsobral).

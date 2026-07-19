@@ -26,6 +26,8 @@ artifact contract.
   resolver tests.
 - Added the shared native target executor, wrapper validator, consumer fixture,
   and zlib published-target wrappers that delegate to the executor.
+- Added focused/staged header-validation modes, scaffold dry-run and central
+  target adaptation, onboarding links, and the distributable consumer skill.
 
 ## Decisions and Trade-offs
 
@@ -40,6 +42,11 @@ its behavior deterministic across the repository's supported local environments.
 The CMake action and local target executor now share one lower-level execution
 sequence. This preserves existing action inputs while making centrally resolved
 local paths available for incremental wrapper migration.
+
+The dependency standard, consumption guide, root guidance, and repository skills
+were already tracked as a coherent earlier onboarding series. Milestone 4 kept
+that newer material, connected the remaining mechanics, and avoided replacing
+it with an older untracked proposal.
 
 ## Unexpected Problems and Discoveries
 
@@ -56,6 +63,10 @@ Milestone 3 expanded the focused suite to 17 tests, validated ten zlib wrappers,
 built and packaged four representative libraries on macOS arm64, and built a
 temporary CMake consumer against generated zlib output.
 
+Milestone 4 passed 15 scaffold lifecycle tests and focused header-validator
+tests. A temporary consumer pinned to published `zlib-1.3.1-r3` fetched the
+artifact, configured, built, linked, and ran through the documented CMake path.
+
 ## Useful Evidence and Examples
 
 Run `python3 scripts/inventory-native-build-orchestration.py --format json` to
@@ -64,6 +75,8 @@ Run `python3 scripts/native-build.py show minizip android-arm64 --format json`
 to inspect an effective target policy without building it.
 Run `scripts/build-native-target.sh zlib macos-arm64 --dry-run` to inspect the
 shared execution command without creating a build directory.
+Run `python3 tools/new-native-dependency.py create ... --dry-run` to review a
+new dependency scaffold before it writes files.
 
 ## Limitations, Remaining Work, and Open Questions
 
@@ -72,6 +85,9 @@ milestones.
 
 Windows runtime verification, Android execution, and Docker/QEMU execution
 remain host-dependent validations for a later platform-capable checkpoint.
+
+The temporary consumer validates zlib only; each adopted dependency still needs
+its own published-target validation in the receiving repository.
 
 ## Possible Article Angles
 

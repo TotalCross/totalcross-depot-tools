@@ -26,7 +26,7 @@ Read only one or two representative dependencies selected by similarity. Use a d
 
 Run from the repository root:
 
-    python3 tools/new-native-dependency.py \
+    python3 tools/new-native-dependency.py create \
       --name <directory> \
       --package <CMakePackage> \
       --version <version> \
@@ -57,7 +57,7 @@ Review created files and executable bits immediately.
 
 Start with:
 
-    python3 tools/new-native-dependency.py --check <directory>
+    python3 tools/new-native-dependency.py check <directory>
     bash -n <directory>/fetch.sh <directory>/scripts/*.sh
     python3 scripts/native-build.py validate
     git diff --check -- <directory> config/native-builds.yml .github/workflows/<directory>.yml deps.yml

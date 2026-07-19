@@ -92,3 +92,23 @@ with each archive inspected for the expected include/lib/manifest layout. A
 temporary CMake consumer configured, linked, and ran against the generated zlib
 installation. Windows, Android, and Docker/QEMU execution were not available on
 the host; their resolved arguments remain tested without execution.
+
+## Milestone 4 onboarding and consumption contract (2026-07-19)
+
+The repository already contained the dependency standard, consumer guide,
+scaffold lifecycle tests, repository skills, and the adopted AGENTS/ExecPlan
+guidance from earlier logical commits. This milestone completed their remaining
+integration surface instead of duplicating those documents or replacing newer
+guidance with the stale proposal copy.
+
+`tools/check-copyright.py` now accepts `--paths` and `--staged`, preserving its
+repository-wide default. The focused test covers both a no-op staged set and a
+single selected file. `tools/new-native-dependency.py create --dry-run` reports
+the exact scaffold without writing it, and its target adapter now derives target
+names and archive suffixes from `config/native-builds.yml`.
+
+The distributable `consumer-skill/adopt-totalcross-depot-tools` package includes
+the skill metadata and a TotalCross behavior reference. A temporary consumer
+used its pinned-bootstrap pattern with `zlib-1.3.1-r3`, fetched the published
+macOS arm64 zlib artifact, configured a CMake target through `FindZlib.cmake`,
+linked it, and executed it successfully.

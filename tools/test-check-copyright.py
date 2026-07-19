@@ -76,6 +76,24 @@ def main() -> int:
         assert check_copyright.classify("third_party/copied.c") is None
         assert check_copyright.classify("generated/output.c") is None
         assert check_copyright.classify("CMakeLists.txt").style == "hash"
+        assert check_copyright.validate(root, []) == []
+        assert check_copyright.staged_paths(root) == []
+        focused = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--root", str(root), "--staged"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert focused.returncode == 0, focused.stderr
+        assert "0 applicable files checked" in focused.stdout
+        focused = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--root", str(root), "--paths", "valid.py"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert focused.returncode == 0, focused.stderr
+        assert "1 applicable files checked" in focused.stdout
     print("Copyright validator tests: passed")
     return 0
 

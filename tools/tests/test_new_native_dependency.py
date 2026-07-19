@@ -85,6 +85,27 @@ class NativeDependencyToolTest(unittest.TestCase):
         self.assertFalse((self.dependency / "scripts" / "build-android-arm64.sh").exists())
         self.assertTrue(self.workflow.is_file())
 
+    def test_dry_run_reports_structure_without_creating_it(self) -> None:
+        result = self.run_tool(
+            "create",
+            "--name", "example",
+            "--package", "Example",
+            "--version", "1.2.3",
+            "--source-url", "https://github.com/example/example.git",
+            "--source-tag", "v1.2.3",
+            "--imported-target", "Example::Example",
+            "--library-name", "example",
+            "--stack", "others",
+            "--targets", "linux-x86_64",
+            "--dry-run",
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("example/manifest.yml", result.stdout)
+        self.assertIn("Dry run; no files created.", result.stdout)
+        self.assertFalse(self.dependency.exists())
+        self.assertFalse(self.workflow.exists())
+
     def test_generated_scripts_are_executable(self) -> None:
         result = self.create("linux-x86_64")
 
