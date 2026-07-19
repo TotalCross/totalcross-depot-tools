@@ -28,9 +28,12 @@ Read `.agent/state/native-dependency-scaffold.md` first. The implementation is
 
 - [x] (2026-07-19) Inspected the request and representative zlib, libpng,
   sqlite3, and Skia layouts without modifying them.
-- [ ] Implement explicit create/check commands and the isolated target adapter.
-- [ ] Add lifecycle tests and run focused validation.
-- [ ] Document the final interface and commit the completed slices.
+- [x] (2026-07-19) Added explicit create/check commands and the isolated target
+  adapter in commit abda645.
+- [x] (2026-07-19) Added temporary-directory lifecycle coverage in commit
+  53bf773.
+- [x] (2026-07-19) Documented the interface, boundaries, and target adapter;
+  final focused validation is pending this documentation commit.
 
 ## Current Architecture and Scope
 
@@ -80,8 +83,9 @@ plans, proposals, and unrelated files remain untouched.
 
 ## Outcomes & Retrospective
 
-Pending implementation and focused validation.
+The scaffold and read-only structural validator are implemented. Existing
+dependencies are deliberately not migrated or checked globally.
 
 ## Revision Note
 
-Created for this multi-commit tool implementation.
+Consolidated after scaffold and test commits; documentation is the final slice.

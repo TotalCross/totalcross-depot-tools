@@ -5,38 +5,28 @@ SPDX-License-Identifier: MIT
 
 # Native dependency scaffold state
 
-## Active slice
+## Status
 
-Implement explicit `create` and `check` operations in
-`tools/new-native-dependency.py`, using a separately documented target adapter.
+Final documentation and focused validation are complete pending the final
+documentation commit.
 
-## Context
+## Completed commits
 
-The request requires commits, standard-library tests, no changes to existing
-dependencies, and no releases or `deps.yml` updates. No active task-specific
-state existed before this file.
+- abda645 feat(tools): add native dependency scaffold
+- 53bf773 test(tools): cover dependency scaffold lifecycle
 
-## Inspected evidence
+The first commit provides explicit commands, deterministic templates, the target
+adapter, non-overwrite behavior, and read-only structural checks. The second
+uses temporary directories to cover the creation and validation lifecycle.
 
-`zlib`, `libpng`, `sqlite3`, and `skia` show historical target and workflow
-variation. The repository has no `config/native-builds.yml`. Their files must not
-be changed to satisfy the new validator.
+## Scope preserved
 
-## Active paths
+Existing zlib, libpng, sqlite3, and Skia layouts were inspected but not changed.
+The validator operates only on its requested dependency and no release, tag,
+dependency pin, or platform build has run.
 
-- `tools/new-native-dependency.py`
-- `tools/native_dependency_targets.py`
-- `tools/tests/test_new_native_dependency.py`
-- `docs/DEPENDENCY_STANDARD.md`
-- `AGENTS.md`
-- `.agent/exec-plan-native-dependency-scaffold.md`
+## Final validation
 
-## Next action
-
-Implement templates, CLI subcommands, and basic isolated smoke validation; then
-commit the scaffold slice and record its result here.
-
-## Deferred validation
-
-No platform build, release operation, or consumer CMake build applies until a
-real dependency replaces scaffold placeholders.
+Run the documented unittest module, all three help commands, copyright and diff
+checks. Platform builds, releases, and consumer CMake checks remain deliberately
+deferred because no real dependency implementation replaces the scaffold.

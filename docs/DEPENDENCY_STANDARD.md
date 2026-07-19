@@ -15,6 +15,48 @@ Use the `add-native-dependency` skill and `tools/new-native-dependency.py` to
 create the initial structure. Do not copy an arbitrary existing dependency: some
 folders contain historical exceptions that are not the current standard.
 
+## Scaffold and structural check
+
+The scaffold creates an intentionally incomplete CMake dependency. It is useful
+when a library is ready to be onboarded but its build, artifact, and release
+details have not yet been implemented. Run it from the repository root:
+
+    python3 tools/new-native-dependency.py create --name example --package Example --version 1.2.3 --source-url https://github.com/example/example.git --source-tag v1.2.3 --imported-target Example::Example --library-name example --stack others --targets linux-x86_64 windows-x64 android-arm64
+
+Only requested targets receive a scripts/build-<target>.sh wrapper. The command
+refuses an existing dependency directory, generated file, or library workflow.
+It has no force mode.
+
+Every generated file has an SPDX header. The CMake, fetch, package, auto-fetch,
+find, README, and workflow files deliberately contain the
+TC_DEPOT_SCAFFOLD_TODO marker. Replace every marker with a real implementation
+before adding the dependency to a release. The manual work includes upstream
+license notices, source/build logic, deterministic packaging, artifact fetching,
+CMake resolution, central build configuration, workflow operation handling, and
+a consumer validation.
+
+Check only one candidate dependency:
+
+    python3 tools/new-native-dependency.py check example
+
+The check is read-only and accepts either a dependency name relative to the
+repository root or an absolute dependency path. It validates manifest fields,
+target/archive/wrapper consistency, executable scripts, SPDX headers, required
+modules and workflow, placeholder absence, forbidden wrapper policy, Windows
+runtime-policy ordering, and generated directories. It is a structural check,
+not a successful native build: completing it does not replace build, package,
+fetch, CMake-consumer, workflow, or release validation.
+
+Until config/native-builds.yml exists, accepted target names and canonical
+archive suffixes live in tools/native_dependency_targets.py. Add a new target
+there with its archive suffix, then extend focused tests and central build
+configuration when it is introduced. The scaffold and check use that one
+adapter, so the command interface will remain stable when it becomes an adapter
+to central configuration.
+
+The scaffold never publishes a release, creates a tag, or updates deps.yml. Do
+those operations only after the dependency has a real compatible release.
+
 ## Required inputs before scaffolding
 
 Collect these facts first:
@@ -273,8 +315,8 @@ graph rather than copied into multiple workflows.
 
 Run the smallest applicable checks:
 
-    python3 tools/new-native-dependency.py --check <dependency>
-    python3 tools/check-copyright.py --paths <changed files>
+    python3 tools/new-native-dependency.py check <dependency>
+    python3 tools/check-copyright.py
     bash -n <dependency>/fetch.sh <dependency>/scripts/*.sh
     python3 scripts/native-build.py validate
     cmake -S <dependency> -B <focused build dir> -G Ninja

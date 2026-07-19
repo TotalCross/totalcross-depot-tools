@@ -102,6 +102,11 @@ New native dependencies must follow `docs/DEPENDENCY_STANDARD.md`. Use the
 `add-native-dependency` skill and `tools/new-native-dependency.py` instead of
 copying an arbitrary existing directory.
 
+Use the create operation only to generate an intentionally incomplete starting
+point, then run check for one dependency before functional validation. See
+docs/DEPENDENCY_STANDARD.md for the command, completion work, target adapter,
+and the boundary between structural and build checks.
+
 Only create explicit target scripts for targets that the dependency will publish.
 The scripts remain discoverable by name, but contain only the dependency and
 target identity. They must delegate policy and command construction to shared
