@@ -4,6 +4,10 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 
 This repository contains `.agent/PLANS.md`. Maintain this document in accordance with that file. A person or coding agent must be able to resume the work using only the repository and this ExecPlan, without access to the conversation that produced it.
 
+## Status
+
+**Abandoned — 2026-07-19.** The restructuring did not achieve its expected objective. Do not resume this ExecPlan; use a new plan if the release-build architecture is revisited.
+
 ## Purpose / Big Picture
 
 The repository currently builds and publishes many small native libraries through independent GitHub Actions matrices. Each job starts a fresh runner, so releases repeatedly perform checkout, toolchain setup, source downloads, artifact upload, artifact download, and packaging. After this work, maintainers will be able to publish the same separate library releases with fewer runner allocations, less repeated setup, narrower dependency-triggered rebuilds, and reusable platform-oriented build paths.
