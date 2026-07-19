@@ -7,11 +7,10 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 4 — not started; stop before implementation.
-- Current slice: awaiting authorization to add dependency standards, scaffold,
-  documentation, and skills.
-- Last pre-milestone revision: `d719b1307e7d235ef3a8848221abf583dc7707cc`.
-- Last logical commit: `f5848d8 feat(native-build): unify target execution`.
+- Active milestone: Milestone 5 — not started; stop before implementation.
+- Current slice: awaiting authorization to replace build/release workflow pairs.
+- Last pre-milestone revision: `056f44db05c69475f71011cb29b22ffc93b5bbdc`.
+- Last logical commit: `f5c77cc feat(onboarding): complete dependency adoption contract`.
 
 ## Active paths
 
@@ -27,6 +26,10 @@ SPDX-License-Identifier: MIT
 - `scripts/tests/test_native_build_target.py`
 - `.github/actions/build-native-library/action.yml`
 - `zlib/scripts/build-*.sh`
+- `docs/DEPENDENCY_STANDARD.md`
+- `docs/CONSUMING_DEPOT_TOOLS.md`
+- `tools/new-native-dependency.py`
+- `consumer-skill/adopt-totalcross-depot-tools/`
 
 ## Completed work
 
@@ -40,6 +43,8 @@ SPDX-License-Identifier: MIT
   12 focused tests. Existing workflows remain the production path.
 - Added one shared CMake target path, action delegation to the low-level CMake
   sequence, zlib published-target wrappers, and 17 executor-focused tests.
+- Completed the onboarding contract with central scaffold targets, dry-run,
+  focused header validation, concise README links, and consumer skill package.
 
 ## Focused validation
 
@@ -55,6 +60,11 @@ SPDX-License-Identifier: MIT
 - Temporary macOS-arm64 builds for zlib, minizip, SLJIT, and libpng — passed,
   with expected archive layouts; a zlib CMake consumer fixture configured,
   built, linked, and ran.
+- `python3 tools/test-check-copyright.py` — passed.
+- `python3 -m unittest tools.tests.test_new_native_dependency` — passed (15
+  tests), including dry-run, overwrite refusal, executable bits, and TODO checks.
+- A temporary consumer pinned to published `zlib-1.3.1-r3` fetched its macOS
+  arm64 artifact and configured, built, linked, and ran through `FindZlib.cmake`.
 
 ## Deferred validation
 
@@ -73,8 +83,8 @@ SPDX-License-Identifier: MIT
 
 ## Next action and resume command
 
-Start Milestone 4 only when authorized by the user. Begin by reading this state
-file, then inspect the active milestone paths in the ExecPlan.
+Start Milestone 5 only when authorized by the user. Begin by reading this state
+file, then inspect the library workflow family selected for the first migration.
 
-Do not start scaffold or documentation work as part of this completed executor
+Do not change workflow or release behavior as part of this completed onboarding
 milestone.
