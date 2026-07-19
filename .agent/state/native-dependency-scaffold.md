@@ -7,13 +7,14 @@ SPDX-License-Identifier: MIT
 
 ## Status
 
-Implementation is complete pending the final validator follow-up commit.
+Implementation and focused validation are complete.
 
 ## Completed commits
 
 - abda645 feat(tools): add native dependency scaffold
 - 53bf773 test(tools): cover dependency scaffold lifecycle
 - 08896f5 docs(dependencies): document scaffold workflow
+- d4b897a fix(tools): validate complete scaffold markers
 
 The first commit provides explicit commands, deterministic templates, the target
 adapter, non-overwrite behavior, and read-only structural checks. The second

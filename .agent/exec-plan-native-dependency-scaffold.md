@@ -33,7 +33,7 @@ Read `.agent/state/native-dependency-scaffold.md` first. The implementation is
 - [x] (2026-07-19) Added temporary-directory lifecycle coverage in commit
   53bf773.
 - [x] (2026-07-19) Documented the interface, boundaries, and target adapter;
-  final focused validation is pending this documentation commit.
+  final focused validation passed.
 
 ## Current Architecture and Scope
 
@@ -83,9 +83,10 @@ plans, proposals, and unrelated files remain untouched.
 
 ## Outcomes & Retrospective
 
-The scaffold and read-only structural validator are implemented. Existing
-dependencies are deliberately not migrated or checked globally.
+The scaffold and read-only structural validator are implemented and covered by
+14 temporary-directory lifecycle tests. Existing dependencies are deliberately
+not migrated or checked globally.
 
 ## Revision Note
 
-Consolidated after scaffold and test commits; documentation is the final slice.
+Closed after the documentation and structural-validation follow-up commits.
