@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: Skia native operation
+
+on:
+  workflow_call:
+    inputs:
+      operation:
+        required: false
+        default: build
+        type: string
+    outputs:
+      status:
+        value: ${{ jobs.summary.outputs.status }}
+      effective_release_tag:
+        value: ${{ jobs.summary.outputs.effective_release_tag }}
+      release_url:
+        value: ${{ jobs.summary.outputs.release_url }}
+      artifact_manifest:
+        value: ${{ jobs.summary.outputs.artifact_manifest }}
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Build, release, or force-release. Publication is added in a later milestone.
+        required: true
+        default: build
+        type: choice
+        options: [build, release, force-release]
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Plan Skia
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - env:
+          OPERATION: ${{ inputs.operation }}
+        run: python3 scripts/native-build.py plan skia --operation "${OPERATION}" --format json
+  build:
+    needs: plan
+    uses: ./.github/workflows/build-skia.yml
+  summary:
+    needs: build
+    runs-on: ubuntu-24.04
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      effective_release_tag: ${{ steps.summary.outputs.effective_release_tag }}
+      release_url: ${{ steps.summary.outputs.release_url }}
+      artifact_manifest: ${{ steps.summary.outputs.artifact_manifest }}
+    steps:
+      - id: summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts='["skia-release-assets"]'
+          printf 'status=built\neffective_release_tag=\nrelease_url=\nartifact_manifest=%s\n' "${artifacts}" >> "${GITHUB_OUTPUT}"
+          printf '### Native build result\n\nStatus: `built`\n\n```json\n%s\n```\n' "${artifacts}" >> "${GITHUB_STEP_SUMMARY}"
