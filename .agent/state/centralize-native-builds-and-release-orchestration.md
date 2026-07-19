@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 1 — completed; stop before Milestone 2.
-- Current slice: baseline inventory and resumption support.
+- Active milestone: Milestone 2 — not started; stop before implementation.
+- Current slice: awaiting authorization to add central configuration and resolver.
 - Last pre-milestone revision: `6c911bdb405d6533f63bafd8801eaa2150c45dcf`.
-- Logical commit: pending for this completed milestone.
+- Last logical commit: `689946e chore(orchestration): capture native build baseline`.
 
 ## Active paths
 
@@ -50,7 +50,7 @@ SPDX-License-Identifier: MIT
 
 ## Next action and resume command
 
-After reviewing and committing this milestone, start Milestone 2 only when
-authorized by the user. Begin by reading this state file, then run:
+Start Milestone 2 only when authorized by the user. Begin by reading this state
+file, then run:
 
     python3 scripts/inventory-native-build-orchestration.py --format summary
