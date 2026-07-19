@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+
+interface:
+  display_name: "Logical depot-tools commits"
+  short_description: "Create validated logical Conventional Commits"
+policy:
+  allow_implicit_invocation: false
