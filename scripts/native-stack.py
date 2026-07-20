@@ -63,6 +63,114 @@ def _order_for_roots(config: dict[str, Any], roots: Sequence[str]) -> list[str]:
     return ordered
 
 
+def _skia_topology(
+    config: dict[str, Any], entries: Sequence[dict[str, Any]], lanes: Sequence[dict[str, Any]]
+) -> dict[str, Any] | None:
+    by_library = {entry["library"]: entry for entry in entries}
+    skia = by_library.get("skia")
+    if not skia or skia["action"] in ("external", "recovery-required"):
+        return None
+    lane_by_target = {lane["target"]: lane for lane in lanes}
+    standard_nodes: list[dict[str, Any]] = []
+    apple_libraries: list[str] = []
+    for target, lane in sorted(lane_by_target.items()):
+        if target.startswith(("macos-", "ios-")):
+            apple_libraries.extend(lane["libraries"])
+            continue
+        standard_nodes.append(
+            {
+                "id": f"lane:{target}",
+                "kind": "standard-lane",
+                "target": target,
+                "libraries": lane["libraries"],
+                "needs": [],
+            }
+        )
+    if apple_libraries:
+        standard_nodes.append(
+            {
+                "id": "lane:apple",
+                "kind": "standard-lane",
+                "target": "apple-arm64",
+                "libraries": sorted(set(apple_libraries)),
+                "needs": [],
+            }
+        )
+    standard_ids = {node["id"] for node in standard_nodes}
+    skia_nodes: list[dict[str, Any]] = []
+    for target in config["libraries"]["skia"]["targets"]:
+        needs = ["prepare-skia-sources"]
+        continued_lane = ""
+        if target in ("linux-x86_64", "linux-armv7l", "linux-aarch64", "android-arm64"):
+            candidate = f"lane:{target}"
+            if candidate in standard_ids:
+                needs.append(candidate)
+                continued_lane = candidate
+        elif target in ("macos-arm64", "ios-arm64", "ios-simulator-arm64") and "lane:apple" in standard_ids:
+            needs.append("lane:apple")
+            continued_lane = "lane:apple" if target == "macos-arm64" else ""
+        elif target == "windows-x64" and "lane:windows-x64" in standard_ids:
+            needs.append("lane:windows-x64")
+            continued_lane = "lane:windows-x64"
+        skia_nodes.append(
+            {
+                "id": f"skia:{target}",
+                "kind": "skia-target",
+                "target": target,
+                "needs": needs,
+                "continued_lane": continued_lane,
+                "dependency_sources": [
+                    {"library": dependency["library"], "source": dependency["source"]}
+                    for dependency in skia["dependencies"]
+                ],
+            }
+        )
+    topology = {
+        "prepare": {"id": "prepare-skia-sources", "kind": "source-preparation", "needs": []},
+        "standard_lanes": standard_nodes,
+        "skia_targets": skia_nodes,
+        "webassembly": "skia:wasm",
+        "continued_windows_target": "skia:windows-x64",
+        "baseline_job_families": {
+            "prepare-skia-sources": ["prepare-skia-sources"],
+            "build-linux": ["skia:linux-x86_64", "skia:linux-armv7l", "skia:linux-aarch64"],
+            "build-android": ["skia:android-arm64"],
+            "build-wasm": ["skia:wasm"],
+            "build-apple": ["skia:macos-arm64", "skia:ios-arm64", "skia:ios-simulator-arm64"],
+            "build-windows": ["skia:windows-x86", "skia:windows-x64", "skia:windows-arm64"],
+            "package-release-assets": [],
+        },
+    }
+    validate_skia_topology(config, topology)
+    return topology
+
+
+def validate_skia_topology(config: dict[str, Any], topology: dict[str, Any]) -> None:
+    targets = topology["skia_targets"]
+    expected = set(config["libraries"]["skia"]["targets"])
+    actual = {node["target"] for node in targets}
+    if actual != expected:
+        raise NativeStackError("Skia topology does not cover every published target")
+    ids = {node["id"] for node in targets}
+    for node in targets:
+        if any(need in ids for need in node["needs"]):
+            raise NativeStackError(f"Skia target {node['target']} depends on another Skia target")
+    continued_windows = [node for node in targets if node["continued_lane"].startswith("lane:windows")]
+    if len(continued_windows) > 1:
+        raise NativeStackError("more than one Windows Skia target continues a lane")
+    wasm = next(node for node in targets if node["target"] == "wasm")
+    if wasm["needs"] != ["prepare-skia-sources"]:
+        raise NativeStackError("WebAssembly Skia target must remain separate")
+    topology_ids = {node["id"] for node in targets} | {"prepare-skia-sources"}
+    expected_ids = {
+        node_id
+        for node_ids in topology["baseline_job_families"].values()
+        for node_id in node_ids
+    }
+    if expected_ids != topology_ids:
+        raise NativeStackError("Skia baseline job families do not cover the generated topology")
+
+
 def plan_stack(
     config: dict[str, Any],
     stack: str,
@@ -140,7 +248,7 @@ def plan_stack(
                 {"target": target, "runner": resolved["runner"], "libraries": []},
             )
             lane["libraries"].append(library)
-    return {
+    outcome = {
         "stack": stack,
         "operation": operation,
         "requested_libraries": roots,
@@ -150,6 +258,8 @@ def plan_stack(
         "publication_order": [library for library in order if library in selected],
         "recoveries": recoveries,
     }
+    outcome["skia_topology"] = _skia_topology(config, entries, outcome["lanes"])
+    return outcome
 
 
 def _fixture(path: Path | None, fallback: Callable[[], Any]) -> Any:

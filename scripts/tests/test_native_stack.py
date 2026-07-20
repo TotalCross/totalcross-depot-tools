@@ -15,6 +15,12 @@ SPEC = importlib.util.spec_from_file_location("native_stack", MODULE_PATH)
 assert SPEC and SPEC.loader
 NATIVE_STACK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(NATIVE_STACK)
+INVENTORY_SPEC = importlib.util.spec_from_file_location(
+    "native_inventory", ROOT / "scripts" / "inventory-native-build-orchestration.py"
+)
+assert INVENTORY_SPEC and INVENTORY_SPEC.loader
+NATIVE_INVENTORY = importlib.util.module_from_spec(INVENTORY_SPEC)
+INVENTORY_SPEC.loader.exec_module(NATIVE_INVENTORY)
 
 
 class NativeStackTests(unittest.TestCase):
@@ -84,6 +90,28 @@ class NativeStackTests(unittest.TestCase):
         plan = self.plan("graphics", "release", [{"tag": "libpng-1", "draft": True, "url": "https://example.test/draft"}], requested="libpng")
         self.assertEqual([{"library": "libpng", "reason": "draft_release"}], plan["recoveries"])
         self.assertNotIn("libpng", plan["publication_order"])
+
+    def test_skia_topology_preserves_target_parallelism_and_actual_dependencies(self) -> None:
+        plan = self.plan("graphics", "build", [])
+        topology = plan["skia_topology"]
+        self.assertIsNotNone(topology)
+        targets = topology["skia_targets"]
+        self.assertEqual(set(self.config["libraries"]["skia"]["targets"]), {node["target"] for node in targets})
+        target_ids = {node["id"] for node in targets}
+        self.assertTrue(all(not target_ids.intersection(node["needs"]) for node in targets))
+        self.assertEqual(["prepare-skia-sources"], next(node for node in targets if node["target"] == "wasm")["needs"])
+        self.assertEqual("lane:windows-x64", next(node for node in targets if node["target"] == "windows-x64")["continued_lane"])
+        baseline = NATIVE_INVENTORY.inventory()["skia_parallelism"]["jobs"]
+        self.assertEqual(set(baseline), set(topology["baseline_job_families"]))
+        skia_dependencies = next(item for item in plan["libraries"] if item["library"] == "skia")["dependencies"]
+        self.assertEqual({"zlib-ng", "libpng"}, {item["library"] for item in skia_dependencies})
+
+    def test_skia_topology_rejects_accidental_target_serialization(self) -> None:
+        plan = self.plan("graphics", "build", [])
+        topology = plan["skia_topology"]
+        topology["skia_targets"][1]["needs"].append(topology["skia_targets"][0]["id"])
+        with self.assertRaisesRegex(NATIVE_STACK.NativeStackError, "depends on another Skia target"):
+            NATIVE_STACK.validate_skia_topology(self.config, topology)
 
 
 if __name__ == "__main__":
