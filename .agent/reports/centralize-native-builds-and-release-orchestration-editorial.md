@@ -36,6 +36,8 @@ artifact contract.
   orchestration.
 - Added selective graphics/others stack planning with external/local dependency
   handoff, compatible target lanes, and topological publication order.
+- Added an explicit, testable 11-target Skia DAG that preserves target
+  concurrency while documenting permitted lane continuations.
 
 ## Decisions and Trade-offs
 
@@ -67,6 +69,10 @@ explicit recovery condition, never a reason to invent another suffix.
 Milestone 7 models stack membership as scheduling scope only. The plan follows
 real dependency edges, so an already-published dependency is fetched instead of
 rebuilt and unrelated stack members remain untouched.
+
+Milestone 8 makes Skia concurrency an explicit contract: no target may depend
+on another Skia target, WebAssembly remains separate, and only one Windows
+target continues a lane.
 
 ## Unexpected Problems and Discoveries
 
@@ -100,6 +106,9 @@ Milestone 7 expanded the focused suite to 34 tests, including seven stack
 scenarios. Graphics and others scripts produce offline build plans; the matching
 workflows use the same planning contract.
 
+Milestone 8 passed nine stack tests and emitted an 11-target graphics Skia DAG
+whose job families match the baseline inventory. No platform build was run.
+
 ## Useful Evidence and Examples
 
 Run `python3 scripts/inventory-native-build-orchestration.py --format json` to
@@ -116,10 +125,10 @@ new dependency scaffold before it writes files.
 Executor migration and workflow changes are intentionally deferred to later
 milestones.
 
-The next milestone preserves Skia target parallelism while using eligible stack
-lanes. Before production publication, the eight inherited manifest/bundle pin
-mismatches need deliberate recovery and the individual release implementation
-needs authorized remote validation.
+The next milestone inventories and removes superseded paths only after the
+required equivalence gates. Before production publication, the eight inherited
+manifest/bundle pin mismatches need deliberate recovery and the individual
+release implementation needs authorized remote validation.
 
 Windows runtime verification, Android execution, and Docker/QEMU execution
 remain host-dependent validations for a later platform-capable checkpoint.

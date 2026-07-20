@@ -163,3 +163,15 @@ The graphics and others shell scripts and workflows all call that planner.
 Seven focused scenarios prove all-existing, one-missing leaf, local dependency
 handoff, unrelated stack member, force-release, lane grouping, and recovery
 cases. No remote lane or publication was dispatched.
+
+## Milestone 8 Skia parallel topology (2026-07-20)
+
+The graphics plan now includes an explicit 11-target Skia DAG. Linux and Android
+may continue matching standard lanes; Apple prerequisites feed macOS, iOS, and
+iOS Simulator independently; only Windows x64 continues a Windows lane; and
+WebAssembly has only source preparation as a prerequisite. The planner records
+only zlib-ng and libpng as Skia dependencies.
+
+Validation compares the generated families with the seven-job baseline inventory
+and fails if a Skia target depends on any other Skia target. This is a local DAG
+contract, not a dispatched platform build.

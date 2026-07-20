@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 8 — not started; stop before implementation.
-- Current slice: selective stack planning is available; Skia lane topology is
-  deferred.
-- Last pre-milestone revision: `cfccd78`.
-- Last logical commit: `698d3c9 feat(stacks): add selective native stack planning`.
+- Active milestone: Milestone 9 — not started; stop before implementation.
+- Current slice: Skia's planner topology preserves independent targets; legacy
+  cleanup and final validation remain deferred.
+- Last pre-milestone revision: `1e49272`.
+- Last logical commit: `1fa82d5 feat(skia): model parallel stack topology`.
 
 ## Active paths
 
@@ -69,6 +69,9 @@ SPDX-License-Identifier: MIT
   asset verification, recovery diagnostics, and per-library publication guards.
 - Added selective graphics/others planning with external/local dependency
   handoff, compatible target lanes, and true topological publication order.
+- Added an explicit Skia topology to graphics planning. It retains all 11
+  target nodes independently, allows only eligible lane continuations, keeps
+  WebAssembly separate, and validates against the captured job-family baseline.
 
 ## Focused validation
 
@@ -100,6 +103,9 @@ SPDX-License-Identifier: MIT
 - The same focused suite passed with 34 tests after stack planning, including
   all-existing, one-missing leaf, local dependency handoff, unrelated others,
   force-release, lane grouping, and recovery plans.
+- The focused stack suite passed with nine tests after Skia topology checks.
+  A controlled graphics plan emitted 11 independent Skia targets and the seven
+  baseline workflow job families.
 
 ## Deferred validation
 
@@ -113,6 +119,8 @@ SPDX-License-Identifier: MIT
   workflow, tag, push, or release has been executed.
 - Stack workflows expose the shared plan; no remote lane execution or
   publication was dispatched.
+- No Skia build was dispatched. The topology validation is deliberately a local
+  DAG contract; full platform-runner execution remains a later release gate.
 
 ## Decisions and blockers
 
@@ -130,9 +138,9 @@ SPDX-License-Identifier: MIT
 
 ## Next action and resume command
 
-Start Milestone 8 only when authorized by the user. Begin by reading this state
-file, then inspect the existing Skia topology and new lane plan before adding
-any platform-lane reuse.
+Start Milestone 9 only when authorized by the user. Begin by reading this state
+file, then inventory old paths and validate equivalence before removing any
+workflow or duplicated policy literal.
 
-Do not dispatch remote workflows, remove legacy paths, or change Skia target
-parallelism as part of the completed Milestone 7 checkpoint.
+Do not remove legacy paths or run remote release/platform validations as part of
+the completed Milestone 8 checkpoint.
