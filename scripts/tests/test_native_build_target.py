@@ -86,8 +86,8 @@ class NativeBuildTargetTests(unittest.TestCase):
 
     def test_skia_ccache_uses_complete_snapshots_and_partial_fallbacks(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
-        self.assertEqual(7, workflow.count("uses: actions/cache/restore@v5"))
-        self.assertEqual(14, workflow.count("uses: actions/cache/save@v5"))
+        self.assertEqual(5, workflow.count("uses: actions/cache/restore@v5"))
+        self.assertEqual(10, workflow.count("uses: actions/cache/save@v5"))
         self.assertNotIn("key: skia-ccache-${{", workflow)
         self.assertIn(
             "key: skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-${{ github.sha }}",
@@ -99,6 +99,21 @@ class NativeBuildTargetTests(unittest.TestCase):
             workflow,
         )
         self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", workflow)
+
+    def test_skia_prepares_platform_source_archives_before_native_depot_tools(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
+        self.assertIn("prepare-skia-sources-linux:", workflow)
+        self.assertIn("prepare-skia-sources-windows:", workflow)
+        self.assertIn("prepare-skia-sources-macos:", workflow)
+        self.assertIn("needs: prepare-skia-sources-windows", workflow)
+        self.assertIn("needs: prepare-skia-sources-macos", workflow)
+        self.assertIn("key: ${{ needs.prepare-skia-sources-windows.outputs.cache-key }}", workflow)
+        self.assertIn("key: ${{ needs.prepare-skia-sources-macos.outputs.cache-key }}", workflow)
+        self.assertIn("target: macos-arm64", workflow)
+        self.assertIn("target: ios-arm64", workflow)
+        self.assertIn("target: ios-simulator-arm64", workflow)
+        self.assertIn("package-apple-artifacts:", workflow)
+        self.assertIn("- package-apple-artifacts", workflow)
 
     def test_skia_windows_sdk_compat_uses_links_instead_of_copying(self) -> None:
         common = ROOT / "skia" / "scripts" / "common.sh"

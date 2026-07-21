@@ -30,8 +30,8 @@ env:
 # before partial snapshots; each revision gets an immutable completed snapshot.
 
 jobs:
-  prepare-skia-sources:
-    name: Prepare Skia source dependencies
+  prepare-skia-sources-linux:
+    name: Prepare Skia source dependencies (Linux)
     runs-on: ubuntu-24.04
     outputs:
       cache-key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
@@ -51,7 +51,7 @@ jobs:
             shasum -a 256 |
             awk '{print $1}'
           )
-          echo "cache-key=skia-source-deps-${key_hash}" >> "$GITHUB_OUTPUT"
+          echo "cache-key=skia-source-deps-linux-${key_hash}" >> "$GITHUB_OUTPUT"
 
       - name: Restore Skia source archive cache
         id: skia-source-cache
@@ -70,7 +70,11 @@ jobs:
         if: steps.skia-source-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p skia/.source-cache/bin
-          ln -sf "$(command -v python3)" skia/.source-cache/bin/python
+          cat > skia/.source-cache/bin/python <<'EOF'
+          #!/usr/bin/env bash
+          exec python3 "$@"
+          EOF
+          chmod +x skia/.source-cache/bin/python
           cd skia/skia
           PATH="${GITHUB_WORKSPACE}/skia/.source-cache/bin:${GITHUB_WORKSPACE}/skia/depot_tools:${PATH}" python3 tools/git-sync-deps
 
@@ -81,9 +85,121 @@ jobs:
           tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
             --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
 
+  prepare-skia-sources-windows:
+    name: Prepare Skia source dependencies (Windows)
+    runs-on: windows-2022
+    outputs:
+      cache-key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Compute Skia source cache key
+        id: skia-source-cache-key
+        run: |
+          key_hash=$(
+            git rev-parse \
+              HEAD:skia/manifest.json \
+              HEAD:skia/scripts/fetch-source.sh \
+              HEAD:skia/scripts/common.sh |
+            shasum -a 256 |
+            awk '{print $1}'
+          )
+          echo "cache-key=skia-source-deps-windows-${key_hash}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Skia source archive cache
+        id: skia-source-cache
+        uses: actions/cache@v5
+        with:
+          path: skia/.source-cache
+          key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
+          enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Sync Skia dependencies
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache/bin
+          cat > skia/.source-cache/bin/python <<'EOF'
+          #!/usr/bin/env bash
+          exec python3 "$@"
+          EOF
+          chmod +x skia/.source-cache/bin/python
+          cd skia/skia
+          PATH="${GITHUB_WORKSPACE}/skia/.source-cache/bin:${GITHUB_WORKSPACE}/skia/depot_tools:${PATH}" python3 tools/git-sync-deps
+
+      - name: Package Skia source archive
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache
+          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
+
+  prepare-skia-sources-macos:
+    name: Prepare Skia source dependencies (macOS)
+    runs-on: macos-15
+    outputs:
+      cache-key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Compute Skia source cache key
+        id: skia-source-cache-key
+        run: |
+          key_hash=$(
+            git rev-parse \
+              HEAD:skia/manifest.json \
+              HEAD:skia/scripts/fetch-source.sh \
+              HEAD:skia/scripts/common.sh |
+            shasum -a 256 |
+            awk '{print $1}'
+          )
+          echo "cache-key=skia-source-deps-macos-${key_hash}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Skia source archive cache
+        id: skia-source-cache
+        uses: actions/cache@v5
+        with:
+          path: skia/.source-cache
+          key: ${{ steps.skia-source-cache-key.outputs.cache-key }}
+          enableCrossOsArchive: true
+
+      - name: Fetch pinned Skia sources
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        working-directory: skia
+        run: ./scripts/fetch-source.sh
+
+      - name: Sync Skia dependencies
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache/bin
+          cat > skia/.source-cache/bin/python <<'EOF'
+          #!/usr/bin/env bash
+          exec python3 "$@"
+          EOF
+          chmod +x skia/.source-cache/bin/python
+          cd skia/skia
+          PATH="${GITHUB_WORKSPACE}/skia/.source-cache/bin:${GITHUB_WORKSPACE}/skia/depot_tools:${PATH}" python3 tools/git-sync-deps
+
+      - name: Package Skia source archive
+        if: steps.skia-source-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p skia/.source-cache
+          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
+
   build-linux:
     name: Build ${{ matrix.platform_arch }}
-    needs: prepare-skia-sources
+    needs: prepare-skia-sources-linux
     strategy:
       fail-fast: false
       matrix:
@@ -168,7 +284,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: skia/.source-cache
-          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
+          key: ${{ needs.prepare-skia-sources-linux.outputs.cache-key }}
           enableCrossOsArchive: true
 
       - name: Extract Skia source archive
@@ -275,7 +391,7 @@ jobs:
 
   build-android:
     name: Build android/arm64-v8a
-    needs: prepare-skia-sources
+    needs: prepare-skia-sources-linux
     runs-on: ubuntu-24.04
 
     steps:
@@ -314,7 +430,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: skia/.source-cache
-          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
+          key: ${{ needs.prepare-skia-sources-linux.outputs.cache-key }}
           enableCrossOsArchive: true
 
       - name: Extract Skia source archive
@@ -382,7 +498,7 @@ jobs:
 
   build-wasm:
     name: Build wasm/wasm32
-    needs: prepare-skia-sources
+    needs: prepare-skia-sources-linux
     runs-on: ubuntu-24.04
 
     steps:
@@ -418,7 +534,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: skia/.source-cache
-          key: ${{ needs.prepare-skia-sources.outputs.cache-key }}
+          key: ${{ needs.prepare-skia-sources-linux.outputs.cache-key }}
           enableCrossOsArchive: true
 
       - name: Extract Skia source archive
@@ -481,42 +597,36 @@ jobs:
           path: skia/dist/diagnostics
 
   build-apple:
-    name: Build and package Apple arm64 artifacts
+    name: Build ${{ matrix.target }}
+    needs: prepare-skia-sources-macos
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos-arm64
+            platform: macos
+            script: build-macos-arm64.sh
+          - target: ios-arm64
+            platform: ios
+            script: build-ios-arm64.sh
+          - target: ios-simulator-arm64
+            platform: ios-simulator
+            script: build-ios-simulator-arm64.sh
     runs-on: macos-15
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Restore macOS ccache
-        id: restore-macos-ccache
+      - name: Restore ccache
+        id: restore-ccache
         uses: actions/cache/restore@v5
         with:
-          path: .cache/ccache/skia-macos-arm64
-          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-${{ github.sha }}
+          path: .cache/ccache/skia-${{ matrix.target }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.target }}-complete-${{ github.sha }}
           restore-keys: |
-            skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-
-            skia-ccache-v1-${{ runner.os }}-macos-arm64-partial-
-
-      - name: Restore iOS device ccache
-        id: restore-ios-ccache
-        uses: actions/cache/restore@v5
-        with:
-          path: .cache/ccache/skia-ios-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-${{ github.sha }}
-          restore-keys: |
-            skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-
-            skia-ccache-v1-${{ runner.os }}-ios-arm64-partial-
-
-      - name: Restore iOS simulator ccache
-        id: restore-ios-simulator-ccache
-        uses: actions/cache/restore@v5
-        with:
-          path: .cache/ccache/skia-ios-simulator-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-${{ github.sha }}
-          restore-keys: |
-            skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-
-            skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-partial-
+            skia-ccache-v1-${{ runner.os }}-${{ matrix.target }}-complete-
+            skia-ccache-v1-${{ runner.os }}-${{ matrix.target }}-partial-
 
       - name: Verify or install build tools
         run: |
@@ -525,83 +635,48 @@ jobs:
 
       - name: Configure ccache
         run: |
-          for target in macos-arm64 ios-arm64 ios-simulator-arm64; do
-            CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${target}" ccache --set-config=max_size=2G
-            CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${target}" ccache --show-stats || true
-          done
+          CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${{ matrix.target }}" ccache --set-config=max_size=2G
+          CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${{ matrix.target }}" ccache --show-stats || true
 
-      - name: Fetch zlib-ng/libpng Apple prebuilts
+      - name: Fetch zlib-ng/libpng prebuilt dependencies
+        run: bash skia/scripts/fetch-prebuilt-deps.sh ${{ matrix.platform }} arm64
+
+      - name: Restore Skia source archive cache
+        uses: actions/cache@v5
+        with:
+          path: skia/.source-cache
+          key: ${{ needs.prepare-skia-sources-macos.outputs.cache-key }}
+          enableCrossOsArchive: true
+
+      - name: Extract Skia source archive
         run: |
-          bash skia/scripts/fetch-prebuilt-deps.sh macos arm64
-          bash skia/scripts/fetch-prebuilt-deps.sh ios arm64
-          bash skia/scripts/fetch-prebuilt-deps.sh ios-simulator arm64
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
 
-      - name: Fetch pinned Skia sources
+      - name: Fetch native depot_tools
         working-directory: skia
-        run: ./scripts/fetch-source.sh
+        run: ./scripts/fetch-source.sh depot_tools
 
-      - name: Build macOS static library
-        id: build-macos
-        working-directory: skia
-        env:
-          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-macos-arm64
-        run: ./scripts/build-macos-arm64.sh
-
-      - name: Save complete macOS ccache
-        if: ${{ steps.build-macos.outcome == 'success' }}
-        uses: actions/cache/save@v5
-        with:
-          path: .cache/ccache/skia-macos-arm64
-          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-${{ github.sha }}
-
-      - name: Save partial macOS ccache
-        if: ${{ (failure() || cancelled()) && steps.build-macos.outcome != 'skipped' }}
-        uses: actions/cache/save@v5
-        with:
-          path: .cache/ccache/skia-macos-arm64
-          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Build iOS device static library
-        id: build-ios
+      - name: Build static library
+        id: build-static-library
         working-directory: skia
         env:
-          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-arm64
-        run: ./scripts/build-ios-arm64.sh
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.target }}
+        run: ./scripts/${{ matrix.script }}
 
-      - name: Save complete iOS device ccache
-        if: ${{ steps.build-ios.outcome == 'success' }}
+      - name: Save complete ccache
+        if: ${{ steps.build-static-library.outcome == 'success' }}
         uses: actions/cache/save@v5
         with:
-          path: .cache/ccache/skia-ios-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-${{ github.sha }}
+          path: .cache/ccache/skia-${{ matrix.target }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.target }}-complete-${{ github.sha }}
 
-      - name: Save partial iOS device ccache
-        if: ${{ (failure() || cancelled()) && steps.build-ios.outcome != 'skipped' }}
+      - name: Save partial ccache
+        if: ${{ (failure() || cancelled()) && steps.build-static-library.outcome != 'skipped' }}
         uses: actions/cache/save@v5
         with:
-          path: .cache/ccache/skia-ios-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Build iOS simulator static library
-        id: build-ios-simulator
-        working-directory: skia
-        env:
-          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-simulator-arm64
-        run: ./scripts/build-ios-simulator-arm64.sh
-
-      - name: Save complete iOS simulator ccache
-        if: ${{ steps.build-ios-simulator.outcome == 'success' }}
-        uses: actions/cache/save@v5
-        with:
-          path: .cache/ccache/skia-ios-simulator-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-${{ github.sha }}
-
-      - name: Save partial iOS simulator ccache
-        if: ${{ (failure() || cancelled()) && steps.build-ios-simulator.outcome != 'skipped' }}
-        uses: actions/cache/save@v5
-        with:
-          path: .cache/ccache/skia-ios-simulator-arm64
-          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cache/ccache/skia-${{ matrix.target }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.target }}-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Print build summary on failure
         if: failure()
@@ -610,49 +685,75 @@ jobs:
 
       - name: Verify artifacts
         run: |
-          for suffix in macos-arm64 ios-arm64 ios-simulator-arm64; do
-            test -f "skia/dist/libskia-${suffix}.a"
-            test -f "skia/dist/build_config_manifest-${suffix}.md"
-            grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${suffix}.md"
-            grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${suffix}.md"
-          done
+          test -f "skia/dist/libskia-${{ matrix.target }}.a"
+          test -f "skia/dist/build_config_manifest-${{ matrix.target }}.md"
+          grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
+          grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
 
-      - name: Stage development headers
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-${{ matrix.target }}
+          path: |
+            skia/dist/libskia-${{ matrix.target }}.a
+            skia/dist/build_config_manifest-${{ matrix.target }}.md
+
+      - name: Upload diagnostics
+        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: skia-diagnostics-${{ matrix.target }}
+          path: skia/dist/diagnostics
+
+  package-apple-artifacts:
+    name: Package Apple XCFramework and headers
+    needs:
+      - prepare-skia-sources-macos
+      - build-apple
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Restore Skia source archive cache
+        uses: actions/cache@v5
+        with:
+          path: skia/.source-cache
+          key: ${{ needs.prepare-skia-sources-macos.outputs.cache-key }}
+          enableCrossOsArchive: true
+
+      - name: Extract Skia source archive
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: skia-macos-arm64
+          path: skia/dist
+
+      - name: Download iOS device artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: skia-ios-arm64
+          path: skia/dist
+
+      - name: Download iOS simulator artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: skia-ios-simulator-arm64
+          path: skia/dist
+
+      - name: Stage development headers and package artifacts
         working-directory: skia
         run: |
           source ./scripts/common.sh
           stage_dev_subset
-
-      - name: Package Apple artifacts
-        working-directory: skia
-        run: |
           ./scripts/package-ios-xcframework.sh
           ./scripts/package-dev-bundle.sh
-
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-macos-arm64
-          path: |
-            skia/dist/libskia-macos-arm64.a
-            skia/dist/build_config_manifest-macos-arm64.md
-
-      - name: Upload iOS device artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-ios-arm64
-          path: |
-            skia/dist/libskia-ios-arm64.a
-            skia/dist/build_config_manifest-ios-arm64.md
-
-      - name: Upload iOS simulator artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-ios-simulator-arm64
-          path: |
-            skia/dist/libskia-ios-simulator-arm64.a
-            skia/dist/build_config_manifest-ios-simulator-arm64.md
 
       - name: Upload iOS package artifact
         uses: actions/upload-artifact@v7
@@ -666,29 +767,9 @@ jobs:
             skia/dist/build_config_manifest-ios-arm64.md
             skia/dist/build_config_manifest-ios-simulator-arm64.md
 
-      - name: Upload macOS diagnostics
-        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-diagnostics-macos-arm64
-          path: skia/dist/diagnostics
-
-      - name: Upload iOS device diagnostics
-        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-diagnostics-ios-arm64
-          path: skia/dist/diagnostics
-
-      - name: Upload iOS simulator diagnostics
-        if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: skia-diagnostics-ios-simulator-arm64
-          path: skia/dist/diagnostics
-
   build-windows:
     name: Build windows/${{ matrix.arch }}
+    needs: prepare-skia-sources-windows
     strategy:
       fail-fast: false
       matrix:
@@ -737,10 +818,23 @@ jobs:
         shell: bash
         run: bash skia/scripts/fetch-prebuilt-deps.sh windows ${{ matrix.arch }}
 
-      - name: Fetch pinned Skia sources
+      - name: Restore Skia source archive cache
+        uses: actions/cache@v5
+        with:
+          path: skia/.source-cache
+          key: ${{ needs.prepare-skia-sources-windows.outputs.cache-key }}
+          enableCrossOsArchive: true
+
+      - name: Extract Skia source archive
+        shell: bash
+        run: |
+          test -f skia/.source-cache/skia-source.tar
+          tar -C skia -xf skia/.source-cache/skia-source.tar
+
+      - name: Fetch native depot_tools
         shell: bash
         working-directory: skia
-        run: ./scripts/fetch-source.sh
+        run: ./scripts/fetch-source.sh depot_tools
 
       - name: Build static library
         shell: bash
@@ -806,7 +900,7 @@ jobs:
       - build-linux
       - build-android
       - build-wasm
-      - build-apple
+      - package-apple-artifacts
       - build-windows
 
     steps:
