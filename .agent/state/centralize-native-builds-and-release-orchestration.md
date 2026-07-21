@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 9 — blocked before cleanup by failed remote
-  build-equivalence validation.
-- Current slice: remote build-only representatives uncovered central executor
-  defects; legacy cleanup and final validation remain deferred.
+- Active milestone: Milestone 9 — blocked before cleanup pending manual Docker
+  image publication and remote build-equivalence reruns.
+- Current slice: the local Skia-environment and shared-executor corrections are
+  committed; legacy cleanup and final validation remain deferred.
 - Last pre-milestone revision: `1e49272`.
 - Last logical commit: `1fa82d5 feat(skia): model parallel stack topology`.
 
@@ -73,6 +73,12 @@ SPDX-License-Identifier: MIT
 - Added an explicit Skia topology to graphics planning. It retains all 11
   target nodes independently, allows only eligible lane continuations, keeps
   WebAssembly separate, and validates against the captured job-family baseline.
+- Prepared Docker image version `v2.0.2` for manual publication. The Skia x86_64
+  and AArch64 image now includes Fontconfig headers, and the ARMv7 image includes
+  Fontconfig headers and Python 3. The workflow preserves the NDK path exported
+  by the shared Android setup action.
+- Normalized Python-derived CRLF shell values on Windows and mapped repository
+  dependency directories to Docker's `/sources` mount for shared CMake builds.
 
 ## Focused validation
 
@@ -142,8 +148,9 @@ SPDX-License-Identifier: MIT
   `github-output`, causing an empty/CR-prefixed dependency name and an attempted
   `/fetch.sh`. Linux minizip passes a host dependency directory to CMake inside
   Docker, where the checkout is mounted at `/sources`; zlib is fetched correctly
-  but is then invisible to the container. These must be corrected and rerun
-  before Milestone 9 may remove legacy workflows.
+  but is then invisible to the container. Commit `5d4b232` corrects both local
+  executor defects; remote build-only reruns must verify them before Milestone 9
+  may remove legacy workflows.
 - The Skia run `29852139910` completed with Android and Linux failures, while
   Apple, WebAssembly, and all Windows targets passed. The new `skia.yml`
   adapter invokes `build-skia.yml` directly, so the failing build environment
@@ -156,11 +163,11 @@ SPDX-License-Identifier: MIT
   from `sdkmanager` to `setup-android-native` exposes a valid NDK through
   `ANDROID_NDK_HOME`, but the Skia build step overwrites `NDK_BUNDLE` from an
   unsuitable `ANDROID_HOME` value, yielding `/ndk/28.2.13676358` and a missing
-  sysroot. These are separate from the generic CMake executor defects.
+  sysroot. Commit `3de6fa6` removes that override and prepares the required
+  `v2.0.2` images. These are separate from the generic CMake executor defects.
 
 ## Next action and resume command
 
-Do not remove legacy paths. Correct the generic executor defects and the three
-Skia legacy-environment regressions in the appropriate prior-work milestones,
-then rerun the failed representative build-only workflows before resuming this
-Milestone 9 cleanup.
+Do not remove legacy paths. Manually publish the Docker `v2.0.2` images, then
+rerun the failed representative build-only workflows without release inputs.
+Only resume Milestone 9 cleanup after those remote results pass.
