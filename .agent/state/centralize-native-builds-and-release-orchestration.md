@@ -7,12 +7,13 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 9 — blocked before cleanup pending manual Docker
-  image publication and remote build-equivalence reruns.
-- Current slice: the local Skia-environment and shared-executor corrections are
-  committed; legacy cleanup and final validation remain deferred.
+- Active milestone: complete.
+- Current slice: Milestone 9 removed obsolete workflows and release helpers,
+  confirmed the final Skia build-equivalence matrix, and validated idempotent
+  remote release short-circuiting without a publication.
 - Last pre-milestone revision: `1e49272`.
-- Last logical commit: `1fa82d5 feat(skia): model parallel stack topology`.
+- Last logical commit: `8344852 test(orchestration): enforce centralized native
+  policy`.
 
 ## Active paths
 
@@ -113,21 +114,29 @@ SPDX-License-Identifier: MIT
 - The focused stack suite passed with nine tests after Skia topology checks.
   A controlled graphics plan emitted 11 independent Skia targets and the seven
   baseline workflow job families.
+- Remote Skia run `29868514126` at `e660585` has passed Android, all three
+  Linux targets, Apple, WebAssembly, and all three Windows targets. Windows
+  static-library steps completed in about 7m01 (x86), 7m21 (x64), and 15m50
+  (arm64), with the junction-based SDK compatibility layout accepted remotely.
+- `vcruntime.yml` release run `29871061155` passed with `existing-release` for
+  `vcruntime-14`; its build and publish jobs were skipped. The prior run
+  `29870981832` exposed and validated the corrective `GH_TOKEN` environment
+  requirement in the specialized planners.
+- The final inventory reports 15 libraries and 27 workflows. It retains only
+  the specialized reusable Skia/VCRuntime implementation workflows alongside
+  their single operation entry points.
 
 ## Deferred validation
 
-- Windows runtime verification, Android execution, and Docker/QEMU execution
-  remain deferred because this host cannot provide those platform facilities.
-  Dry-run tests cover their resolved arguments. No workflow dispatch, remote
-  build, release dry run, or remote publication was run.
-- Legacy `build-*.yml`/`release-*.yml` workflows remain until the planned
-  equivalent remote validation and later obsolete-path removal gate. The new
-  workflows now contain idempotence and publication logic, but no remote
-  workflow, tag, push, or release has been executed.
-- Stack workflows expose the shared plan; no remote lane execution or
-  publication was dispatched.
-- No Skia build was dispatched. The topology validation is deliberately a local
-  DAG contract; full platform-runner execution remains a later release gate.
+- No new native release, tag, or release metadata was published. The remote
+  release gate covers the safe existing-release short circuit for VCRuntime;
+  force-release and new-release publication remain deliberately unexercised.
+- Stack workflows were validated with deterministic local planner scenarios but
+  were not remotely dispatched. Their normal release behavior remains subject
+  to the same per-library publication safeguards.
+- CMake-library remote builds were representative (VCRuntime, zlib, minizip,
+  and SLJIT) rather than a fresh 15-library platform matrix. The full available
+  Skia matrix exercised Windows, Android, Docker/QEMU Linux, Apple, and web.
 
 ## Decisions and blockers
 
@@ -182,8 +191,8 @@ SPDX-License-Identifier: MIT
   fallback test passes; a Windows runner must measure the actual improvement.
 - The next Linux Skia rerun progressed past EGL but failed on `GLES2/gl2.h`.
   Commit `c1649dc` advances the shared image version to `v2.0.4` and adds
-  `libgles2-mesa-dev` to both the Skia AMD64 and ARMv7 Linux images. The user
-  must manually publish the images before the next build-only rerun.
+  `libgles2-mesa-dev` to both the Skia AMD64 and ARMv7 Linux images. All four
+  required `v2.0.4` Docker images were subsequently confirmed published.
 - Commit `ca7702d` replaces mutable-looking `actions/cache` ccache entries with
   restore/save snapshots. A completed snapshot for the current revision is
   preferred, prior completed snapshots are reusable across revisions, and
@@ -207,10 +216,14 @@ SPDX-License-Identifier: MIT
   for the Apple target matrix, matching the other archive-consuming lanes.
 - The same restored-archive warnings appeared in Windows target builds. Commit
   `3f9ac69` also sets `SKIA_SKIP_DEPS_SYNC=1` for the Windows matrix.
+- Current GitHub CLI versions do not expose `url` or `assets` from `gh release
+  list`. Commit `cfbef66` changes `scripts/native-release.py` to the paginated
+  Releases API and validates its response contract. The specialized Skia and
+  VCRuntime planners additionally need `GH_TOKEN`; commit `30b2d9d` provides
+  it and run `29871061155` verifies the existing-release path.
 
 ## Next action and resume command
 
-Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `3f9ac69` without release
-inputs. The Windows lane must measure the junction improvement. Only resume
-Milestone 9 cleanup after the representative remote results pass.
+Milestone complete. Before a production release, deliberately dispatch a
+library with a new approved effective tag and verify metadata-before-tag
+publication, then exercise the selected stack release path.

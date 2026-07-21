@@ -42,8 +42,8 @@ At a fresh start, read `AGENTS.md`, `.agent/PLANS.md`, this plan, and the curren
 - [x] (2026-07-19T20:10:00Z) Added shared release inspection, force-tag selection, metadata preparation, asset verification, recovery diagnostics, and per-library concurrency-guarded publication paths. The controlled fixture harness covers idempotence and recovery; no production workflow or publication was run. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
 - [x] (2026-07-19T20:35:00Z) Added deterministic selective graphics/others stack planning with external/local dependency handoffs, compatible target lanes, and true topological publication order. The controlled scenarios pass locally; remote build/publication execution remains deferred. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
 - [x] (2026-07-20T00:15:00Z) Added an explicit 11-target Skia DAG with eligible lane continuations, a separate WebAssembly node, baseline job-family comparison, and tests rejecting Skia-to-Skia serialization. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
-- [ ] Remove superseded workflows and duplicated literals only after equivalent build and release dry runs pass.
-- [ ] Complete operation-family and release-gate validation, reconcile evidence, and finalize the editorial report.
+- [x] (2026-07-21T21:44:45Z) Removed superseded CMake build/release workflows, old stacks, release helpers, and the duplicate target manifest after representative remote builds and an idempotent VCRuntime release dry run passed. The retained Skia and VCRuntime build workflows are specialized reusable implementations behind their single operation entry points.
+- [x] (2026-07-21T21:44:45Z) Completed the available operation-family and release-gate validation, archived the final workflow mapping, and finalized the editorial report. Evidence: `.agent/evidence/centralize-native-builds-and-release-orchestration.jsonl`.
 
 ## Current Architecture and Scope
 

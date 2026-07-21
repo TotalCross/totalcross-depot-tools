@@ -175,3 +175,24 @@ only zlib-ng and libpng as Skia dependencies.
 Validation compares the generated families with the seven-job baseline inventory
 and fails if a Skia target depends on any other Skia target. This is a local DAG
 contract, not a dispatched platform build.
+
+## Milestone 9 cleanup and remote release gate (2026-07-21)
+
+The final migration inventory contains 15 libraries and 27 workflows. Thirteen
+superseded CMake build/release pairs, the old graphics/small-library stacks, the
+duplicate `.github/native-build-targets.yml`, and obsolete release helpers were
+removed. `build-dependency-consumers.yml` now calls operation workflows. Every
+operation entry workflow owns narrow pull-request filters and defaults that
+event to `build`.
+
+Skia and VCRuntime retain `build-skia.yml` and `build-vcruntime.yml` as
+specialized reusable implementations, while `skia.yml` and `vcruntime.yml`
+remain their only operation entry points. The final Skia run `29868514126`
+passed all 11 targets. The VCRuntime release run `29871061155` returned
+`existing-release` for `vcruntime-14` and skipped build and publication.
+
+The current GitHub CLI no longer exposes release URLs and assets from `gh
+release list`, so release inspection now uses the paginated Releases API.
+Specialized planners export `GH_TOKEN` before querying that API. The maintained
+policy validator reports zero duplicated policy literals outside its central
+and runtime allowlist.

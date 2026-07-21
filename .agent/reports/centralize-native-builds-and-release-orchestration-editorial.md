@@ -122,19 +122,22 @@ new dependency scaffold before it writes files.
 
 ## Limitations, Remaining Work, and Open Questions
 
-Executor migration and workflow changes are intentionally deferred to later
-milestones.
+The migration is complete. The final inventory has 15 libraries and 27
+workflows after removal of the superseded CMake workflow pairs, old stack
+workflows, duplicate target manifest, and obsolete release helpers.
 
-The next milestone inventories and removes superseded paths only after the
-required equivalence gates. Before production publication, the eight inherited
-manifest/bundle pin mismatches need deliberate recovery and the individual
-release implementation needs authorized remote validation.
+Remote run `29868514126` passed the complete 11-target Skia matrix, including
+Windows static-runtime checks, Android, Docker/QEMU Linux, Apple, and web.
+Its Windows static-library steps took about 7m01 (x86), 7m21 (x64), and 15m50
+(arm64). The idempotent VCRuntime release run `29871061155` returned
+`existing-release` for `vcruntime-14`; build and publication jobs were skipped.
 
-Windows runtime verification, Android execution, and Docker/QEMU execution
-remain host-dependent validations for a later platform-capable checkpoint.
-
-The temporary consumer validates zlib only; each adopted dependency still needs
-its own published-target validation in the receiving repository.
+No new release, tag, or metadata commit was published. A future production
+release must deliberately exercise the new-release metadata-before-tag path;
+the eight inherited manifest/bundle pin mismatches remain recovery cases. Stack
+release execution remains locally planned rather than remotely dispatched. The
+temporary consumer validates zlib only; each adopted dependency still needs its
+own published-target validation in the receiving repository.
 
 ## Possible Article Angles
 
