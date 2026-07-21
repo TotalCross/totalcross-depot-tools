@@ -74,7 +74,7 @@ class NativeBuildTargetTests(unittest.TestCase):
 
     def test_skia_armv7_generates_gn_in_an_amd64_container(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
-        self.assertIn("gn_image: totalcross/skia-linux-amd64:v2.0.2", workflow)
+        self.assertIn("gn_image: totalcross/skia-linux-amd64:v2.0.3", workflow)
         self.assertIn("gn_docker_platform: linux/amd64", workflow)
         self.assertIn("--platform ${{ matrix.gn_docker_platform }}", workflow)
         self.assertIn("-t ${{ matrix.gn_image }}", workflow)

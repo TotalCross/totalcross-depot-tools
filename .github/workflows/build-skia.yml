@@ -86,8 +86,8 @@ jobs:
       matrix:
         include:
           - project: linux-amd64
-            image: totalcross/skia-linux-amd64:v2.0.2
-            gn_image: totalcross/skia-linux-amd64:v2.0.2
+            image: totalcross/skia-linux-amd64:v2.0.3
+            gn_image: totalcross/skia-linux-amd64:v2.0.3
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -100,8 +100,8 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm64
-            image: totalcross/skia-linux-amd64:v2.0.2
-            gn_image: totalcross/skia-linux-amd64:v2.0.2
+            image: totalcross/skia-linux-amd64:v2.0.3
+            gn_image: totalcross/skia-linux-amd64:v2.0.3
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
@@ -114,8 +114,8 @@ jobs:
             use_gn_container: false
             use_qemu: false
           - project: linux-arm32v7
-            image: totalcross/linux-arm32v7:v2.0.2
-            gn_image: totalcross/skia-linux-amd64:v2.0.2
+            image: totalcross/linux-arm32v7:v2.0.3
+            gn_image: totalcross/skia-linux-amd64:v2.0.3
             runner: ubuntu-22.04
             build_project: linux-arm32v7
             docker_platform: linux/arm/v7

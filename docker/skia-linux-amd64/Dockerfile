@@ -9,7 +9,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential ca-certificates ccache cmake curl git \
     gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu \
-    libfontconfig1-dev ninja-build python3 rsync && \
+    libegl1-mesa-dev libfontconfig1-dev ninja-build python3 rsync && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
