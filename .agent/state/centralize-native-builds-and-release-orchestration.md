@@ -180,10 +180,14 @@ SPDX-License-Identifier: MIT
   Commit `5571475` replaces those copies with NTFS directory junctions for the
   SDK layout while retaining a real `bin` directory for `SetEnv.cmd`. The local
   fallback test passes; a Windows runner must measure the actual improvement.
+- The next Linux Skia rerun progressed past EGL but failed on `GLES2/gl2.h`.
+  Commit `c1649dc` advances the shared image version to `v2.0.4` and adds
+  `libgles2-mesa-dev` to both the Skia AMD64 and ARMv7 Linux images. The user
+  must manually publish the images before the next build-only rerun.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.3` and rerun Skia from commit `5571475` without release
+publish Docker `v2.0.4` and rerun Skia from commit `c1649dc` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
