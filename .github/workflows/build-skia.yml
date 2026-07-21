@@ -840,6 +840,7 @@ jobs:
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
           DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Save complete ccache

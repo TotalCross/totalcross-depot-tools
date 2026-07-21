@@ -98,6 +98,8 @@ class NativeBuildTargetTests(unittest.TestCase):
             "            skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-partial-",
             workflow,
         )
+        windows_build = workflow.split("build-windows:", 1)[1].split("package-release-assets:", 1)[0]
+        self.assertIn("SKIA_SKIP_DEPS_SYNC: 1", windows_build)
         self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", workflow)
 
     def test_skia_prepares_platform_source_archives_before_native_depot_tools(self) -> None:
