@@ -51,6 +51,7 @@ jobs:
         env:
           OPERATION: ${{ inputs.operation || 'build' }}
           REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail

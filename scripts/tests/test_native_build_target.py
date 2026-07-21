@@ -172,6 +172,9 @@ class NativeBuildTargetTests(unittest.TestCase):
             self.assertIn("config/native-builds.yml", workflow)
             self.assertIn(f"{library}/**", workflow)
             self.assertIn("inputs.operation || 'build'", workflow)
+        for library in ("skia", "vcruntime"):
+            workflow = (ROOT / ".github" / "workflows" / f"{library}.yml").read_text(encoding="utf-8")
+            self.assertIn("GH_TOKEN: ${{ github.token }}", workflow)
         removed = (
             "axtls", "libjpeg", "libjpeg-turbo", "libpng", "mbedtls", "minizip", "minizip-ng",
             "qrcode", "qrcodegen", "sljit", "sqlite3", "zlib", "zlib-ng",
