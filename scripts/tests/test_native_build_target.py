@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EXECUTOR = ROOT / "scripts" / "build-native-target.sh"
+FETCHER = ROOT / "scripts" / "fetch-native-dependencies.sh"
 
 
 def dry_run(library: str, target: str, *options: str) -> dict[str, object]:
@@ -39,6 +40,11 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn(f"-DZLIB_DIR={ROOT}/zlib/local/macos/arm64", arguments)
         self.assertIn("-DCMAKE_OSX_ARCHITECTURES=arm64", arguments)
 
+    def test_linux_container_dependencies_use_the_mounted_workspace_path(self) -> None:
+        result = dry_run("minizip", "linux-x86_64")
+        arguments = cmake_args(result)
+        self.assertIn("-DZLIB_DIR=/sources/zlib/local/linux/x86_64", arguments)
+
     def test_tested_library_arguments_are_preserved(self) -> None:
         result = dry_run("sljit", "macos-arm64")
         command = result["command"]
@@ -58,6 +64,13 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("-A", windows)
         self.assertIn("x64", windows)
         self.assertIn("-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded", windows)
+
+    def test_windows_python_output_is_normalized_before_shell_resolution(self) -> None:
+        executor = EXECUTOR.read_text(encoding="utf-8")
+        fetcher = FETCHER.read_text(encoding="utf-8")
+        self.assertIn('key="${key%$\'\\r\'}"', executor)
+        self.assertIn('dependency="${dependency%$\'\\r\'}"', executor)
+        self.assertIn('dependency_name="${dependency_name%$\'\\r\'}"', fetcher)
 
     def test_composite_action_delegates_to_the_low_level_executor(self) -> None:
         action = (ROOT / ".github" / "actions" / "build-native-library" / "action.yml").read_text()

@@ -97,6 +97,8 @@ windows_expected_runtime=''
 apple_sysroot=''
 
 while IFS='=' read -r key value; do
+  key="${key%$'\r'}"
+  value="${value%$'\r'}"
   case "${key}" in
     runner|platform|platform_family|arch|build_dir_name|build_system|configuration|generator|package_script|tests|cmake_arguments|dependencies|docker_image|docker_platform|qemu|android_ndk_version|android_api|android_abi|android_use_legacy_toolchain|cmake_platform|windows_expected_runtime|apple_sysroot)
       printf -v "${key}" '%s' "${value}"
@@ -127,11 +129,14 @@ append_cmake_arg() {
 }
 
 while IFS= read -r argument; do
+  argument="${argument%$'\r'}"
   [ -n "${argument}" ] || continue
   append_cmake_arg "${argument}"
 done < <(python3 -c 'import json, sys; print("\n".join(json.loads(sys.argv[1])))' "${cmake_arguments}")
 
 while IFS=$'\t' read -r variable dependency; do
+  variable="${variable%$'\r'}"
+  dependency="${dependency%$'\r'}"
   [ -n "${variable}" ] || continue
   dependency_dir="${repo_root}/${dependency}/local/${platform}/${arch}"
   for override in "${dependency_dirs[@]:-}"; do
@@ -140,6 +145,17 @@ while IFS=$'\t' read -r variable dependency; do
       "${dependency}"=*) dependency_dir="${override#*=}" ;;
     esac
   done
+  if [ -n "${docker_image}" ]; then
+    case "${dependency_dir}" in
+      "${repo_root}"/*)
+        dependency_dir="/sources/${dependency_dir#"${repo_root}/"}"
+        ;;
+      *)
+        echo "build-native-target: Docker builds require ${dependency} under ${repo_root}; got ${dependency_dir}" >&2
+        exit 2
+        ;;
+    esac
+  fi
   append_cmake_arg "-D${variable}=${dependency_dir}"
 done < <(python3 -c '
 import json

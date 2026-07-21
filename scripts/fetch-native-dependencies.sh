@@ -36,6 +36,8 @@ platform=''
 arch=''
 dependencies='{}'
 while IFS='=' read -r key value; do
+  key="${key%$'\r'}"
+  value="${value%$'\r'}"
   case "${key}" in
     platform|arch) printf -v "${key}" '%s' "${value}" ;;
     dependencies) dependencies="${value}" ;;
@@ -44,6 +46,7 @@ done < <(python3 scripts/native-build.py show "${library}" "${target}" --format 
 
 dependency_names=()
 while IFS= read -r dependency_name; do
+  dependency_name="${dependency_name%$'\r'}"
   [ -n "${dependency_name}" ] || continue
   dependency_names+=("${dependency_name}")
 done < <(python3 - "${dependencies}" <<'PY'
