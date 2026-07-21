@@ -205,10 +205,12 @@ SPDX-License-Identifier: MIT
   because they reran `git-sync-deps` after restoring a synchronized archive
   without `.git` directories. Commit `18841cd` sets `SKIA_SKIP_DEPS_SYNC=1`
   for the Apple target matrix, matching the other archive-consuming lanes.
+- The same restored-archive warnings appeared in Windows target builds. Commit
+  `3f9ac69` also sets `SKIA_SKIP_DEPS_SYNC=1` for the Windows matrix.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `18841cd` without release
+publish Docker `v2.0.4` and rerun Skia from commit `3f9ac69` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
