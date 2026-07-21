@@ -105,6 +105,7 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("prepare-skia-sources-linux:", workflow)
         self.assertIn("prepare-skia-sources-windows:", workflow)
         self.assertIn("prepare-skia-sources-macos:", workflow)
+        self.assertEqual(3, workflow.count("git hash-object --stdin"))
         self.assertIn("needs: prepare-skia-sources-windows", workflow)
         self.assertIn("needs: prepare-skia-sources-macos", workflow)
         self.assertIn("key: ${{ needs.prepare-skia-sources-windows.outputs.cache-key }}", workflow)

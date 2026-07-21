@@ -48,8 +48,7 @@ jobs:
               HEAD:skia/manifest.json \
               HEAD:skia/scripts/fetch-source.sh \
               HEAD:skia/scripts/common.sh |
-            shasum -a 256 |
-            awk '{print $1}'
+            git hash-object --stdin
           )
           echo "cache-key=skia-source-deps-linux-${key_hash}" >> "$GITHUB_OUTPUT"
 
@@ -107,8 +106,7 @@ jobs:
               HEAD:skia/manifest.json \
               HEAD:skia/scripts/fetch-source.sh \
               HEAD:skia/scripts/common.sh |
-            shasum -a 256 |
-            awk '{print $1}'
+            git hash-object --stdin
           )
           echo "cache-key=skia-source-deps-windows-${key_hash}" >> "$GITHUB_OUTPUT"
 
@@ -161,8 +159,7 @@ jobs:
               HEAD:skia/manifest.json \
               HEAD:skia/scripts/fetch-source.sh \
               HEAD:skia/scripts/common.sh |
-            shasum -a 256 |
-            awk '{print $1}'
+            git hash-object --stdin
           )
           echo "cache-key=skia-source-deps-macos-${key_hash}" >> "$GITHUB_OUTPUT"
 
