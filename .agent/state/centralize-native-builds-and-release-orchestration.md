@@ -194,10 +194,13 @@ SPDX-License-Identifier: MIT
   jobs. Windows and Apple target builds now restore their platform archive
   before fetching native `depot_tools`; Apple targets run as a parallel matrix,
   followed by a dedicated XCFramework and development-header packaging job.
+- Windows preparation then failed because Git for Windows does not provide
+  `shasum`. Commit `922c140` derives all source archive cache keys with the
+  portable `git hash-object --stdin` command instead.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `73e1f68` without release
+publish Docker `v2.0.4` and rerun Skia from commit `922c140` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
