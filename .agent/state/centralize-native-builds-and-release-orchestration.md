@@ -144,15 +144,23 @@ SPDX-License-Identifier: MIT
   Docker, where the checkout is mounted at `/sources`; zlib is fetched correctly
   but is then invisible to the container. These must be corrected and rerun
   before Milestone 9 may remove legacy workflows.
-- The same Skia run remains active by user direction, but its Android and all
-  Linux lanes had already failed when observed. Skia uses its own prebuilt
-  dependency helper, not the failed generic helper, so its terminal logs are
-  required to determine whether the causes overlap. The user will assess Skia
-  once it completes; do not wait for it in this execution turn.
+- The Skia run `29852139910` completed with Android and Linux failures, while
+  Apple, WebAssembly, and all Windows targets passed. The new `skia.yml`
+  adapter invokes `build-skia.yml` directly, so the failing build environment
+  is the legacy workflow's environment rather than a change introduced by the
+  operation wrapper. Compared with the last successful legacy run
+  `29612356263` at `3f23d8d`, the current legacy workflow changed its Linux
+  images from `totalcross/linux-amd64:v1.0.7` to v2.0.1 minimal images. Those
+  images omit Fontconfig development headers (breaking x86_64 and AArch64) and
+  Python 3 in the ARMv7 image (breaking GN generation). The Android migration
+  from `sdkmanager` to `setup-android-native` exposes a valid NDK through
+  `ANDROID_NDK_HOME`, but the Skia build step overwrites `NDK_BUNDLE` from an
+  unsuitable `ANDROID_HOME` value, yielding `/ndk/28.2.13676358` and a missing
+  sysroot. These are separate from the generic CMake executor defects.
 
 ## Next action and resume command
 
-Do not remove legacy paths. Correct the two executor defects in the appropriate
-prior-work milestone, rerun the failed representative build-only workflows, and
-record the terminal Skia diagnosis supplied by the user before resuming this
+Do not remove legacy paths. Correct the generic executor defects and the three
+Skia legacy-environment regressions in the appropriate prior-work milestones,
+then rerun the failed representative build-only workflows before resuming this
 Milestone 9 cleanup.
