@@ -165,9 +165,14 @@ SPDX-License-Identifier: MIT
   unsuitable `ANDROID_HOME` value, yielding `/ndk/28.2.13676358` and a missing
   sysroot. Commit `3de6fa6` removes that override and prepares the required
   `v2.0.2` images. These are separate from the generic CMake executor defects.
+- A subsequent build-only Skia run (`29855312320`) confirmed the shared-executor
+  fixes: zlib, minizip, and SLJIT passed. Its ARMv7 Skia lane failed because the
+  refactored workflow attempted to run the AMD64 `depot_tools` GN binary inside
+  the ARMv7 container. Commit `8c679bc` now generates the ARMv7 Ninja files in
+  `skia-linux-amd64:v2.0.2` and retains QEMU plus the ARMv7 image for compilation.
 
 ## Next action and resume command
 
-Do not remove legacy paths. Manually publish the Docker `v2.0.2` images, then
-rerun the failed representative build-only workflows without release inputs.
-Only resume Milestone 9 cleanup after those remote results pass.
+Do not remove legacy paths. After the in-progress Skia run is assessed, rerun
+Skia from commit `8c679bc` without release inputs. Only resume Milestone 9
+cleanup after the representative remote results pass.
