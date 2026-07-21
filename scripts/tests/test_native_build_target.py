@@ -102,10 +102,16 @@ class NativeBuildTargetTests(unittest.TestCase):
 
     def test_skia_prepares_platform_source_archives_before_native_depot_tools(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
+        fetch_source = (ROOT / "skia" / "scripts" / "fetch-source.sh").read_text(encoding="utf-8")
+        windows_preparation = workflow.split("prepare-skia-sources-windows:", 1)[1].split(
+            "prepare-skia-sources-macos:", 1
+        )[0]
         self.assertIn("prepare-skia-sources-linux:", workflow)
         self.assertIn("prepare-skia-sources-windows:", workflow)
         self.assertIn("prepare-skia-sources-macos:", workflow)
         self.assertEqual(3, workflow.count("git hash-object --stdin"))
+        self.assertIn("tar --dereference", windows_preparation)
+        self.assertIn("SKIA_SOURCE_ARCHIVE_FORMAT=3", fetch_source)
         self.assertIn("needs: prepare-skia-sources-windows", workflow)
         self.assertIn("needs: prepare-skia-sources-macos", workflow)
         self.assertIn("key: ${{ needs.prepare-skia-sources-windows.outputs.cache-key }}", workflow)

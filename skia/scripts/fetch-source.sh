@@ -6,7 +6,7 @@ set -euo pipefail
 # Bump when the archive format or source preparation semantics change. The
 # workflow includes this value in its cache key so unrelated YAML edits do not
 # invalidate a synchronized source tree.
-readonly SKIA_SOURCE_ARCHIVE_FORMAT=2
+readonly SKIA_SOURCE_ARCHIVE_FORMAT=3
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 MANIFEST_PATH="${MANIFEST_PATH:-$ROOT_DIR/manifest.json}"

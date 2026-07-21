@@ -139,7 +139,7 @@ jobs:
         if: steps.skia-source-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p skia/.source-cache
-          tar --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
+          tar --dereference --exclude='.git' --exclude='*/.git' -C skia -cf skia/.source-cache/skia-source.tar skia
 
   prepare-skia-sources-macos:
     name: Prepare Skia source dependencies (macOS)
