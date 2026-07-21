@@ -197,10 +197,14 @@ SPDX-License-Identifier: MIT
 - Windows preparation then failed because Git for Windows does not provide
   `shasum`. Commit `922c140` derives all source archive cache keys with the
   portable `git hash-object --stdin` command instead.
+- Windows target jobs then failed to extract source-tree symbolic links from
+  the cached archive. Commit `956d7f4` dereferences links while producing the
+  Windows archive and bumps the source archive format to invalidate the
+  immutable incompatible cache.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `922c140` without release
+publish Docker `v2.0.4` and rerun Skia from commit `956d7f4` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
