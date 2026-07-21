@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 EXECUTOR = ROOT / "scripts" / "build-native-target.sh"
 FETCHER = ROOT / "scripts" / "fetch-native-dependencies.sh"
+POLICY_VALIDATOR = ROOT / "scripts" / "validate-native-policy-literals.py"
 
 
 def dry_run(library: str, target: str, *options: str) -> dict[str, object]:
@@ -182,6 +183,9 @@ class NativeBuildTargetTests(unittest.TestCase):
         for library in removed:
             self.assertFalse((ROOT / ".github" / "workflows" / f"build-{library}.yml").exists())
             self.assertFalse((ROOT / ".github" / "workflows" / f"release-{library}.yml").exists())
+
+    def test_policy_literals_are_confined_to_approved_central_or_runtime_files(self) -> None:
+        subprocess.run([str(POLICY_VALIDATOR)], check=True, cwd=ROOT)
 
 
 if __name__ == "__main__":
