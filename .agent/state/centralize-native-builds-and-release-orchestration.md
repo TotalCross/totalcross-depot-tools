@@ -174,10 +174,16 @@ SPDX-License-Identifier: MIT
   Commit `ad9b2eb` advances the images and central references to `v2.0.3` and
   adds `libegl1-mesa-dev` to both Skia Linux build images. The v2.0.3 images
   must be manually published before the next Skia build-only rerun.
+- Windows x64 logs showed that the 802-task Ninja build itself took about 18
+  seconds of an 11-minute-59-second static-library step; nearly all preceding
+  time was recursive Windows SDK copying in `create_windows_sdk_compat`.
+  Commit `5571475` replaces those copies with NTFS directory junctions for the
+  SDK layout while retaining a real `bin` directory for `SetEnv.cmd`. The local
+  fallback test passes; a Windows runner must measure the actual improvement.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.3` and rerun Skia from commit `ad9b2eb` without release
-inputs. Only resume Milestone 9 cleanup after the representative remote results
-pass.
+publish Docker `v2.0.3` and rerun Skia from commit `5571475` without release
+inputs. The Windows lane must measure the junction improvement. Only resume
+Milestone 9 cleanup after the representative remote results pass.
