@@ -28,7 +28,7 @@ class NativeBuildConfigurationTests(unittest.TestCase):
             NATIVE_BUILD.resolve(self.config, "zlib", target)["docker_image"]
             for target in ("linux-x86_64", "linux-armv7l", "linux-aarch64")
         ]
-        self.assertEqual("v2.0.1", version)
+        self.assertEqual("v2.0.2", version)
         self.assertTrue(all(image.endswith(f":{version}") for image in resolved))
         self.assertEqual(3, len(set(resolved)))
 
@@ -72,7 +72,7 @@ class NativeBuildConfigurationTests(unittest.TestCase):
     def test_target_override_cannot_embed_a_complete_image_tag(self) -> None:
         invalid = copy.deepcopy(self.config)
         invalid["libraries"]["zlib"]["target_overrides"] = {
-            "linux-x86_64": {"image": "totalcross/linux-amd64:v2.0.1"}
+            "linux-x86_64": {"image": "totalcross/linux-amd64:v2.0.2"}
         }
         with self.assertRaisesRegex(NATIVE_BUILD.NativeBuildError, "must not embed a tag"):
             NATIVE_BUILD.validate_config(invalid)

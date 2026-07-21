@@ -16,7 +16,7 @@ platforms:
   linux:
     runner: ubuntu-22.04
     image_registry: totalcross
-    image_version: v2.0.1
+    image_version: v2.0.2
   windows:
     runner: windows-2022
     generator: Visual Studio 17 2022

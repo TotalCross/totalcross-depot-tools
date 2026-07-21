@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 # Canonical runner and artifact names shared by native release workflows.
 linux:
-  amd64: { runner: ubuntu-22.04, image: 'totalcross/linux-amd64:v2.0.1', platform: linux/x86_64 }
-  armv7: { runner: ubuntu-22.04, image: 'totalcross/linux-arm32v7:v2.0.1', platform: linux/armv7l }
-  arm64: { runner: ubuntu-22.04-arm, image: 'totalcross/linux-arm64:v2.0.1', platform: linux/aarch64 }
+  amd64: { runner: ubuntu-22.04, image: 'totalcross/linux-amd64:v2.0.2', platform: linux/x86_64 }
+  armv7: { runner: ubuntu-22.04, image: 'totalcross/linux-arm32v7:v2.0.2', platform: linux/armv7l }
+  arm64: { runner: ubuntu-22.04-arm, image: 'totalcross/linux-arm64:v2.0.2', platform: linux/aarch64 }
 android:
   arm64-v8a: { runner: ubuntu-24.04, api: 23, ndk: 28.2.13676358 }
 apple:
