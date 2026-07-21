@@ -7,9 +7,10 @@ SPDX-License-Identifier: MIT
 
 ## Current position
 
-- Active milestone: Milestone 9 — not started; stop before implementation.
-- Current slice: Skia's planner topology preserves independent targets; legacy
-  cleanup and final validation remain deferred.
+- Active milestone: Milestone 9 — blocked before cleanup by failed remote
+  build-equivalence validation.
+- Current slice: remote build-only representatives uncovered central executor
+  defects; legacy cleanup and final validation remain deferred.
 - Last pre-milestone revision: `1e49272`.
 - Last logical commit: `1fa82d5 feat(skia): model parallel stack topology`.
 
@@ -135,12 +136,23 @@ SPDX-License-Identifier: MIT
   pin: libjpeg, libjpeg-turbo, mbedtls, minizip, minizip-ng, sqlite3, zlib, and
   zlib-ng. The new helper reports this as `metadata_mismatch` and requires a
   deliberate recovery rather than silently selecting a new suffix.
+- On 2026-07-21, build-only workflow dispatches on `main` validated VCRuntime
+  successfully but failed zlib, minizip, and SLJIT. Windows invocations of
+  `scripts/fetch-native-dependencies.sh` preserve a carriage return from Python
+  `github-output`, causing an empty/CR-prefixed dependency name and an attempted
+  `/fetch.sh`. Linux minizip passes a host dependency directory to CMake inside
+  Docker, where the checkout is mounted at `/sources`; zlib is fetched correctly
+  but is then invisible to the container. These must be corrected and rerun
+  before Milestone 9 may remove legacy workflows.
+- The same Skia run remains active by user direction, but its Android and all
+  Linux lanes had already failed when observed. Skia uses its own prebuilt
+  dependency helper, not the failed generic helper, so its terminal logs are
+  required to determine whether the causes overlap. The user will assess Skia
+  once it completes; do not wait for it in this execution turn.
 
 ## Next action and resume command
 
-Start Milestone 9 only when authorized by the user. Begin by reading this state
-file, then inventory old paths and validate equivalence before removing any
-workflow or duplicated policy literal.
-
-Do not remove legacy paths or run remote release/platform validations as part of
-the completed Milestone 8 checkpoint.
+Do not remove legacy paths. Correct the two executor defects in the appropriate
+prior-work milestone, rerun the failed representative build-only workflows, and
+record the terminal Skia diagnosis supplied by the user before resuming this
+Milestone 9 cleanup.
