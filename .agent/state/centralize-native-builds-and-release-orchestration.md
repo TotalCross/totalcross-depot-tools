@@ -190,10 +190,14 @@ SPDX-License-Identifier: MIT
   failure or cancellation saves a unique partial snapshot as a fallback. Ccache
   retains per-object input validation. Cancellation persistence is best-effort
   because GitHub may terminate the runner before the save step starts.
+- Commit `73e1f68` splits source preparation into Linux, Windows, and macOS
+  jobs. Windows and Apple target builds now restore their platform archive
+  before fetching native `depot_tools`; Apple targets run as a parallel matrix,
+  followed by a dedicated XCFramework and development-header packaging job.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `ca7702d` without release
+publish Docker `v2.0.4` and rerun Skia from commit `73e1f68` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
