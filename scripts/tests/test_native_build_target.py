@@ -119,6 +119,8 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("target: macos-arm64", workflow)
         self.assertIn("target: ios-arm64", workflow)
         self.assertIn("target: ios-simulator-arm64", workflow)
+        apple_build = workflow.split("build-apple:", 1)[1].split("package-apple-artifacts:", 1)[0]
+        self.assertIn("SKIA_SKIP_DEPS_SYNC: 1", apple_build)
         self.assertIn("package-apple-artifacts:", workflow)
         self.assertIn("- package-apple-artifacts", workflow)
 

@@ -659,6 +659,7 @@ jobs:
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-${{ matrix.target }}
+          SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/${{ matrix.script }}
 
       - name: Save complete ccache
