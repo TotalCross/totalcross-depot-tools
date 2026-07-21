@@ -79,6 +79,36 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("--platform ${{ matrix.gn_docker_platform }}", workflow)
         self.assertIn("-t ${{ matrix.gn_image }}", workflow)
 
+    def test_skia_windows_sdk_compat_uses_links_instead_of_copying(self) -> None:
+        common = ROOT / "skia" / "scripts" / "common.sh"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "sdk"
+            compat = root / "compat"
+            for path in ("Include", "Lib", "UnionMetadata", "References", "bin/10.0.1"):
+                (source / path).mkdir(parents=True)
+            (source / "Include" / "windows.h").write_text("header", encoding="utf-8")
+            subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    'source "$1"; create_windows_sdk_compat "$2" "$3"; '
+                    'test -L "$3/Include"; test -L "$3/Lib"; test -L "$3/bin/10.0.1"; '
+                    'test -f "$3/bin/SetEnv.cmd"; test "$(cat "$3/Include/windows.h")" = header',
+                    "bash",
+                    str(common),
+                    str(source),
+                    str(compat),
+                ],
+                check=True,
+                cwd=ROOT,
+            )
+        common_source = common.read_text(encoding="utf-8")
+        compat_function = common_source.split("create_windows_sdk_compat()", 1)[1].split(
+            "prepare_windows_toolchain_compat()", 1
+        )[0]
+        self.assertNotIn("cp -R", compat_function)
+
     def test_composite_action_delegates_to_the_low_level_executor(self) -> None:
         action = (ROOT / ".github" / "actions" / "build-native-library" / "action.yml").read_text()
         self.assertIn("scripts/build-cmake-multi.sh", action)
