@@ -103,6 +103,10 @@ class NativeStackTests(unittest.TestCase):
         self.assertEqual("lane:windows-x64", next(node for node in targets if node["target"] == "windows-x64")["continued_lane"])
         baseline = NATIVE_INVENTORY.inventory()["skia_parallelism"]["jobs"]
         self.assertEqual(set(baseline), set(topology["baseline_job_families"]))
+        self.assertEqual(
+            ["prepare-skia-sources"],
+            topology["baseline_job_families"]["prepare-skia-sources-windows"],
+        )
         skia_dependencies = next(item for item in plan["libraries"] if item["library"] == "skia")["dependencies"]
         self.assertEqual({"zlib-ng", "libpng"}, {item["library"] for item in skia_dependencies})
 

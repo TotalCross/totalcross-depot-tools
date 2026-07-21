@@ -161,6 +161,25 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("scripts/build-cmake-multi.sh", action)
         self.assertNotIn("build_command=$(cat", action)
 
+    def test_operation_workflows_own_narrow_pr_filters_and_replace_legacy_pairs(self) -> None:
+        libraries = (
+            "axtls", "libjpeg", "libjpeg-turbo", "libpng", "mbedtls", "minizip", "minizip-ng",
+            "qrcode", "qrcodegen", "skia", "sljit", "sqlite3", "vcruntime", "zlib", "zlib-ng",
+        )
+        for library in libraries:
+            workflow = (ROOT / ".github" / "workflows" / f"{library}.yml").read_text(encoding="utf-8")
+            self.assertIn("pull_request:", workflow)
+            self.assertIn("config/native-builds.yml", workflow)
+            self.assertIn(f"{library}/**", workflow)
+            self.assertIn("inputs.operation || 'build'", workflow)
+        removed = (
+            "axtls", "libjpeg", "libjpeg-turbo", "libpng", "mbedtls", "minizip", "minizip-ng",
+            "qrcode", "qrcodegen", "sljit", "sqlite3", "zlib", "zlib-ng",
+        )
+        for library in removed:
+            self.assertFalse((ROOT / ".github" / "workflows" / f"build-{library}.yml").exists())
+            self.assertFalse((ROOT / ".github" / "workflows" / f"release-{library}.yml").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

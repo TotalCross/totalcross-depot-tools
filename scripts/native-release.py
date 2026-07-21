@@ -103,17 +103,20 @@ def _load_json(path: Path | None, default: Any) -> Any:
 def _remote_releases(repository: str) -> list[dict[str, Any]]:
     try:
         output = subprocess.check_output(
-            ["gh", "release", "list", "--repo", repository, "--limit", "1000", "--json", "tagName,isDraft,url,assets"],
+            ["gh", "api", "--paginate", "--slurp", f"repos/{repository}/releases?per_page=100"],
             text=True,
         )
     except (OSError, subprocess.CalledProcessError) as error:
         raise NativeReleaseError(f"unable to query GitHub releases: {error}") from error
-    data = json.loads(output)
+    pages = json.loads(output)
+    if not isinstance(pages, list) or not all(isinstance(page, list) for page in pages):
+        raise NativeReleaseError("GitHub releases response has an unexpected shape")
+    data = [item for page in pages for item in page]
     return [
         {
-            "tag": item["tagName"],
-            "draft": item["isDraft"],
-            "url": item.get("url", ""),
+            "tag": item["tag_name"],
+            "draft": item["draft"],
+            "url": item.get("html_url", ""),
             "assets": [asset["name"] for asset in item.get("assets", [])],
         }
         for item in data

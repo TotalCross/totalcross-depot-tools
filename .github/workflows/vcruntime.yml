@@ -26,6 +26,9 @@ on:
         default: build
         type: choice
         options: [build, release, force-release]
+  pull_request:
+    branches: [main, master]
+    paths: [deps.yml, config/native-builds.yml, vcruntime/**, scripts/native-build.py, scripts/native-release.py, .github/actions/publish-native-release/action.yml, .github/workflows/build-vcruntime.yml, .github/workflows/vcruntime.yml]
 
 permissions:
   contents: write
@@ -42,11 +45,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - env:
-          OPERATION: ${{ inputs.operation }}
+          OPERATION: ${{ inputs.operation || 'build' }}
         run: python3 scripts/native-build.py plan vcruntime --operation "${OPERATION}" --format json
       - id: release
         env:
-          OPERATION: ${{ inputs.operation }}
+          OPERATION: ${{ inputs.operation || 'build' }}
           REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
@@ -93,7 +96,7 @@ jobs:
         uses: ./.github/actions/publish-native-release
         with:
           library: vcruntime
-          operation: ${{ inputs.operation }}
+          operation: ${{ inputs.operation || 'build' }}
           effective-release-tag: ${{ needs.plan.outputs.effective_release_tag }}
           assets-directory: release-assets
   summary:

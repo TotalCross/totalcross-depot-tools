@@ -26,6 +26,9 @@ on:
         default: build
         type: choice
         options: [build, release, force-release]
+  pull_request:
+    branches: [main, master]
+    paths: [deps.yml, config/native-builds.yml, mbedtls/**, scripts/build-cmake-multi.sh, scripts/build-native-target.sh, scripts/fetch-native-dependencies.sh, scripts/native-build.py, scripts/package-native-ios-xcframework.sh, .github/actions/build-native-library/action.yml, .github/workflows/mbedtls.yml, .github/workflows/native-library-operation.yml]
 
 permissions:
   contents: write
@@ -35,4 +38,4 @@ jobs:
     uses: ./.github/workflows/native-library-operation.yml
     with:
       library: mbedtls
-      operation: ${{ inputs.operation }}
+      operation: ${{ inputs.operation || 'build' }}

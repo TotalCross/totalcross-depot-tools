@@ -17,6 +17,8 @@ minizip-ng aligned with the bundle rather than selecting the newest release.
 - `<dependency>/cmake`: CMake modules used by TotalCross consumers.
 - `<dependency>/scripts/package-artifact.sh`: creates release archives.
 - `docker`: shared build images by target platform.
+- `config/native-builds.yml`: canonical platform, target, dependency, and
+  stack policy used by local scripts and GitHub Actions.
 
 Skia is the exception on the build side: it is built with GN/Ninja through 
 scripts, and consumed through the CMake fetch/find modules imported from 
@@ -28,6 +30,15 @@ TotalCrossVM.
   scaffold, structural contract, build targets, packaging, and release boundary.
 - [Consuming depot-tools](docs/CONSUMING_DEPOT_TOOLS.md) explains how a CMake
   consumer pins this repository, fetches artifacts, and links imported targets.
+
+## Native build and release operations
+
+Each dependency has one operation workflow at
+`.github/workflows/<dependency>.yml`, with `build`, idempotent `release`, and
+`force-release` operations. The `graphics-stack.yml` and `others-stack.yml`
+entry points plan selective stack operations. Target policy belongs only in
+`config/native-builds.yml`; explicit dependency wrappers delegate to the shared
+native build scripts.
 
 ## Maintainer
 

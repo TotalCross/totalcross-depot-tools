@@ -9,6 +9,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,6 +54,19 @@ class NativeReleaseTests(unittest.TestCase):
         )
         self.assertEqual("existing-release", result["status"])
         self.assertEqual("https://example.test/zlib", result["release_url"])
+
+    def test_remote_release_query_uses_the_api_fields_available_in_current_gh(self) -> None:
+        pages = [[{"tag_name": "zlib-1.3.1", "draft": False, "html_url": "https://example.test/zlib", "assets": [{"name": "zlib-linux-x86_64.tar.gz"}]}]]
+        with mock.patch.object(NATIVE_RELEASE.subprocess, "check_output", return_value=json.dumps(pages)) as query:
+            releases = NATIVE_RELEASE._remote_releases("TotalCross/totalcross-depot-tools")
+        query.assert_called_once_with(
+            ["gh", "api", "--paginate", "--slurp", "repos/TotalCross/totalcross-depot-tools/releases?per_page=100"],
+            text=True,
+        )
+        self.assertEqual(
+            [{"tag": "zlib-1.3.1", "draft": False, "url": "https://example.test/zlib", "assets": ["zlib-linux-x86_64.tar.gz"]}],
+            releases,
+        )
 
     def test_draft_and_tag_without_release_are_recovery_states(self) -> None:
         draft = self.inspect([], [{"tag": "zlib-1.3.1", "draft": True, "url": "https://example.test/draft"}])

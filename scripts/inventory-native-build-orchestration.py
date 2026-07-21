@@ -164,26 +164,20 @@ def inventory() -> dict[str, Any]:
         for path in sorted(WORKFLOWS.glob("*.y*ml"))
     }
     helpers = [
-        ".github/actions/pin-deps-release/action.yml",
-        ".github/actions/prepare-release-metadata/action.yml",
-        ".github/actions/revert-deps-release-pin/action.yml",
-        ".github/scripts/latest-release-tag.sh",
-        ".github/scripts/next-release-tag.sh",
+        ".github/actions/publish-native-release/action.yml",
         ".github/scripts/read-deps-release.sh",
-        ".github/scripts/update-deps-release.sh",
-        ".github/scripts/update-deps-releases-batch.py",
-        ".github/scripts/update-skia-release-tag.py",
+        "scripts/native-release.py",
     ]
     return {
-        "schema": 1,
+        "schema": 2,
         "libraries": libraries,
         "workflows": workflow_inventory,
         "policy_literal_occurrences": policy_occurrences(),
         "release_helpers": helpers,
         "release_suffix_rule": "<dependency>-<version>, then -r<N> after any matching tag exists",
         "stack_workflows": [
-            ".github/workflows/release-graphics-stack.yml",
-            ".github/workflows/release-small-libraries.yml",
+            ".github/workflows/graphics-stack.yml",
+            ".github/workflows/others-stack.yml",
         ],
         "skia_parallelism": {
             "workflow": ".github/workflows/build-skia.yml",

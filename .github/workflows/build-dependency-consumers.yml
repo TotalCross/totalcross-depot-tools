@@ -32,15 +32,15 @@ jobs:
   minizip:
     needs: route
     if: needs.route.outputs.minizip == 'true'
-    uses: ./.github/workflows/build-minizip.yml
+    uses: ./.github/workflows/minizip.yml
   libpng:
     needs: route
     if: needs.route.outputs.libpng == 'true'
-    uses: ./.github/workflows/build-libpng.yml
+    uses: ./.github/workflows/libpng.yml
   minizip-ng:
     needs: route
     if: needs.route.outputs.minizip_ng == 'true'
-    uses: ./.github/workflows/build-minizip-ng.yml
+    uses: ./.github/workflows/minizip-ng.yml
   skia:
     needs: route
     if: needs.route.outputs.skia == 'true'
