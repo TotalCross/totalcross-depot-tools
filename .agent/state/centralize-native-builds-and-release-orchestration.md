@@ -201,10 +201,14 @@ SPDX-License-Identifier: MIT
   the cached archive. Commit `956d7f4` dereferences links while producing the
   Windows archive and bumps the source archive format to invalidate the
   immutable incompatible cache.
+- Apple builds emitted non-fatal `IS NOT TOP-LEVEL GIT DIRECTORY` messages
+  because they reran `git-sync-deps` after restoring a synchronized archive
+  without `.git` directories. Commit `18841cd` sets `SKIA_SKIP_DEPS_SYNC=1`
+  for the Apple target matrix, matching the other archive-consuming lanes.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `956d7f4` without release
+publish Docker `v2.0.4` and rerun Skia from commit `18841cd` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
