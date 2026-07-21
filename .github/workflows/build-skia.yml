@@ -87,9 +87,11 @@ jobs:
         include:
           - project: linux-amd64
             image: totalcross/skia-linux-amd64:v2.0.2
+            gn_image: totalcross/skia-linux-amd64:v2.0.2
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
+            gn_docker_platform: linux/amd64
             platform_arch: linux/x86_64
             artifact_suffix: linux-x86_64
             arch: x86_64
@@ -99,9 +101,11 @@ jobs:
             use_qemu: false
           - project: linux-arm64
             image: totalcross/skia-linux-amd64:v2.0.2
+            gn_image: totalcross/skia-linux-amd64:v2.0.2
             runner: ubuntu-22.04
             build_project: linux-amd64
             docker_platform: linux/amd64
+            gn_docker_platform: linux/amd64
             platform_arch: linux/aarch64
             artifact_suffix: linux-aarch64
             arch: aarch64
@@ -111,9 +115,11 @@ jobs:
             use_qemu: false
           - project: linux-arm32v7
             image: totalcross/linux-arm32v7:v2.0.2
+            gn_image: totalcross/skia-linux-amd64:v2.0.2
             runner: ubuntu-22.04
             build_project: linux-arm32v7
             docker_platform: linux/arm/v7
+            gn_docker_platform: linux/amd64
             platform_arch: linux/armv7l
             artifact_suffix: linux-armv7l
             arch: armv7l
@@ -174,7 +180,7 @@ jobs:
         run: |
           mkdir -p "${HOME}/.cache/ccache/skia-${{ matrix.project }}"
           docker run \
-            --platform ${{ matrix.docker_platform }} \
+            --platform ${{ matrix.gn_docker_platform }} \
             -v "${PWD}:${PWD}" \
             -v "${HOME}/.cache/ccache/skia-${{ matrix.project }}:/ccache" \
             -e CCACHE_DIR=/ccache \
@@ -182,7 +188,7 @@ jobs:
             -e SKIA_ONLY_GN_GEN=1 \
             -e SKIA_SKIP_DEPS_SYNC=1 \
             -w "${PWD}" \
-            -t ${{ matrix.image }} \
+            -t ${{ matrix.gn_image }} \
             bash -lc "
               command -v python3
               command -v ccache
