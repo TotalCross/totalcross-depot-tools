@@ -6,7 +6,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add - && \
     echo 'deb https://apt.kitware.com/ubuntu/ bionic main' > /etc/apt/sources.list.d/kitware.list && \
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    build-essential ca-certificates ccache cmake curl git libegl1-mesa-dev libfontconfig1-dev ninja-build python3 rsync && \
+    build-essential ca-certificates ccache cmake curl git libegl1-mesa-dev libfontconfig1-dev libgles2-mesa-dev ninja-build python3 rsync && \
     rm -rf /var/lib/apt/lists/*
 
 ENV BUILD_FOLDER /build
