@@ -170,9 +170,14 @@ SPDX-License-Identifier: MIT
   refactored workflow attempted to run the AMD64 `depot_tools` GN binary inside
   the ARMv7 container. Commit `8c679bc` now generates the ARMv7 Ninja files in
   `skia-linux-amd64:v2.0.2` and retains QEMU plus the ARMv7 image for compilation.
+- The same run exposed missing `EGL/egl.h` on the other Linux Skia targets.
+  Commit `ad9b2eb` advances the images and central references to `v2.0.3` and
+  adds `libegl1-mesa-dev` to both Skia Linux build images. The v2.0.3 images
+  must be manually published before the next Skia build-only rerun.
 
 ## Next action and resume command
 
-Do not remove legacy paths. After the in-progress Skia run is assessed, rerun
-Skia from commit `8c679bc` without release inputs. Only resume Milestone 9
-cleanup after the representative remote results pass.
+Do not remove legacy paths. After the in-progress Skia run is assessed, manually
+publish Docker `v2.0.3` and rerun Skia from commit `ad9b2eb` without release
+inputs. Only resume Milestone 9 cleanup after the representative remote results
+pass.
