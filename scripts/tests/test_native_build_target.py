@@ -84,6 +84,22 @@ class NativeBuildTargetTests(unittest.TestCase):
             dockerfile = (ROOT / "docker" / image / "Dockerfile").read_text(encoding="utf-8")
             self.assertIn("libgles2-mesa-dev", dockerfile)
 
+    def test_skia_ccache_uses_complete_snapshots_and_partial_fallbacks(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
+        self.assertEqual(7, workflow.count("uses: actions/cache/restore@v5"))
+        self.assertEqual(14, workflow.count("uses: actions/cache/save@v5"))
+        self.assertNotIn("key: skia-ccache-${{", workflow)
+        self.assertIn(
+            "key: skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-${{ github.sha }}",
+            workflow,
+        )
+        self.assertIn(
+            "skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-\n"
+            "            skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-partial-",
+            workflow,
+        )
+        self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", workflow)
+
     def test_skia_windows_sdk_compat_uses_links_instead_of_copying(self) -> None:
         common = ROOT / "skia" / "scripts" / "common.sh"
         with tempfile.TemporaryDirectory() as directory:

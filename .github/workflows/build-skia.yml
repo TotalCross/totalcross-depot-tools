@@ -26,6 +26,9 @@ env:
   SKIA_DIAGNOSTICS_MODE: summary
   SKIA_USE_CCACHE: 1
 
+# Ccache validates individual compiler inputs. Completed snapshots are restored
+# before partial snapshots; each revision gets an immutable completed snapshot.
+
 jobs:
   prepare-skia-sources:
     name: Prepare Skia source dependencies
@@ -135,10 +138,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore ccache
-        uses: actions/cache@v5
+        id: restore-ccache
+        uses: actions/cache/restore@v5
         with:
           path: ~/.cache/ccache/skia-${{ matrix.project }}
-          key: skia-ccache-${{ runner.os }}-${{ matrix.project }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.project }}-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-${{ matrix.project }}-complete-
+            skia-ccache-v1-${{ runner.os }}-${{ matrix.project }}-partial-
 
       - name: Allow multiarch
         if: ${{ matrix.use_qemu || matrix.use_gn_container }}
@@ -214,6 +221,20 @@ jobs:
               bash skia/scripts/${{ matrix.script }}
             "
 
+      - name: Save complete ccache
+        if: success()
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache/skia-${{ matrix.project }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.project }}-complete-${{ github.sha }}
+
+      - name: Save partial ccache
+        if: ${{ failure() || cancelled() }}
+        uses: actions/cache/save@v5
+        with:
+          path: ~/.cache/ccache/skia-${{ matrix.project }}
+          key: skia-ccache-v1-${{ runner.os }}-${{ matrix.project }}-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Print build summary on failure
         if: failure()
         run: |
@@ -262,10 +283,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore ccache
-        uses: actions/cache@v5
+        id: restore-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-android-arm64-v8a
-          key: skia-ccache-${{ runner.os }}-android-arm64-v8a-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-android-arm64-v8a-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-android-arm64-v8a-complete-
+            skia-ccache-v1-${{ runner.os }}-android-arm64-v8a-partial-
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build rsync
@@ -307,6 +332,20 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-android-arm64-v8a
           SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/build-android-arm64.sh
+
+      - name: Save complete ccache
+        if: success()
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-android-arm64-v8a
+          key: skia-ccache-v1-${{ runner.os }}-android-arm64-v8a-complete-${{ github.sha }}
+
+      - name: Save partial ccache
+        if: ${{ failure() || cancelled() }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-android-arm64-v8a
+          key: skia-ccache-v1-${{ runner.os }}-android-arm64-v8a-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Print build summary on failure
         if: failure()
@@ -351,10 +390,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore ccache
-        uses: actions/cache@v5
+        id: restore-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-wasm-wasm32
-          key: skia-ccache-${{ runner.os }}-wasm-wasm32-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-wasm-wasm32-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-wasm-wasm32-complete-
+            skia-ccache-v1-${{ runner.os }}-wasm-wasm32-partial-
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build rsync
@@ -363,6 +406,13 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: ${{ env.EMSCRIPTEN_VERSION }}
+
+      - name: Configure ccache
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-wasm-wasm32
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --show-stats || true
 
       - name: Restore Skia source archive
         uses: actions/cache@v5
@@ -386,6 +436,20 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-wasm-wasm32
           SKIA_SKIP_DEPS_SYNC: 1
         run: ./scripts/build-wasm32.sh
+
+      - name: Save complete ccache
+        if: success()
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-wasm-wasm32
+          key: skia-ccache-v1-${{ runner.os }}-wasm-wasm32-complete-${{ github.sha }}
+
+      - name: Save partial ccache
+        if: ${{ failure() || cancelled() }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-wasm-wasm32
+          key: skia-ccache-v1-${{ runner.os }}-wasm-wasm32-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Print build summary on failure
         if: failure()
@@ -425,27 +489,46 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore macOS ccache
-        uses: actions/cache@v5
+        id: restore-macos-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-macos-arm64
-          key: skia-ccache-${{ runner.os }}-macos-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-
+            skia-ccache-v1-${{ runner.os }}-macos-arm64-partial-
 
       - name: Restore iOS device ccache
-        uses: actions/cache@v5
+        id: restore-ios-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-ios-arm64
-          key: skia-ccache-${{ runner.os }}-ios-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-
+            skia-ccache-v1-${{ runner.os }}-ios-arm64-partial-
 
       - name: Restore iOS simulator ccache
-        uses: actions/cache@v5
+        id: restore-ios-simulator-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-ios-simulator-arm64
-          key: skia-ccache-${{ runner.os }}-ios-simulator-arm64-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-
+            skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-partial-
 
       - name: Verify or install build tools
         run: |
           command -v ninja >/dev/null 2>&1 || brew install ninja
           command -v ccache >/dev/null 2>&1 || brew install ccache
+
+      - name: Configure ccache
+        run: |
+          for target in macos-arm64 ios-arm64 ios-simulator-arm64; do
+            CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${target}" ccache --set-config=max_size=2G
+            CCACHE_DIR="${GITHUB_WORKSPACE}/.cache/ccache/skia-${target}" ccache --show-stats || true
+          done
 
       - name: Fetch zlib-ng/libpng Apple prebuilts
         run: |
@@ -458,22 +541,67 @@ jobs:
         run: ./scripts/fetch-source.sh
 
       - name: Build macOS static library
+        id: build-macos
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-macos-arm64
         run: ./scripts/build-macos-arm64.sh
 
+      - name: Save complete macOS ccache
+        if: ${{ steps.build-macos.outcome == 'success' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-macos-arm64
+          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-complete-${{ github.sha }}
+
+      - name: Save partial macOS ccache
+        if: ${{ (failure() || cancelled()) && steps.build-macos.outcome != 'skipped' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-macos-arm64
+          key: skia-ccache-v1-${{ runner.os }}-macos-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Build iOS device static library
+        id: build-ios
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-arm64
         run: ./scripts/build-ios-arm64.sh
 
+      - name: Save complete iOS device ccache
+        if: ${{ steps.build-ios.outcome == 'success' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-ios-arm64
+          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-complete-${{ github.sha }}
+
+      - name: Save partial iOS device ccache
+        if: ${{ (failure() || cancelled()) && steps.build-ios.outcome != 'skipped' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-ios-arm64
+          key: skia-ccache-v1-${{ runner.os }}-ios-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Build iOS simulator static library
+        id: build-ios-simulator
         working-directory: skia
         env:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-ios-simulator-arm64
         run: ./scripts/build-ios-simulator-arm64.sh
+
+      - name: Save complete iOS simulator ccache
+        if: ${{ steps.build-ios-simulator.outcome == 'success' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-ios-simulator-arm64
+          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-complete-${{ github.sha }}
+
+      - name: Save partial iOS simulator ccache
+        if: ${{ (failure() || cancelled()) && steps.build-ios-simulator.outcome != 'skipped' }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-ios-simulator-arm64
+          key: skia-ccache-v1-${{ runner.os }}-ios-simulator-arm64-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Print build summary on failure
         if: failure()
@@ -582,16 +710,28 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore ccache
-        uses: actions/cache@v5
+        id: restore-ccache
+        uses: actions/cache/restore@v5
         with:
           path: .cache/ccache/skia-windows-${{ matrix.arch }}
-          key: skia-ccache-${{ runner.os }}-windows-${{ matrix.arch }}-${{ hashFiles('skia/manifest.json', 'skia/scripts/**') }}
+          key: skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-${{ github.sha }}
+          restore-keys: |
+            skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-
+            skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-partial-
 
       - name: Install build tools
         shell: powershell
         run: |
           if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) { choco install ninja -y }
           if (-not (Get-Command ccache -ErrorAction SilentlyContinue)) { choco install ccache -y --no-progress --limit-output --ignore-checksums }
+
+      - name: Configure ccache
+        shell: bash
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --show-stats || true
 
       - name: Fetch zlib-ng/libpng prebuilts
         shell: bash
@@ -609,6 +749,20 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.cache/ccache/skia-windows-${{ matrix.arch }}
           DEPOT_TOOLS_WIN_TOOLCHAIN: 0
         run: ./scripts/${{ matrix.script }}
+
+      - name: Save complete ccache
+        if: success()
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-windows-${{ matrix.arch }}
+          key: skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-complete-${{ github.sha }}
+
+      - name: Save partial ccache
+        if: ${{ failure() || cancelled() }}
+        uses: actions/cache/save@v5
+        with:
+          path: .cache/ccache/skia-windows-${{ matrix.arch }}
+          key: skia-ccache-v1-${{ runner.os }}-windows-${{ matrix.arch }}-partial-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Print build summary on failure
         if: failure()
