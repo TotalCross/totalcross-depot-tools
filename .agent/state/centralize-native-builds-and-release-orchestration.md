@@ -184,10 +184,16 @@ SPDX-License-Identifier: MIT
   Commit `c1649dc` advances the shared image version to `v2.0.4` and adds
   `libgles2-mesa-dev` to both the Skia AMD64 and ARMv7 Linux images. The user
   must manually publish the images before the next build-only rerun.
+- Commit `ca7702d` replaces mutable-looking `actions/cache` ccache entries with
+  restore/save snapshots. A completed snapshot for the current revision is
+  preferred, prior completed snapshots are reusable across revisions, and
+  failure or cancellation saves a unique partial snapshot as a fallback. Ccache
+  retains per-object input validation. Cancellation persistence is best-effort
+  because GitHub may terminate the runner before the save step starts.
 
 ## Next action and resume command
 
 Do not remove legacy paths. After the in-progress Skia run is assessed, manually
-publish Docker `v2.0.4` and rerun Skia from commit `c1649dc` without release
+publish Docker `v2.0.4` and rerun Skia from commit `ca7702d` without release
 inputs. The Windows lane must measure the junction improvement. Only resume
 Milestone 9 cleanup after the representative remote results pass.
