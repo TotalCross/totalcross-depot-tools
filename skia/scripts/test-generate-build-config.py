@@ -162,12 +162,26 @@ class GenerateBuildConfigTests(unittest.TestCase):
 
     def test_missing_inactive_target_local_value_is_classified_off(self) -> None:
         args = effective_args().replace("skia_use_system_freetype2 = false\n", "")
+        args = args.replace("skia_use_system_harfbuzz = false\n", "")
         args = args.replace("skia_use_system_expat = false\n", "")
+        args = args.replace("skia_use_system_icu = false\n", "")
         result, output, _ = self.run_generator(args)
         self.assertEqual(result.returncode, 0, result.stderr)
         content = output.read_text(encoding="utf-8")
         self.assertIn("set(SKIA_BUILD_USE_SYSTEM_FREETYPE2 OFF)", content)
+        self.assertIn("set(SKIA_BUILD_USE_SYSTEM_HARFBUZZ OFF)", content)
         self.assertIn("set(SKIA_BUILD_USE_SYSTEM_EXPAT OFF)", content)
+        self.assertIn("set(SKIA_BUILD_USE_SYSTEM_ICU OFF)", content)
+
+    def test_repository_selection_must_match_effective_configuration(self) -> None:
+        result, output, _ = self.run_generator(
+            effective_args(skia_use_system_libpng="true"),
+            repository_zlib="false",
+            repository_libpng="false",
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(output.exists())
+        self.assertIn("repository libpng selection does not match", result.stderr)
 
 
 if __name__ == "__main__":

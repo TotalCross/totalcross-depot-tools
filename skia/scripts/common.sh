@@ -302,12 +302,25 @@ copy_static_artifact() {
   local platform="$5"
   local arch="$6"
   local installed_name="$7"
+  local linker_style="unix"
 
   if [[ "$SKIA_ONLY_GN_GEN" == "1" || "$SKIA_ONLY_GN_GEN" == "true" ]]; then
     return 0
   fi
 
   [[ -f "$build_dir/$source_name" ]] || die "missing built Skia library at $build_dir/$source_name"
+  if [[ "$platform" == "wasm" ]]; then
+    SKIA_DEP_USE_ZLIB=false
+    SKIA_DEP_USE_LIBPNG=false
+  else
+    if [[ "$platform" == "windows" ]]; then
+      linker_style="msvc"
+    fi
+    # GN argument producers run in command substitutions, so their shell state
+    # does not survive until artifact packaging. Re-resolve the validated
+    # repository-prebuilt selections at the shared packaging boundary.
+    configure_prebuilt_deps "$platform" "$arch" "$linker_style"
+  fi
   local build_config="$build_dir/SkiaBuildConfig.cmake"
   local upstream_revision
   upstream_revision=$(python3 - "$ROOT_DIR/manifest.json" <<'PY'

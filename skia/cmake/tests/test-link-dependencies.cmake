@@ -46,6 +46,21 @@ function(assert_requirements label platform architecture expected)
   endif()
 endfunction()
 
+function(assert_platform_definition platform expected)
+  skia_platform_compile_definition(actual "${platform}")
+  if(NOT actual STREQUAL expected)
+    message(FATAL_ERROR "${platform}: expected platform definition '${expected}', got '${actual}'")
+  endif()
+endfunction()
+
+assert_platform_definition(macos SK_BUILD_FOR_MAC)
+assert_platform_definition(ios SK_BUILD_FOR_IOS)
+assert_platform_definition(ios-simulator SK_BUILD_FOR_IOS)
+assert_platform_definition(android SK_BUILD_FOR_ANDROID)
+assert_platform_definition(windows SK_BUILD_FOR_WIN)
+assert_platform_definition(linux SK_BUILD_FOR_UNIX)
+assert_platform_definition(wasm SK_BUILD_FOR_UNIX)
+
 reset_skia_features()
 set(SKIA_BUILD_USE_LIBPNG_DECODE ON)
 set(SKIA_BUILD_USE_SYSTEM_LIBPNG ON)
@@ -115,6 +130,13 @@ assert_requirements(
   linux-gl-off linux x86_64
   "repository-png;repository-zlib;toolchain-dl;toolchain-fontconfig;toolchain-freetype"
 )
+set(SKIA_BUILD_USE_GL ON)
+set(SKIA_BUILD_USE_EGL OFF)
+set(SKIA_BUILD_USE_X11 ON)
+assert_requirements(
+  linux-x11-opengl linux x86_64
+  "repository-png;repository-zlib;toolchain-dl;toolchain-opengl;toolchain-fontconfig;toolchain-freetype"
+)
 
 reset_skia_features()
 set(SKIA_BUILD_USE_GL ON)
@@ -123,6 +145,8 @@ set(SKIA_BUILD_NDK_API 23)
 assert_requirements(android-current android arm64-v8a "toolchain-android-log;toolchain-egl;toolchain-glesv2")
 set(SKIA_BUILD_USE_GL OFF)
 assert_requirements(android-gl-off android arm64-v8a "toolchain-android-log")
+set(SKIA_BUILD_NDK_API 26)
+assert_requirements(android-api-26 android arm64-v8a "toolchain-android-log;toolchain-android")
 
 reset_skia_features()
 set(SKIA_BUILD_USE_GL ON)

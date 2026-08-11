@@ -209,7 +209,7 @@ class FindSkiaTests(unittest.TestCase):
         self.assertIn("Foundation.framework", interface)
         self.assertIn("OpenGL.framework", interface)
         self.assertIn("PNG::PNG;ZLIB::ZLIB", interface)
-        self.assertIn("definitions=SK_GL;SK_METAL;SK_VULKAN", interface)
+        self.assertIn("definitions=SK_BUILD_FOR_MAC;SK_GL;SK_METAL;SK_VULKAN", interface)
 
     def test_metal_off_removes_metal_requirements(self) -> None:
         library = self.create_layout(self.managed_root)

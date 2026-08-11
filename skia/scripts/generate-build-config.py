@@ -36,19 +36,19 @@ BOOLEAN_FIELDS = (
     ("skia_enable_fontmgr_win", "SKIA_BUILD_ENABLE_FONTMGR_WIN"),
     ("skia_enable_fontmgr_win_gdi", "SKIA_BUILD_ENABLE_FONTMGR_WIN_GDI"),
     ("skia_use_harfbuzz", "SKIA_BUILD_USE_HARFBUZZ"),
-    ("skia_use_system_harfbuzz", "SKIA_BUILD_USE_SYSTEM_HARFBUZZ"),
     ("skia_use_expat", "SKIA_BUILD_USE_EXPAT"),
     ("skia_use_icu", "SKIA_BUILD_USE_ICU"),
-    ("skia_use_system_icu", "SKIA_BUILD_USE_SYSTEM_ICU"),
     ("skia_use_zlib", "SKIA_BUILD_USE_ZLIB"),
     ("skia_use_libpng_decode", "SKIA_BUILD_USE_LIBPNG_DECODE"),
     ("skia_use_libpng_encode", "SKIA_BUILD_USE_LIBPNG_ENCODE"),
     ("skia_use_system_libpng", "SKIA_BUILD_USE_SYSTEM_LIBPNG"),
 )
 
-CONDITIONAL_BOOLEAN_FIELDS = (
-    ("skia_use_system_freetype2", "SKIA_BUILD_USE_SYSTEM_FREETYPE2", "skia_use_freetype"),
-    ("skia_use_system_expat", "SKIA_BUILD_USE_SYSTEM_EXPAT", "skia_use_expat"),
+TARGET_LOCAL_BOOLEAN_FIELDS = (
+    ("skia_use_system_freetype2", "SKIA_BUILD_USE_SYSTEM_FREETYPE2"),
+    ("skia_use_system_harfbuzz", "SKIA_BUILD_USE_SYSTEM_HARFBUZZ"),
+    ("skia_use_system_expat", "SKIA_BUILD_USE_SYSTEM_EXPAT"),
+    ("skia_use_system_icu", "SKIA_BUILD_USE_SYSTEM_ICU"),
 )
 
 STRING_FIELDS = (
@@ -129,18 +129,12 @@ def generate(args: argparse.Namespace) -> str:
 
     for gn_name, cmake_name in BOOLEAN_FIELDS:
         lines.append(cmake_set(cmake_name, parse_boolean(gn_name, require(effective, gn_name))))
-    for gn_name, cmake_name, enabling_name in CONDITIONAL_BOOLEAN_FIELDS:
+    for gn_name, cmake_name in TARGET_LOCAL_BOOLEAN_FIELDS:
         raw = effective.get(gn_name)
-        if raw is None:
-            enabling_value = parse_boolean(enabling_name, require(effective, enabling_name))
-            if enabling_value == "ON":
-                raise ValueError(
-                    f"effective GN argument listing is missing required value {gn_name} "
-                    f"while {enabling_name} is true"
-                )
-            value = "OFF"
-        else:
-            value = parse_boolean(gn_name, raw)
+        # These declarations live in nested third_party targets. GN omits them
+        # from the effective listing when that target was not loaded, which is
+        # itself the authoritative inactive classification.
+        value = parse_boolean(gn_name, raw) if raw is not None else "OFF"
         lines.append(cmake_set(cmake_name, value))
 
     repository_zlib = parse_boolean("repository_zlib", args.repository_zlib)
@@ -148,8 +142,12 @@ def generate(args: argparse.Namespace) -> str:
     system_libpng = parse_boolean(
         "skia_use_system_libpng", require(effective, "skia_use_system_libpng")
     )
-    if repository_libpng == "ON" and system_libpng != "ON":
-        raise ValueError("repository libpng was selected but effective GN system libpng is disabled")
+    if repository_libpng != system_libpng:
+        raise ValueError(
+            "repository libpng selection does not match effective GN system libpng selection"
+        )
+    if repository_libpng == "ON" and repository_zlib != "ON":
+        raise ValueError("repository libpng requires the repository zlib prebuilt")
     lines.append(cmake_set("SKIA_BUILD_USE_REPOSITORY_ZLIB", repository_zlib))
     lines.append(cmake_set("SKIA_BUILD_USE_REPOSITORY_LIBPNG", repository_libpng))
     # Retain the representative v1 system-zlib field even though this pinned
