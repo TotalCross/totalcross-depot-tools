@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -118,6 +120,80 @@ class NativeReleaseTests(unittest.TestCase):
         actual = {path.name for path in assets.iterdir()}
         self.assertEqual({"zlib-macos-arm64.tar.gz"}, expected - actual)
         self.assertEqual({"unexpected.tar.gz"}, actual - expected)
+
+    def test_skia_contract_rejects_undeclared_machine_config_and_diagnostics(self) -> None:
+        skia = self.root / "skia"
+        skia.mkdir()
+        payload = {
+            "release": {"assets": ["SkiaBuildConfig-linux-x86_64.cmake", "diagnostics.tar.gz", "SHA256SUMS"]},
+            "metadata": {
+                "machine-build-configs": {
+                    "linux-x86_64": {"artifact_name": "SkiaBuildConfig-linux-x86_64.cmake"}
+                }
+            },
+        }
+        (skia / "manifest.yml").write_text(
+            "artifact:\n  diagnostics: diagnostics.tar.gz\n", encoding="utf-8"
+        )
+        (skia / "artifacts.json").write_text(json.dumps(payload), encoding="utf-8")
+        self.assertEqual(payload["release"]["assets"], NATIVE_RELEASE.validate_skia_asset_contract(self.root))
+
+        for omitted in ("SkiaBuildConfig-linux-x86_64.cmake", "diagnostics.tar.gz"):
+            with self.subTest(omitted=omitted):
+                payload["release"]["assets"].remove(omitted)
+                (skia / "artifacts.json").write_text(json.dumps(payload), encoding="utf-8")
+                with self.assertRaisesRegex(NATIVE_RELEASE.NativeReleaseError, "omit"):
+                    NATIVE_RELEASE.validate_skia_asset_contract(self.root)
+                payload["release"]["assets"].append(omitted)
+
+    def test_skia_summary_diagnostics_package_matches_release_contract(self) -> None:
+        payload = json.loads((ROOT / "skia" / "artifacts.json").read_text(encoding="utf-8"))
+        expected = set(NATIVE_RELEASE.expected_assets(ROOT, "skia"))
+        diagnostics_name = next(name for name in expected if name.startswith("skia-build-diagnostics-"))
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            assets = Path(directory)
+            for name in expected - {diagnostics_name, "SHA256SUMS"}:
+                (assets / name).write_bytes((name + "\n").encode("utf-8"))
+            for target in payload["metadata"]["machine-build-configs"]:
+                summary = assets / "diagnostics" / target / "build-summary.json"
+                summary.parent.mkdir(parents=True, exist_ok=True)
+                summary.write_text('{"status":"success"}\n', encoding="utf-8")
+
+            subprocess.run(
+                [str(ROOT / "skia" / "scripts" / "package-release-assets.sh"), str(assets)],
+                cwd=ROOT,
+                check=True,
+            )
+
+            actual = {path.name for path in assets.iterdir() if path.is_file()}
+            self.assertEqual(11, len(payload["artifacts"]))
+            self.assertEqual(11, len(payload["metadata"]["machine-build-configs"]))
+            self.assertEqual(expected, actual)
+            verification = subprocess.run(
+                [
+                    "python3",
+                    str(MODULE_PATH),
+                    "verify-assets",
+                    "skia",
+                    "--paths",
+                    f"{assets.name}/*",
+                ],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            verification_result = json.loads(verification.stdout)
+            self.assertEqual([], verification_result["missing"])
+            self.assertEqual([], verification_result["unexpected"])
+            checksums = {
+                line.split("  ", 1)[1]
+                for line in (assets / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+            }
+            self.assertEqual(expected - {"SHA256SUMS"}, checksums)
+            with tarfile.open(assets / diagnostics_name, "r:gz") as archive:
+                summaries = [name for name in archive.getnames() if name.endswith("/build-summary.json")]
+            self.assertEqual(11, len(summaries))
 
     def test_fixture_files_are_valid_release_json(self) -> None:
         fixture = self.root / "releases.json"

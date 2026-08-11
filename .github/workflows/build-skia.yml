@@ -22,7 +22,6 @@ env:
   EMSCRIPTEN_VERSION: 2.0.6
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   GITHUB_TOKEN: ${{ github.token }}
-  SKIA_DIAGNOSTICS_ARCHIVE: skia-build-diagnostics-158dc9d7.tar.gz
   SKIA_DIAGNOSTICS_MODE: summary
   SKIA_USE_CCACHE: 1
 
@@ -381,6 +380,7 @@ jobs:
           test -f "skia/dist/libskia-${{ matrix.artifact_suffix }}.a"
           test -f "skia/dist/SkiaBuildConfig-${{ matrix.artifact_suffix }}.cmake"
           test -f "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
+          test -f "skia/dist/diagnostics/${{ matrix.artifact_suffix }}/build-summary.json"
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
@@ -393,6 +393,7 @@ jobs:
             skia/dist/libskia-${{ matrix.artifact_suffix }}.a
             skia/dist/SkiaBuildConfig-${{ matrix.artifact_suffix }}.cmake
             skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md
+            skia/dist/diagnostics/${{ matrix.artifact_suffix }}/build-summary.json
 
       - name: Upload full diagnostics
         if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
@@ -485,6 +486,7 @@ jobs:
           test -f skia/dist/libskia-android-arm64-v8a.a
           test -f skia/dist/SkiaBuildConfig-android-arm64-v8a.cmake
           test -f skia/dist/build_config_manifest-android-arm64-v8a.md
+          test -f skia/dist/diagnostics/android-arm64-v8a/build-summary.json
           grep -Eq 'is_component_build[[:space:]]*=[[:space:]]*false' skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -q "${ANDROID_NDK_VERSION}" skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-android-arm64-v8a.md
@@ -502,6 +504,7 @@ jobs:
             skia/dist/libskia-android-arm64-v8a.a
             skia/dist/SkiaBuildConfig-android-arm64-v8a.cmake
             skia/dist/build_config_manifest-android-arm64-v8a.md
+            skia/dist/diagnostics/android-arm64-v8a/build-summary.json
 
       - name: Upload diagnostics
         if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
@@ -591,6 +594,7 @@ jobs:
           test -f skia/dist/libskia-wasm32.a
           test -f skia/dist/SkiaBuildConfig-wasm-wasm32.cmake
           test -f skia/dist/build_config_manifest-wasm-wasm32.md
+          test -f skia/dist/diagnostics/wasm-wasm32/build-summary.json
           grep -Eq 'target_cpu[[:space:]]*=[[:space:]]*"wasm"' skia/dist/build_config_manifest-wasm-wasm32.md
           grep -Eq 'skia_use_webgl[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-wasm-wasm32.md
           grep -Eq 'skia_gl_standard[[:space:]]*=[[:space:]]*"webgl"' skia/dist/build_config_manifest-wasm-wasm32.md
@@ -604,6 +608,7 @@ jobs:
             skia/dist/libskia-wasm32.a
             skia/dist/SkiaBuildConfig-wasm-wasm32.cmake
             skia/dist/build_config_manifest-wasm-wasm32.md
+            skia/dist/diagnostics/wasm-wasm32/build-summary.json
 
       - name: Upload diagnostics
         if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
@@ -705,6 +710,7 @@ jobs:
           test -f "skia/dist/libskia-${{ matrix.target }}.a"
           test -f "skia/dist/SkiaBuildConfig-${{ matrix.target }}.cmake"
           test -f "skia/dist/build_config_manifest-${{ matrix.target }}.md"
+          test -f "skia/dist/diagnostics/${{ matrix.target }}/build-summary.json"
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
           ! find skia/dist -maxdepth 1 -name '*.so' | grep -q .
@@ -717,6 +723,7 @@ jobs:
             skia/dist/libskia-${{ matrix.target }}.a
             skia/dist/SkiaBuildConfig-${{ matrix.target }}.cmake
             skia/dist/build_config_manifest-${{ matrix.target }}.md
+            skia/dist/diagnostics/${{ matrix.target }}/build-summary.json
 
       - name: Upload diagnostics
         if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
@@ -892,6 +899,7 @@ jobs:
           test -f skia/dist/libskia-windows-${{ matrix.arch }}.lib
           test -f skia/dist/SkiaBuildConfig-windows-${{ matrix.arch }}.cmake
           test -f skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+          test -f skia/dist/diagnostics/windows-${{ matrix.arch }}/build-summary.json
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'extra_cflags.*"/MT"' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
@@ -909,6 +917,7 @@ jobs:
             skia/dist/libskia-windows-${{ matrix.arch }}.lib
             skia/dist/SkiaBuildConfig-windows-${{ matrix.arch }}.cmake
             skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
+            skia/dist/diagnostics/windows-${{ matrix.arch }}/build-summary.json
 
       - name: Upload diagnostics
         if: ${{ failure() || env.SKIA_DIAGNOSTICS_MODE == 'full' }}
@@ -934,28 +943,11 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Generate SHA256SUMS
-        run: |
-          ! find release-assets -maxdepth 1 -name '*.so' | grep -q .
-          test "$(find release-assets -maxdepth 1 -type f -name 'SkiaBuildConfig-*.cmake' | wc -l | tr -d ' ')" = "11"
+      - name: Package diagnostics and generate SHA256SUMS
+        run: skia/scripts/package-release-assets.sh release-assets
 
-          mkdir -p release-assets/.diagnostics
-          if [ -d release-assets/diagnostics ]; then
-            find release-assets/diagnostics -mindepth 1 -maxdepth 1 -exec mv {} release-assets/.diagnostics/ \;
-            rm -rf release-assets/diagnostics
-          fi
-
-          while IFS= read -r -d '' diagnostics_dir; do
-            mv "${diagnostics_dir}" release-assets/.diagnostics/
-          done < <(find release-assets -mindepth 1 -maxdepth 1 -type d ! -name '.diagnostics' -print0)
-
-          if find release-assets/.diagnostics -mindepth 1 -print -quit | grep -q .; then
-            tar -C release-assets/.diagnostics -czf "release-assets/${SKIA_DIAGNOSTICS_ARCHIVE}" .
-          fi
-          rm -rf release-assets/.diagnostics
-
-          cd release-assets
-          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | xargs -0 shasum -a 256 | sed 's#  \./#  #' | sort -k 2 > SHA256SUMS
+      - name: Verify declared release assets
+        run: python3 scripts/native-release.py verify-assets skia --paths 'release-assets/*'
 
       - name: Upload release assets
         uses: actions/upload-artifact@v7

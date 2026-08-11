@@ -103,6 +103,15 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("SKIA_SKIP_DEPS_SYNC: 1", windows_build)
         self.assertIn("${{ github.run_id }}-${{ github.run_attempt }}", workflow)
 
+    def test_skia_summary_diagnostics_are_part_of_release_packaging(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
+        operation = (ROOT / ".github" / "workflows" / "skia.yml").read_text(encoding="utf-8")
+        self.assertIn("SKIA_DIAGNOSTICS_MODE: summary", workflow)
+        self.assertEqual(10, workflow.count("/build-summary.json"))
+        self.assertIn("skia/scripts/package-release-assets.sh release-assets", workflow)
+        self.assertIn("native-release.py verify-assets skia", workflow)
+        self.assertIn("native-release.py validate-contract skia", operation)
+
     def test_skia_prepares_platform_source_archives_before_native_depot_tools(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "build-skia.yml").read_text(encoding="utf-8")
         fetch_source = (ROOT / "skia" / "scripts" / "fetch-source.sh").read_text(encoding="utf-8")

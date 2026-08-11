@@ -168,8 +168,7 @@ def inspect_release(info: dict[str, Any], tags: Sequence[str], releases: Sequenc
 
 def expected_assets(root: Path, library: str) -> list[str]:
     if library == "skia":
-        path = root / "skia" / "artifacts.json"
-        return json.loads(path.read_text(encoding="utf-8"))["release"]["assets"]
+        return validate_skia_asset_contract(root)
     manifest = _manifest_path(root, library).read_text(encoding="utf-8").splitlines()
     archives: list[str] = []
     in_archives = False
@@ -186,6 +185,51 @@ def expected_assets(root: Path, library: str) -> list[str]:
     if not archives:
         raise NativeReleaseError(f"{library} has no declared release archives")
     return archives
+
+
+def validate_skia_asset_contract(root: Path) -> list[str]:
+    artifacts_path = root / "skia" / "artifacts.json"
+    manifest_path = root / "skia" / "manifest.yml"
+    try:
+        payload = json.loads(artifacts_path.read_text(encoding="utf-8"))
+        assets = payload["release"]["assets"]
+        machine_configs = payload["metadata"]["machine-build-configs"]
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as error:
+        raise NativeReleaseError(f"invalid Skia artifact manifest: {error}") from error
+    if not isinstance(assets, list) or not all(isinstance(asset, str) and asset for asset in assets):
+        raise NativeReleaseError("Skia release assets must be non-empty strings")
+    if len(assets) != len(set(assets)):
+        raise NativeReleaseError("Skia release assets contain duplicate names")
+    if not isinstance(machine_configs, dict) or not machine_configs:
+        raise NativeReleaseError("Skia machine build configs must be a non-empty mapping")
+    try:
+        config_assets = {
+            config["artifact_name"]
+            for config in machine_configs.values()
+            if isinstance(config, dict)
+        }
+    except (KeyError, TypeError) as error:
+        raise NativeReleaseError(f"invalid Skia machine build config: {error}") from error
+    if len(config_assets) != len(machine_configs):
+        raise NativeReleaseError("Skia machine build configs must declare unique artifact names")
+    missing_configs = sorted(config_assets - set(assets))
+    if missing_configs:
+        raise NativeReleaseError(
+            "Skia release assets omit machine build configs: " + ", ".join(missing_configs)
+        )
+    try:
+        diagnostics = next(
+            match.group(1)
+            for line in manifest_path.read_text(encoding="utf-8").splitlines()
+            if (match := re.match(r"^  diagnostics:\s*(\S.*?)\s*$", line))
+        )
+    except (OSError, StopIteration) as error:
+        raise NativeReleaseError("Skia manifest has no diagnostics release asset") from error
+    if diagnostics not in assets:
+        raise NativeReleaseError(f"Skia release assets omit diagnostics archive: {diagnostics}")
+    if "SHA256SUMS" not in assets:
+        raise NativeReleaseError("Skia release assets omit SHA256SUMS")
+    return assets
 
 
 def prepare_metadata(root: Path, library: str, tag: str) -> list[Path]:
@@ -230,6 +274,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     prepare_command = commands.add_parser("prepare-metadata")
     prepare_command.add_argument("library")
     prepare_command.add_argument("--effective-tag", required=True)
+    validate_command = commands.add_parser("validate-contract")
+    validate_command.add_argument("library")
     verify_command = commands.add_parser("verify-assets")
     verify_command.add_argument("library")
     verify_command.add_argument("--paths", nargs="+", required=True)
@@ -238,13 +284,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         root = args.root.resolve()
         if args.tags_file:
             tags = _load_json(args.tags_file, [])
-        elif args.command == "prepare-metadata" or args.command == "verify-assets":
+        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets"):
             tags = []
         else:
             tags = _remote_tags(args.remote)
         if args.releases_file:
             releases = _load_json(args.releases_file, [])
-        elif args.command == "prepare-metadata" or args.command == "verify-assets":
+        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets"):
             releases = []
         else:
             if not args.repository:
@@ -265,6 +311,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _emit({**inspect_release(info, tags, releases, tag), "effective_release_tag": tag, "status": "build-required"})
         elif args.command == "prepare-metadata":
             _emit({"paths": [str(path.relative_to(root)) for path in prepare_metadata(root, args.library, args.effective_tag)], "effective_release_tag": args.effective_tag})
+        elif args.command == "validate-contract":
+            assets = expected_assets(root, args.library)
+            _emit({"library": args.library, "assets": len(assets), "status": "valid"})
         else:
             actual = {Path(path).name for raw in args.paths for path in root.glob(raw) if Path(path).is_file()}
             expected = set(expected_assets(root, args.library))

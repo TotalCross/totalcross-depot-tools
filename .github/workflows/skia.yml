@@ -44,6 +44,8 @@ jobs:
       should_build: ${{ steps.release.outputs.should_build }}
     steps:
       - uses: actions/checkout@v6
+      - name: Validate Skia release contract
+        run: python3 scripts/native-release.py validate-contract skia
       - env:
           OPERATION: ${{ inputs.operation || 'build' }}
         run: python3 scripts/native-build.py plan skia --operation "${OPERATION}" --format json
