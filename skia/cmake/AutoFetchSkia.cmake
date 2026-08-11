@@ -107,6 +107,21 @@ function(tcvm_auto_fetch_skia)
   set(TCVM_FETCH_PLATFORM "")
   set(TCVM_FETCH_ARCH "")
   set(TCVM_FETCH_INSTALL_DEV OFF)
+  set(TCVM_SKIA_BUILD_CONFIG_REQUIRED OFF)
+
+  if(DEFINED SKIA_REQUIRE_BUILD_CONFIG)
+    set(TCVM_SKIA_BUILD_CONFIG_REQUIRED "${SKIA_REQUIRE_BUILD_CONFIG}")
+  elseif(EXISTS "${TCVM_SKIA_DEP_DIR}/artifacts.json")
+    file(READ "${TCVM_SKIA_DEP_DIR}/artifacts.json" TCVM_SKIA_ARTIFACT_MANIFEST_CONTENT)
+    string(REGEX MATCH
+      "\"machine_build_config\"[^}]*\"required\"[ \t\r\n]*:[ \t\r\n]*true"
+      TCVM_SKIA_CONFIG_REQUIRED_MATCH
+      "${TCVM_SKIA_ARTIFACT_MANIFEST_CONTENT}"
+    )
+    if(TCVM_SKIA_CONFIG_REQUIRED_MATCH)
+      set(TCVM_SKIA_BUILD_CONFIG_REQUIRED ON)
+    endif()
+  endif()
 
   if(DEFINED ANDROID_ABI)
     set(TCVM_FETCH_PLATFORM "android")
@@ -207,6 +222,12 @@ function(tcvm_auto_fetch_skia)
   endif()
 
   if(NOT EXISTS "${TCVM_SKIA_ARTIFACT}")
+    set(TCVM_FETCH_NEEDED ON)
+  endif()
+
+  get_filename_component(TCVM_SKIA_ARTIFACT_DIR "${TCVM_SKIA_ARTIFACT}" DIRECTORY)
+  set(TCVM_SKIA_BUILD_CONFIG "${TCVM_SKIA_ARTIFACT_DIR}/SkiaBuildConfig.cmake")
+  if(TCVM_SKIA_BUILD_CONFIG_REQUIRED AND NOT EXISTS "${TCVM_SKIA_BUILD_CONFIG}")
     set(TCVM_FETCH_NEEDED ON)
   endif()
 

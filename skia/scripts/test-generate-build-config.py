@@ -24,6 +24,8 @@ BOOLEAN_NAMES = (
     "skia_use_opencl",
     "skia_use_webgl",
     "skia_use_angle",
+    "skia_use_dawn",
+    "skia_use_direct3d",
     "skia_use_vma",
     "skia_use_x11",
     "skia_use_fonthost_mac",
@@ -63,7 +65,13 @@ def effective_args(**overrides: str) -> str:
 
 
 class GenerateBuildConfigTests(unittest.TestCase):
-    def run_generator(self, gn_args: str) -> tuple[subprocess.CompletedProcess[str], pathlib.Path, pathlib.Path]:
+    def run_generator(
+        self,
+        gn_args: str,
+        *,
+        repository_zlib: str = "false",
+        repository_libpng: str = "false",
+    ) -> tuple[subprocess.CompletedProcess[str], pathlib.Path, pathlib.Path]:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         root = pathlib.Path(temporary.name)
@@ -85,6 +93,10 @@ class GenerateBuildConfigTests(unittest.TestCase):
                 "arm64",
                 "--revision",
                 "158dc9d7",
+                "--repository-zlib",
+                repository_zlib,
+                "--repository-libpng",
+                repository_libpng,
                 "--output",
                 str(output_path),
             ],
@@ -102,7 +114,9 @@ class GenerateBuildConfigTests(unittest.TestCase):
                 skia_use_metal="true",
                 skia_use_system_zlib="true",
                 skia_use_system_libpng="true",
-            )
+            ),
+            repository_zlib="true",
+            repository_libpng="true",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         first = output.read_bytes()
@@ -110,6 +124,8 @@ class GenerateBuildConfigTests(unittest.TestCase):
         self.assertIn(b"set(SKIA_BUILD_CONFIG_VERSION 1)", first)
         self.assertIn(f'set(SKIA_BUILD_LIBRARY_SHA256 "{expected_sha}")'.encode(), first)
         self.assertIn(b"set(SKIA_BUILD_USE_METAL ON)", first)
+        self.assertIn(b"set(SKIA_BUILD_USE_REPOSITORY_ZLIB ON)", first)
+        self.assertIn(b"set(SKIA_BUILD_USE_REPOSITORY_LIBPNG ON)", first)
 
         result, output, _ = self.run_generator(
             effective_args(
@@ -118,7 +134,9 @@ class GenerateBuildConfigTests(unittest.TestCase):
                 skia_use_metal="true",
                 skia_use_system_zlib="true",
                 skia_use_system_libpng="true",
-            )
+            ),
+            repository_zlib="true",
+            repository_libpng="true",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(output.read_bytes(), first)
@@ -141,6 +159,15 @@ class GenerateBuildConfigTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(output.exists())
         self.assertIn("missing required value skia_use_vulkan", result.stderr)
+
+    def test_missing_inactive_target_local_value_is_classified_off(self) -> None:
+        args = effective_args().replace("skia_use_system_freetype2 = false\n", "")
+        args = args.replace("skia_use_system_expat = false\n", "")
+        result, output, _ = self.run_generator(args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        content = output.read_text(encoding="utf-8")
+        self.assertIn("set(SKIA_BUILD_USE_SYSTEM_FREETYPE2 OFF)", content)
+        self.assertIn("set(SKIA_BUILD_USE_SYSTEM_EXPAT OFF)", content)
 
 
 if __name__ == "__main__":

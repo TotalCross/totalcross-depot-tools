@@ -42,15 +42,20 @@ require_depot_tools_checkout() {
 }
 
 prepare_python_compat() {
+  local python_path=""
+  local python3_path=""
+
   require_cmd python3
 
-  if command -v python >/dev/null 2>&1; then
+  python_path=$(command -v python 2>/dev/null || true)
+  if [[ -n "$python_path" && -x "$python_path" ]] && "$python_path" --version >/dev/null 2>&1; then
     return 0
   fi
 
   local compat_bin="$OUT_DIR/toolchain-compat/bin"
+  python3_path=$(python3 -c 'import os, sys; print(os.path.realpath(sys.executable))')
   mkdir -p "$compat_bin"
-  ln -sf "$(command -v python3)" "$compat_bin/python"
+  ln -sf "$python3_path" "$compat_bin/python"
   export PATH="$compat_bin:$PATH"
 }
 
@@ -321,6 +326,8 @@ PY
     --platform "$platform" \
     --architecture "$arch" \
     --revision "$upstream_revision" \
+    --repository-zlib "$SKIA_DEP_USE_ZLIB" \
+    --repository-libpng "$SKIA_DEP_USE_LIBPNG" \
     --output "$build_config"
 
   cp "$build_dir/$source_name" "$DIST_DIR/$artifact_name"

@@ -24,11 +24,12 @@ BOOLEAN_FIELDS = (
     ("skia_use_opencl", "SKIA_BUILD_USE_OPENCL"),
     ("skia_use_webgl", "SKIA_BUILD_USE_WEBGL"),
     ("skia_use_angle", "SKIA_BUILD_USE_ANGLE"),
+    ("skia_use_dawn", "SKIA_BUILD_USE_DAWN"),
+    ("skia_use_direct3d", "SKIA_BUILD_USE_DIRECT3D"),
     ("skia_use_vma", "SKIA_BUILD_USE_VMA"),
     ("skia_use_x11", "SKIA_BUILD_USE_X11"),
     ("skia_use_fonthost_mac", "SKIA_BUILD_USE_FONTHOST_MAC"),
     ("skia_use_freetype", "SKIA_BUILD_USE_FREETYPE"),
-    ("skia_use_system_freetype2", "SKIA_BUILD_USE_SYSTEM_FREETYPE2"),
     ("skia_use_fontconfig", "SKIA_BUILD_USE_FONTCONFIG"),
     ("skia_enable_fontmgr_fontconfig", "SKIA_BUILD_ENABLE_FONTMGR_FONTCONFIG"),
     ("skia_enable_fontmgr_android", "SKIA_BUILD_ENABLE_FONTMGR_ANDROID"),
@@ -37,14 +38,17 @@ BOOLEAN_FIELDS = (
     ("skia_use_harfbuzz", "SKIA_BUILD_USE_HARFBUZZ"),
     ("skia_use_system_harfbuzz", "SKIA_BUILD_USE_SYSTEM_HARFBUZZ"),
     ("skia_use_expat", "SKIA_BUILD_USE_EXPAT"),
-    ("skia_use_system_expat", "SKIA_BUILD_USE_SYSTEM_EXPAT"),
     ("skia_use_icu", "SKIA_BUILD_USE_ICU"),
     ("skia_use_system_icu", "SKIA_BUILD_USE_SYSTEM_ICU"),
     ("skia_use_zlib", "SKIA_BUILD_USE_ZLIB"),
-    ("skia_use_system_zlib", "SKIA_BUILD_USE_SYSTEM_ZLIB"),
     ("skia_use_libpng_decode", "SKIA_BUILD_USE_LIBPNG_DECODE"),
     ("skia_use_libpng_encode", "SKIA_BUILD_USE_LIBPNG_ENCODE"),
     ("skia_use_system_libpng", "SKIA_BUILD_USE_SYSTEM_LIBPNG"),
+)
+
+CONDITIONAL_BOOLEAN_FIELDS = (
+    ("skia_use_system_freetype2", "SKIA_BUILD_USE_SYSTEM_FREETYPE2", "skia_use_freetype"),
+    ("skia_use_system_expat", "SKIA_BUILD_USE_SYSTEM_EXPAT", "skia_use_expat"),
 )
 
 STRING_FIELDS = (
@@ -125,6 +129,32 @@ def generate(args: argparse.Namespace) -> str:
 
     for gn_name, cmake_name in BOOLEAN_FIELDS:
         lines.append(cmake_set(cmake_name, parse_boolean(gn_name, require(effective, gn_name))))
+    for gn_name, cmake_name, enabling_name in CONDITIONAL_BOOLEAN_FIELDS:
+        raw = effective.get(gn_name)
+        if raw is None:
+            enabling_value = parse_boolean(enabling_name, require(effective, enabling_name))
+            if enabling_value == "ON":
+                raise ValueError(
+                    f"effective GN argument listing is missing required value {gn_name} "
+                    f"while {enabling_name} is true"
+                )
+            value = "OFF"
+        else:
+            value = parse_boolean(gn_name, raw)
+        lines.append(cmake_set(cmake_name, value))
+
+    repository_zlib = parse_boolean("repository_zlib", args.repository_zlib)
+    repository_libpng = parse_boolean("repository_libpng", args.repository_libpng)
+    system_libpng = parse_boolean(
+        "skia_use_system_libpng", require(effective, "skia_use_system_libpng")
+    )
+    if repository_libpng == "ON" and system_libpng != "ON":
+        raise ValueError("repository libpng was selected but effective GN system libpng is disabled")
+    lines.append(cmake_set("SKIA_BUILD_USE_REPOSITORY_ZLIB", repository_zlib))
+    lines.append(cmake_set("SKIA_BUILD_USE_REPOSITORY_LIBPNG", repository_libpng))
+    # Retain the representative v1 system-zlib field even though this pinned
+    # Skia declares it only inside a nested target that is not always loaded.
+    lines.append(cmake_set("SKIA_BUILD_USE_SYSTEM_ZLIB", repository_zlib))
     for gn_name, cmake_name in STRING_FIELDS:
         lines.append(cmake_set(cmake_name, parse_string(gn_name, require(effective, gn_name)), quoted=True))
 
@@ -143,6 +173,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--platform", required=True)
     parser.add_argument("--architecture", required=True)
     parser.add_argument("--revision", required=True)
+    parser.add_argument("--repository-zlib", choices=("true", "false"), required=True)
+    parser.add_argument("--repository-libpng", choices=("true", "false"), required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
     return parser.parse_args()
 
