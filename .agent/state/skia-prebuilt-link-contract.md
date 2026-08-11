@@ -5,19 +5,19 @@ SPDX-License-Identifier: MIT
 
 # Skia prebuilt link contract execution state
 
-Active milestone: Milestone 2, machine metadata generation.
+Active milestone: Milestone 3, artifact publication and paired fetch.
 
-Active slice: emit deterministic `SkiaBuildConfig.cmake` sidecars from the
-effective post-`gn gen` argument listing and bind each sidecar to its final
-static archive SHA-256.
+Active slice: declare one target-specific sidecar for every static archive,
+upload it from every workflow lane, and fetch/validate/install the library and
+metadata as a pair independently of `--install-dev`.
 
-Last logical commit: none; the first implementation slice is being prepared.
+Last logical commit: `06d6848 feat(skia): emit prebuilt link metadata`.
 
 Active paths:
 
-- `skia/scripts/common.sh`
-- `skia/scripts/generate-build-config.py`
-- `skia/scripts/test-generate-build-config.py`
+- `skia/artifacts.json`
+- `skia/fetch.sh`
+- `.github/workflows/build-skia.yml`
 - `.agent/exec-plan-skia-prebuilt-link-contract.md`
 - `.agent/evidence/skia-prebuilt-link-contract.jsonl`
 
@@ -32,6 +32,7 @@ Completed focused validation:
 - `python3 skia/scripts/test-generate-build-config.py` passed 3 tests.
 - Python bytecode compilation, `bash -n skia/scripts/common.sh`, and focused
   `git diff --check` passed.
+- Staged SPDX validation passed for the eight-file metadata-emission commit.
 
 Deferred expensive validation:
 
@@ -66,10 +67,11 @@ Deliberate out-of-scope files:
 
 Next concrete action:
 
-1. Run the focused header validator for the intended generator commit.
-2. Commit the metadata-emission slice with an English Conventional Commit body.
-3. Update this state with the resulting hash, then implement artifact metadata
-   declarations, workflow uploads, and paired fetch installation.
+1. Extend `skia/artifacts.json` with machine build-config entries and release
+   assets for all 11 published static-library targets.
+2. Make `skia/fetch.sh` download both files into temporary paths, validate v1
+   platform/architecture/SHA fields, and only then replace the installed pair.
+3. Add focused fetch tests and workflow sidecar verification/upload paths.
 
 Resume command:
 

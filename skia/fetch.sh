@@ -12,6 +12,7 @@ GITHUB_TOKEN_ENV="${SKIA_GITHUB_TOKEN_ENV:-}"
 PLATFORM=""
 ARCH=""
 SOURCE=""
+BUILD_CONFIG_SOURCE=""
 INSTALL_DEV_BUNDLE=0
 
 usage() {
@@ -27,6 +28,8 @@ Options:
   --arch <name>       Target arch/ABI: arm64, x86, x64, x86_64, aarch64,
                       armv7l, wasm32, arm64-v8a.
   --source <path|url> Install from a specific local file or URL.
+  --build-config <path|url>
+                      Matching SkiaBuildConfig.cmake for --source.
   --base-url <url>    Base URL used with the manifest artifact_name.
   --github-repo <r>   GitHub repo in owner/name format.
   --release-tag <t>   GitHub release tag.
@@ -41,6 +44,7 @@ Options:
 Examples:
   $(basename "$0")
   $(basename "$0") --platform macos --arch arm64 --source /tmp/libskia.a
+  $(basename "$0") --platform macos --arch arm64 --source /tmp/libskia.a --build-config /tmp/SkiaBuildConfig.cmake
   $(basename "$0") --platform linux --arch x86_64 --base-url https://artifacts.example.com/skia/m87
   $(basename "$0") --platform ios --arch arm64
   $(basename "$0") --platform ios-simulator --arch arm64
@@ -242,6 +246,11 @@ while [[ $# -gt 0 ]]; do
       SOURCE="$2"
       shift 2
       ;;
+    --build-config)
+      [[ $# -ge 2 ]] || die "--build-config requires a value"
+      BUILD_CONFIG_SOURCE="$2"
+      shift 2
+      ;;
     --base-url)
       [[ $# -ge 2 ]] || die "--base-url requires a value"
       BASE_URL="$2"
@@ -338,6 +347,14 @@ print(source.get("tag", ""))
 dev_bundle = defaults.get("dev_bundle", {})
 print(dev_bundle.get("artifact_name", ""))
 print(dev_bundle.get("sha256", ""))
+build_config = manifest.get("metadata", {}).get("machine-build-configs", {}).get(artifact_key)
+if build_config is None:
+    sys.exit(3)
+print(build_config["artifact_name"])
+print(build_config["target_path"])
+print(build_config.get("sha256", ""))
+machine_build_config = defaults.get("machine_build_config", {})
+print("true" if machine_build_config.get("required", False) else "false")
 PY
 ) || die "artifact '${ARTIFACT_KEY}' not found in manifest ${MANIFEST_PATH}"
 
@@ -349,7 +366,12 @@ DEFAULT_GITHUB_REPO=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '5p')
 DEFAULT_RELEASE_TAG=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '6p')
 DEV_BUNDLE_NAME=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '7p')
 DEV_BUNDLE_SHA=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '8p')
+BUILD_CONFIG_NAME=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '9p')
+BUILD_CONFIG_TARGET_REL=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '10p')
+BUILD_CONFIG_SHA=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '11p')
+DEFAULT_BUILD_CONFIG_REQUIRED=$(printf '%s\n' "$ARTIFACT_INFO" | sed -n '12p')
 TARGET_PATH="$ROOT_DIR/$TARGET_PATH_REL"
+BUILD_CONFIG_TARGET="$ROOT_DIR/$BUILD_CONFIG_TARGET_REL"
 
 if [[ -z "$GITHUB_REPO" ]]; then
   GITHUB_REPO="$DEFAULT_GITHUB_REPO"
@@ -365,12 +387,23 @@ if [[ $PRINT_TARGET -eq 1 ]]; then
 fi
 
 mkdir -p "$(dirname "$TARGET_PATH")"
+mkdir -p "$(dirname "$BUILD_CONFIG_TARGET")"
 
 TMP_FILE=$(mktemp /tmp/skia-artifact.XXXXXX)
+TMP_BUILD_CONFIG=$(mktemp /tmp/skia-build-config.XXXXXX)
+TARGET_TMP=""
+BUILD_CONFIG_TARGET_TMP=""
 TMP_DEV_FILE=""
 TMP_DEV_DIR=""
 cleanup() {
   rm -f "$TMP_FILE"
+  rm -f "$TMP_BUILD_CONFIG"
+  if [[ -n "$TARGET_TMP" ]]; then
+    rm -f "$TARGET_TMP"
+  fi
+  if [[ -n "$BUILD_CONFIG_TARGET_TMP" ]]; then
+    rm -f "$BUILD_CONFIG_TARGET_TMP"
+  fi
   if [[ -n "$TMP_DEV_FILE" ]]; then
     rm -f "$TMP_DEV_FILE"
   fi
@@ -399,9 +432,60 @@ fi
 
 verify_sha256 "$TMP_FILE" "$EXPECTED_SHA" "$ARTIFACT_KEY"
 
-cp "$TMP_FILE" "$TARGET_PATH"
+INSTALL_BUILD_CONFIG=0
+if [[ "$DEFAULT_BUILD_CONFIG_REQUIRED" == "true" ||
+      -n "$BUILD_CONFIG_SOURCE" ||
+      -n "$BASE_URL" ||
+      "$GITHUB_REPO" != "$DEFAULT_GITHUB_REPO" ||
+      "$RELEASE_TAG" != "$DEFAULT_RELEASE_TAG" ]]; then
+  INSTALL_BUILD_CONFIG=1
+fi
+
+if [[ $INSTALL_BUILD_CONFIG -eq 1 && -n "$BUILD_CONFIG_SOURCE" ]]; then
+  if [[ -f "$BUILD_CONFIG_SOURCE" ]]; then
+    cp "$BUILD_CONFIG_SOURCE" "$TMP_BUILD_CONFIG"
+  else
+    download_to_file "$BUILD_CONFIG_SOURCE" "$TMP_BUILD_CONFIG"
+  fi
+elif [[ $INSTALL_BUILD_CONFIG -eq 1 && -n "$SOURCE" ]]; then
+  die "--source requires a matching --build-config; backend metadata cannot be inferred"
+elif [[ $INSTALL_BUILD_CONFIG -eq 1 && -n "$BASE_URL" ]]; then
+  download_to_file "${BASE_URL%/}/${BUILD_CONFIG_NAME}" "$TMP_BUILD_CONFIG"
+elif [[ $INSTALL_BUILD_CONFIG -eq 1 && ( "$DEFAULT_SOURCE_TYPE" == "github_release" || -n "$GITHUB_REPO" || -n "$RELEASE_TAG" ) ]]; then
+  download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${BUILD_CONFIG_NAME}" "$TMP_BUILD_CONFIG"
+elif [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
+  die "unable to resolve matching Skia build metadata"
+fi
+
+if [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
+  verify_sha256 "$TMP_BUILD_CONFIG" "$BUILD_CONFIG_SHA" "build-config-${ARTIFACT_KEY}"
+  python3 "$ROOT_DIR/scripts/validate-build-config.py" \
+    --build-config "$TMP_BUILD_CONFIG" \
+    --library "$TMP_FILE" \
+    --platform "$PLATFORM" \
+    --architecture "$ARCH"
+else
+  echo "warning: installing legacy Skia artifact without machine build metadata" >&2
+fi
+
+TARGET_TMP=$(mktemp "$(dirname "$TARGET_PATH")/.libskia-install.XXXXXX")
+cp "$TMP_FILE" "$TARGET_TMP"
+if [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
+  BUILD_CONFIG_TARGET_TMP=$(mktemp "$(dirname "$BUILD_CONFIG_TARGET")/.skia-build-config-install.XXXXXX")
+  cp "$TMP_BUILD_CONFIG" "$BUILD_CONFIG_TARGET_TMP"
+fi
+mv -f "$TARGET_TMP" "$TARGET_PATH"
+TARGET_TMP=""
+if [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
+  mv -f "$BUILD_CONFIG_TARGET_TMP" "$BUILD_CONFIG_TARGET"
+  BUILD_CONFIG_TARGET_TMP=""
+fi
+
 echo "Installed ${ARTIFACT_KEY} artifact at:"
 echo "  $TARGET_PATH"
+if [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
+  echo "  $BUILD_CONFIG_TARGET"
+fi
 
 if [[ $INSTALL_DEV_BUNDLE -eq 1 ]]; then
   [[ -n "$DEV_BUNDLE_NAME" ]] || die "no defaults.dev_bundle.artifact_name configured in ${MANIFEST_PATH}"

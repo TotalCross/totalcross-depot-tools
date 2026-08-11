@@ -366,6 +366,7 @@ jobs:
       - name: Verify artifacts
         run: |
           test -f "skia/dist/libskia-${{ matrix.artifact_suffix }}.a"
+          test -f "skia/dist/SkiaBuildConfig-${{ matrix.artifact_suffix }}.cmake"
           test -f "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md"
@@ -377,6 +378,7 @@ jobs:
           name: skia-${{ matrix.project }}
           path: |
             skia/dist/libskia-${{ matrix.artifact_suffix }}.a
+            skia/dist/SkiaBuildConfig-${{ matrix.artifact_suffix }}.cmake
             skia/dist/build_config_manifest-${{ matrix.artifact_suffix }}.md
 
       - name: Upload full diagnostics
@@ -468,6 +470,7 @@ jobs:
       - name: Verify artifacts
         run: |
           test -f skia/dist/libskia-android-arm64-v8a.a
+          test -f skia/dist/SkiaBuildConfig-android-arm64-v8a.cmake
           test -f skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -Eq 'is_component_build[[:space:]]*=[[:space:]]*false' skia/dist/build_config_manifest-android-arm64-v8a.md
           grep -q "${ANDROID_NDK_VERSION}" skia/dist/build_config_manifest-android-arm64-v8a.md
@@ -484,6 +487,7 @@ jobs:
           name: skia-android-arm64-v8a
           path: |
             skia/dist/libskia-android-arm64-v8a.a
+            skia/dist/SkiaBuildConfig-android-arm64-v8a.cmake
             skia/dist/build_config_manifest-android-arm64-v8a.md
 
       - name: Upload diagnostics
@@ -572,6 +576,7 @@ jobs:
       - name: Verify artifacts
         run: |
           test -f skia/dist/libskia-wasm32.a
+          test -f skia/dist/SkiaBuildConfig-wasm-wasm32.cmake
           test -f skia/dist/build_config_manifest-wasm-wasm32.md
           grep -Eq 'target_cpu[[:space:]]*=[[:space:]]*"wasm"' skia/dist/build_config_manifest-wasm-wasm32.md
           grep -Eq 'skia_use_webgl[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-wasm-wasm32.md
@@ -584,6 +589,7 @@ jobs:
           name: skia-wasm-wasm32
           path: |
             skia/dist/libskia-wasm32.a
+            skia/dist/SkiaBuildConfig-wasm-wasm32.cmake
             skia/dist/build_config_manifest-wasm-wasm32.md
 
       - name: Upload diagnostics
@@ -684,6 +690,7 @@ jobs:
       - name: Verify artifacts
         run: |
           test -f "skia/dist/libskia-${{ matrix.target }}.a"
+          test -f "skia/dist/SkiaBuildConfig-${{ matrix.target }}.cmake"
           test -f "skia/dist/build_config_manifest-${{ matrix.target }}.md"
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' "skia/dist/build_config_manifest-${{ matrix.target }}.md"
@@ -695,6 +702,7 @@ jobs:
           name: skia-${{ matrix.target }}
           path: |
             skia/dist/libskia-${{ matrix.target }}.a
+            skia/dist/SkiaBuildConfig-${{ matrix.target }}.cmake
             skia/dist/build_config_manifest-${{ matrix.target }}.md
 
       - name: Upload diagnostics
@@ -760,6 +768,8 @@ jobs:
           path: |
             skia/dist/libskia-ios-arm64.a
             skia/dist/libskia-ios-simulator-arm64.a
+            skia/dist/SkiaBuildConfig-ios-arm64.cmake
+            skia/dist/SkiaBuildConfig-ios-simulator-arm64.cmake
             skia/dist/skia-ios.xcframework.zip
             skia/dist/skia-dev-headers-158dc9d7.zip
             skia/dist/build_config_manifest-ios-arm64.md
@@ -867,6 +877,7 @@ jobs:
         shell: bash
         run: |
           test -f skia/dist/libskia-windows-${{ matrix.arch }}.lib
+          test -f skia/dist/SkiaBuildConfig-windows-${{ matrix.arch }}.cmake
           test -f skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'skia_use_system_zlib[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
           grep -Eq 'skia_use_system_libpng[[:space:]]*=[[:space:]]*true' skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
@@ -883,6 +894,7 @@ jobs:
           name: skia-windows-${{ matrix.arch }}
           path: |
             skia/dist/libskia-windows-${{ matrix.arch }}.lib
+            skia/dist/SkiaBuildConfig-windows-${{ matrix.arch }}.cmake
             skia/dist/build_config_manifest-windows-${{ matrix.arch }}.md
 
       - name: Upload diagnostics
@@ -912,6 +924,7 @@ jobs:
       - name: Generate SHA256SUMS
         run: |
           ! find release-assets -maxdepth 1 -name '*.so' | grep -q .
+          test "$(find release-assets -maxdepth 1 -type f -name 'SkiaBuildConfig-*.cmake' | wc -l | tr -d ' ')" = "11"
 
           mkdir -p release-assets/.diagnostics
           if [ -d release-assets/diagnostics ]; then

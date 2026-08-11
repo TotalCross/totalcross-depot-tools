@@ -50,6 +50,9 @@
         },
         "dev_bundle": {
             "artifact_name": "skia-dev-headers-158dc9d7.zip"
+        },
+        "machine_build_config": {
+            "required": false
         }
     },
     "artifacts": {
@@ -99,6 +102,52 @@
         }
     },
     "metadata": {
+        "machine-build-configs": {
+            "linux-x86_64": {
+                "artifact_name": "SkiaBuildConfig-linux-x86_64.cmake",
+                "target_path": "local/out/Release/linux/x86_64/SkiaBuildConfig.cmake"
+            },
+            "linux-aarch64": {
+                "artifact_name": "SkiaBuildConfig-linux-aarch64.cmake",
+                "target_path": "local/out/Release/linux/aarch64/SkiaBuildConfig.cmake"
+            },
+            "linux-armv7l": {
+                "artifact_name": "SkiaBuildConfig-linux-armv7l.cmake",
+                "target_path": "local/out/Release/linux/armv7l/SkiaBuildConfig.cmake"
+            },
+            "wasm-wasm32": {
+                "artifact_name": "SkiaBuildConfig-wasm-wasm32.cmake",
+                "target_path": "local/out/Release/wasm/wasm32/SkiaBuildConfig.cmake"
+            },
+            "android-arm64-v8a": {
+                "artifact_name": "SkiaBuildConfig-android-arm64-v8a.cmake",
+                "target_path": "local/out/Release/android/arm64-v8a/SkiaBuildConfig.cmake"
+            },
+            "macos-arm64": {
+                "artifact_name": "SkiaBuildConfig-macos-arm64.cmake",
+                "target_path": "local/out/Release/macos/arm64/SkiaBuildConfig.cmake"
+            },
+            "ios-arm64": {
+                "artifact_name": "SkiaBuildConfig-ios-arm64.cmake",
+                "target_path": "local/out/Release/ios/arm64/SkiaBuildConfig.cmake"
+            },
+            "ios-simulator-arm64": {
+                "artifact_name": "SkiaBuildConfig-ios-simulator-arm64.cmake",
+                "target_path": "local/out/Release/ios-simulator/arm64/SkiaBuildConfig.cmake"
+            },
+            "windows-x86": {
+                "artifact_name": "SkiaBuildConfig-windows-x86.cmake",
+                "target_path": "local/out/Release/windows/x86/SkiaBuildConfig.cmake"
+            },
+            "windows-x64": {
+                "artifact_name": "SkiaBuildConfig-windows-x64.cmake",
+                "target_path": "local/out/Release/windows/x64/SkiaBuildConfig.cmake"
+            },
+            "windows-arm64": {
+                "artifact_name": "SkiaBuildConfig-windows-arm64.cmake",
+                "target_path": "local/out/Release/windows/arm64/SkiaBuildConfig.cmake"
+            }
+        },
         "build-manifests": {
             "linux-x86_64": {
                 "artifact_name": "build_config_manifest-linux-x86_64.md",

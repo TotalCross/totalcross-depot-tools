@@ -174,10 +174,13 @@ only concise summaries in evidence.
 * [x] (2026-08-11) Milestone 1: established the effective build-feature and
   link-dependency matrix from the r7 release archives, generated build graph,
   effective overrides, pinned Skia source, and symbol evidence.
-* [ ] Milestone 2: generator and shared artifact-copy integration implemented;
-  complete the first logical commit and representative real-build checkpoint.
-* [ ] Milestone 3: package and fetch the matching metadata with every Skia
-  prebuilt.
+* [x] (2026-08-11) Milestone 2 implementation: commit `06d6848` generates v1
+  metadata from effective GN state, SHA-binds it to the final archive, and
+  corrects GN diagnostics collection. A representative real-build checkpoint
+  remains deferred to the operation-family validation before resolver closure.
+* [ ] Milestone 3 implementation: all 11 archive/config mappings, workflow
+  uploads, candidate aggregation checks, and validated paired fetch are in the
+  working tree; complete the logical commit and operation-family checkpoint.
 * [ ] Milestone 4: make `Skia::Skia` derive its link interface from that
   metadata.
 * [ ] Milestone 5: validate the package contract on representative backend
