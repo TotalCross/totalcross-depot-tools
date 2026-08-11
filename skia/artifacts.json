@@ -1,209 +1,209 @@
 {
-    "version": 1,
-    "skia": {
-        "submodule_path": "skia",
-        "upstream_url": "https://skia.googlesource.com/skia.git",
-        "commit": "158dc9d7d4cafb177b99b68c5dc502f8f4282092"
+  "version": 1,
+  "skia": {
+    "submodule_path": "skia",
+    "upstream_url": "https://skia.googlesource.com/skia.git",
+    "commit": "158dc9d7d4cafb177b99b68c5dc502f8f4282092"
+  },
+  "depot_tools": {
+    "submodule_path": "depot_tools",
+    "upstream_url": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
+    "commit": "e868546ad82d7d25eb0a925825d033c355e28152"
+  },
+  "release": {
+    "tag": "skia-158dc9d7-r8",
+    "dev_bundle": "skia-dev-headers-158dc9d7.zip",
+    "assets": [
+      "libskia-linux-x86_64.a",
+      "libskia-linux-aarch64.a",
+      "libskia-linux-armv7l.a",
+      "libskia-wasm32.a",
+      "libskia-android-arm64-v8a.a",
+      "libskia-macos-arm64.a",
+      "libskia-ios-arm64.a",
+      "libskia-ios-simulator-arm64.a",
+      "skia-ios.xcframework.zip",
+      "libskia-windows-x86.lib",
+      "libskia-windows-x64.lib",
+      "libskia-windows-arm64.lib",
+      "SkiaBuildConfig-linux-x86_64.cmake",
+      "SkiaBuildConfig-linux-aarch64.cmake",
+      "SkiaBuildConfig-linux-armv7l.cmake",
+      "SkiaBuildConfig-wasm-wasm32.cmake",
+      "SkiaBuildConfig-android-arm64-v8a.cmake",
+      "SkiaBuildConfig-macos-arm64.cmake",
+      "SkiaBuildConfig-ios-arm64.cmake",
+      "SkiaBuildConfig-ios-simulator-arm64.cmake",
+      "SkiaBuildConfig-windows-x86.cmake",
+      "SkiaBuildConfig-windows-x64.cmake",
+      "SkiaBuildConfig-windows-arm64.cmake",
+      "build_config_manifest-linux-x86_64.md",
+      "build_config_manifest-linux-aarch64.md",
+      "build_config_manifest-linux-armv7l.md",
+      "build_config_manifest-wasm-wasm32.md",
+      "build_config_manifest-android-arm64-v8a.md",
+      "build_config_manifest-macos-arm64.md",
+      "build_config_manifest-ios-arm64.md",
+      "build_config_manifest-ios-simulator-arm64.md",
+      "build_config_manifest-windows-x86.md",
+      "build_config_manifest-windows-x64.md",
+      "build_config_manifest-windows-arm64.md",
+      "skia-dev-headers-158dc9d7.zip",
+      "skia-build-diagnostics-158dc9d7.tar.gz",
+      "SHA256SUMS"
+    ]
+  },
+  "defaults": {
+    "source": {
+      "type": "github_release",
+      "repo": "TotalCross/totalcross-depot-tools",
+      "tag": "skia-158dc9d7-r8"
     },
-    "depot_tools": {
-        "submodule_path": "depot_tools",
-        "upstream_url": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
-        "commit": "e868546ad82d7d25eb0a925825d033c355e28152"
+    "dev_bundle": {
+      "artifact_name": "skia-dev-headers-158dc9d7.zip"
     },
-    "release": {
-        "tag": "skia-158dc9d7-r7",
-        "dev_bundle": "skia-dev-headers-158dc9d7.zip",
-        "assets": [
-            "libskia-linux-x86_64.a",
-            "libskia-linux-aarch64.a",
-            "libskia-linux-armv7l.a",
-            "libskia-wasm32.a",
-            "libskia-android-arm64-v8a.a",
-            "libskia-macos-arm64.a",
-            "libskia-ios-arm64.a",
-            "libskia-ios-simulator-arm64.a",
-            "skia-ios.xcframework.zip",
-            "libskia-windows-x86.lib",
-            "libskia-windows-x64.lib",
-            "libskia-windows-arm64.lib",
-            "SkiaBuildConfig-linux-x86_64.cmake",
-            "SkiaBuildConfig-linux-aarch64.cmake",
-            "SkiaBuildConfig-linux-armv7l.cmake",
-            "SkiaBuildConfig-wasm-wasm32.cmake",
-            "SkiaBuildConfig-android-arm64-v8a.cmake",
-            "SkiaBuildConfig-macos-arm64.cmake",
-            "SkiaBuildConfig-ios-arm64.cmake",
-            "SkiaBuildConfig-ios-simulator-arm64.cmake",
-            "SkiaBuildConfig-windows-x86.cmake",
-            "SkiaBuildConfig-windows-x64.cmake",
-            "SkiaBuildConfig-windows-arm64.cmake",
-            "build_config_manifest-linux-x86_64.md",
-            "build_config_manifest-linux-aarch64.md",
-            "build_config_manifest-linux-armv7l.md",
-            "build_config_manifest-wasm-wasm32.md",
-            "build_config_manifest-android-arm64-v8a.md",
-            "build_config_manifest-macos-arm64.md",
-            "build_config_manifest-ios-arm64.md",
-            "build_config_manifest-ios-simulator-arm64.md",
-            "build_config_manifest-windows-x86.md",
-            "build_config_manifest-windows-x64.md",
-            "build_config_manifest-windows-arm64.md",
-            "skia-dev-headers-158dc9d7.zip",
-            "skia-build-diagnostics-158dc9d7.tar.gz",
-            "SHA256SUMS"
-        ]
-    },
-    "defaults": {
-        "source": {
-            "type": "github_release",
-            "repo": "TotalCross/totalcross-depot-tools",
-            "tag": "skia-158dc9d7-r7"
-        },
-        "dev_bundle": {
-            "artifact_name": "skia-dev-headers-158dc9d7.zip"
-        },
-        "machine_build_config": {
-            "required": false
-        }
-    },
-    "artifacts": {
-        "linux-x86_64": {
-            "artifact_name": "libskia-linux-x86_64.a",
-            "target_path": "local/out/Release/linux/x86_64/libskia.a"
-        },
-        "linux-aarch64": {
-            "artifact_name": "libskia-linux-aarch64.a",
-            "target_path": "local/out/Release/linux/aarch64/libskia.a"
-        },
-        "linux-armv7l": {
-            "artifact_name": "libskia-linux-armv7l.a",
-            "target_path": "local/out/Release/linux/armv7l/libskia.a"
-        },
-        "wasm-wasm32": {
-            "artifact_name": "libskia-wasm32.a",
-            "target_path": "local/out/Release/wasm/wasm32/libskia.a"
-        },
-        "android-arm64-v8a": {
-            "artifact_name": "libskia-android-arm64-v8a.a",
-            "target_path": "local/out/Release/android/arm64-v8a/libskia.a"
-        },
-        "macos-arm64": {
-            "artifact_name": "libskia-macos-arm64.a",
-            "target_path": "local/out/Release/macos/arm64/libskia.a"
-        },
-        "ios-arm64": {
-            "artifact_name": "libskia-ios-arm64.a",
-            "target_path": "local/out/Release/ios/arm64/libskia.a"
-        },
-        "ios-simulator-arm64": {
-            "artifact_name": "libskia-ios-simulator-arm64.a",
-            "target_path": "local/out/Release/ios-simulator/arm64/libskia.a"
-        },
-        "windows-x86": {
-            "artifact_name": "libskia-windows-x86.lib",
-            "target_path": "local/out/Release/windows/x86/libskia.lib"
-        },
-        "windows-x64": {
-            "artifact_name": "libskia-windows-x64.lib",
-            "target_path": "local/out/Release/windows/x64/libskia.lib"
-        },
-        "windows-arm64": {
-            "artifact_name": "libskia-windows-arm64.lib",
-            "target_path": "local/out/Release/windows/arm64/libskia.lib"
-        }
-    },
-    "metadata": {
-        "machine-build-configs": {
-            "linux-x86_64": {
-                "artifact_name": "SkiaBuildConfig-linux-x86_64.cmake",
-                "target_path": "local/out/Release/linux/x86_64/SkiaBuildConfig.cmake"
-            },
-            "linux-aarch64": {
-                "artifact_name": "SkiaBuildConfig-linux-aarch64.cmake",
-                "target_path": "local/out/Release/linux/aarch64/SkiaBuildConfig.cmake"
-            },
-            "linux-armv7l": {
-                "artifact_name": "SkiaBuildConfig-linux-armv7l.cmake",
-                "target_path": "local/out/Release/linux/armv7l/SkiaBuildConfig.cmake"
-            },
-            "wasm-wasm32": {
-                "artifact_name": "SkiaBuildConfig-wasm-wasm32.cmake",
-                "target_path": "local/out/Release/wasm/wasm32/SkiaBuildConfig.cmake"
-            },
-            "android-arm64-v8a": {
-                "artifact_name": "SkiaBuildConfig-android-arm64-v8a.cmake",
-                "target_path": "local/out/Release/android/arm64-v8a/SkiaBuildConfig.cmake"
-            },
-            "macos-arm64": {
-                "artifact_name": "SkiaBuildConfig-macos-arm64.cmake",
-                "target_path": "local/out/Release/macos/arm64/SkiaBuildConfig.cmake"
-            },
-            "ios-arm64": {
-                "artifact_name": "SkiaBuildConfig-ios-arm64.cmake",
-                "target_path": "local/out/Release/ios/arm64/SkiaBuildConfig.cmake"
-            },
-            "ios-simulator-arm64": {
-                "artifact_name": "SkiaBuildConfig-ios-simulator-arm64.cmake",
-                "target_path": "local/out/Release/ios-simulator/arm64/SkiaBuildConfig.cmake"
-            },
-            "windows-x86": {
-                "artifact_name": "SkiaBuildConfig-windows-x86.cmake",
-                "target_path": "local/out/Release/windows/x86/SkiaBuildConfig.cmake"
-            },
-            "windows-x64": {
-                "artifact_name": "SkiaBuildConfig-windows-x64.cmake",
-                "target_path": "local/out/Release/windows/x64/SkiaBuildConfig.cmake"
-            },
-            "windows-arm64": {
-                "artifact_name": "SkiaBuildConfig-windows-arm64.cmake",
-                "target_path": "local/out/Release/windows/arm64/SkiaBuildConfig.cmake"
-            }
-        },
-        "build-manifests": {
-            "linux-x86_64": {
-                "artifact_name": "build_config_manifest-linux-x86_64.md",
-                "target_path": "local/out/Release/linux/x86_64/build_config_manifest.md"
-            },
-            "linux-aarch64": {
-                "artifact_name": "build_config_manifest-linux-aarch64.md",
-                "target_path": "local/out/Release/linux/aarch64/build_config_manifest.md"
-            },
-            "linux-armv7l": {
-                "artifact_name": "build_config_manifest-linux-armv7l.md",
-                "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md"
-            },
-            "wasm-wasm32": {
-                "artifact_name": "build_config_manifest-wasm-wasm32.md",
-                "target_path": "local/out/Release/wasm/wasm32/build_config_manifest.md"
-            },
-            "android-arm64-v8a": {
-                "artifact_name": "build_config_manifest-android-arm64-v8a.md",
-                "target_path": "local/out/Release/android/arm64-v8a/build_config_manifest.md"
-            },
-            "macos-arm64": {
-                "artifact_name": "build_config_manifest-macos-arm64.md",
-                "target_path": "local/out/Release/macos/arm64/build_config_manifest.md"
-            },
-            "ios-arm64": {
-                "artifact_name": "build_config_manifest-ios-arm64.md",
-                "target_path": "local/out/Release/ios/arm64/build_config_manifest.md"
-            },
-            "ios-simulator-arm64": {
-                "artifact_name": "build_config_manifest-ios-simulator-arm64.md",
-                "target_path": "local/out/Release/ios-simulator/arm64/build_config_manifest.md"
-            },
-            "windows-x86": {
-                "artifact_name": "build_config_manifest-windows-x86.md",
-                "target_path": "local/out/Release/windows/x86/build_config_manifest.md"
-            },
-            "windows-x64": {
-                "artifact_name": "build_config_manifest-windows-x64.md",
-                "target_path": "local/out/Release/windows/x64/build_config_manifest.md"
-            },
-            "windows-arm64": {
-                "artifact_name": "build_config_manifest-windows-arm64.md",
-                "target_path": "local/out/Release/windows/arm64/build_config_manifest.md"
-            }
-        }
+    "machine_build_config": {
+      "required": false
     }
+  },
+  "artifacts": {
+    "linux-x86_64": {
+      "artifact_name": "libskia-linux-x86_64.a",
+      "target_path": "local/out/Release/linux/x86_64/libskia.a"
+    },
+    "linux-aarch64": {
+      "artifact_name": "libskia-linux-aarch64.a",
+      "target_path": "local/out/Release/linux/aarch64/libskia.a"
+    },
+    "linux-armv7l": {
+      "artifact_name": "libskia-linux-armv7l.a",
+      "target_path": "local/out/Release/linux/armv7l/libskia.a"
+    },
+    "wasm-wasm32": {
+      "artifact_name": "libskia-wasm32.a",
+      "target_path": "local/out/Release/wasm/wasm32/libskia.a"
+    },
+    "android-arm64-v8a": {
+      "artifact_name": "libskia-android-arm64-v8a.a",
+      "target_path": "local/out/Release/android/arm64-v8a/libskia.a"
+    },
+    "macos-arm64": {
+      "artifact_name": "libskia-macos-arm64.a",
+      "target_path": "local/out/Release/macos/arm64/libskia.a"
+    },
+    "ios-arm64": {
+      "artifact_name": "libskia-ios-arm64.a",
+      "target_path": "local/out/Release/ios/arm64/libskia.a"
+    },
+    "ios-simulator-arm64": {
+      "artifact_name": "libskia-ios-simulator-arm64.a",
+      "target_path": "local/out/Release/ios-simulator/arm64/libskia.a"
+    },
+    "windows-x86": {
+      "artifact_name": "libskia-windows-x86.lib",
+      "target_path": "local/out/Release/windows/x86/libskia.lib"
+    },
+    "windows-x64": {
+      "artifact_name": "libskia-windows-x64.lib",
+      "target_path": "local/out/Release/windows/x64/libskia.lib"
+    },
+    "windows-arm64": {
+      "artifact_name": "libskia-windows-arm64.lib",
+      "target_path": "local/out/Release/windows/arm64/libskia.lib"
+    }
+  },
+  "metadata": {
+    "machine-build-configs": {
+      "linux-x86_64": {
+        "artifact_name": "SkiaBuildConfig-linux-x86_64.cmake",
+        "target_path": "local/out/Release/linux/x86_64/SkiaBuildConfig.cmake"
+      },
+      "linux-aarch64": {
+        "artifact_name": "SkiaBuildConfig-linux-aarch64.cmake",
+        "target_path": "local/out/Release/linux/aarch64/SkiaBuildConfig.cmake"
+      },
+      "linux-armv7l": {
+        "artifact_name": "SkiaBuildConfig-linux-armv7l.cmake",
+        "target_path": "local/out/Release/linux/armv7l/SkiaBuildConfig.cmake"
+      },
+      "wasm-wasm32": {
+        "artifact_name": "SkiaBuildConfig-wasm-wasm32.cmake",
+        "target_path": "local/out/Release/wasm/wasm32/SkiaBuildConfig.cmake"
+      },
+      "android-arm64-v8a": {
+        "artifact_name": "SkiaBuildConfig-android-arm64-v8a.cmake",
+        "target_path": "local/out/Release/android/arm64-v8a/SkiaBuildConfig.cmake"
+      },
+      "macos-arm64": {
+        "artifact_name": "SkiaBuildConfig-macos-arm64.cmake",
+        "target_path": "local/out/Release/macos/arm64/SkiaBuildConfig.cmake"
+      },
+      "ios-arm64": {
+        "artifact_name": "SkiaBuildConfig-ios-arm64.cmake",
+        "target_path": "local/out/Release/ios/arm64/SkiaBuildConfig.cmake"
+      },
+      "ios-simulator-arm64": {
+        "artifact_name": "SkiaBuildConfig-ios-simulator-arm64.cmake",
+        "target_path": "local/out/Release/ios-simulator/arm64/SkiaBuildConfig.cmake"
+      },
+      "windows-x86": {
+        "artifact_name": "SkiaBuildConfig-windows-x86.cmake",
+        "target_path": "local/out/Release/windows/x86/SkiaBuildConfig.cmake"
+      },
+      "windows-x64": {
+        "artifact_name": "SkiaBuildConfig-windows-x64.cmake",
+        "target_path": "local/out/Release/windows/x64/SkiaBuildConfig.cmake"
+      },
+      "windows-arm64": {
+        "artifact_name": "SkiaBuildConfig-windows-arm64.cmake",
+        "target_path": "local/out/Release/windows/arm64/SkiaBuildConfig.cmake"
+      }
+    },
+    "build-manifests": {
+      "linux-x86_64": {
+        "artifact_name": "build_config_manifest-linux-x86_64.md",
+        "target_path": "local/out/Release/linux/x86_64/build_config_manifest.md"
+      },
+      "linux-aarch64": {
+        "artifact_name": "build_config_manifest-linux-aarch64.md",
+        "target_path": "local/out/Release/linux/aarch64/build_config_manifest.md"
+      },
+      "linux-armv7l": {
+        "artifact_name": "build_config_manifest-linux-armv7l.md",
+        "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md"
+      },
+      "wasm-wasm32": {
+        "artifact_name": "build_config_manifest-wasm-wasm32.md",
+        "target_path": "local/out/Release/wasm/wasm32/build_config_manifest.md"
+      },
+      "android-arm64-v8a": {
+        "artifact_name": "build_config_manifest-android-arm64-v8a.md",
+        "target_path": "local/out/Release/android/arm64-v8a/build_config_manifest.md"
+      },
+      "macos-arm64": {
+        "artifact_name": "build_config_manifest-macos-arm64.md",
+        "target_path": "local/out/Release/macos/arm64/build_config_manifest.md"
+      },
+      "ios-arm64": {
+        "artifact_name": "build_config_manifest-ios-arm64.md",
+        "target_path": "local/out/Release/ios/arm64/build_config_manifest.md"
+      },
+      "ios-simulator-arm64": {
+        "artifact_name": "build_config_manifest-ios-simulator-arm64.md",
+        "target_path": "local/out/Release/ios-simulator/arm64/build_config_manifest.md"
+      },
+      "windows-x86": {
+        "artifact_name": "build_config_manifest-windows-x86.md",
+        "target_path": "local/out/Release/windows/x86/build_config_manifest.md"
+      },
+      "windows-x64": {
+        "artifact_name": "build_config_manifest-windows-x64.md",
+        "target_path": "local/out/Release/windows/x64/build_config_manifest.md"
+      },
+      "windows-arm64": {
+        "artifact_name": "build_config_manifest-windows-arm64.md",
+        "target_path": "local/out/Release/windows/arm64/build_config_manifest.md"
+      }
+    }
+  }
 }
