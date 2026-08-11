@@ -176,18 +176,28 @@ only concise summaries in evidence.
   effective overrides, pinned Skia source, and symbol evidence.
 * [x] (2026-08-11) Milestone 2 implementation: commit `06d6848` generates v1
   metadata from effective GN state, SHA-binds it to the final archive, and
-  corrects GN diagnostics collection. A representative real-build checkpoint
-  remains deferred to the operation-family validation before resolver closure.
-* [ ] Milestone 3 implementation: all 11 archive/config mappings, workflow
-  uploads, candidate aggregation checks, and validated paired fetch are in the
-  working tree; complete the logical commit and operation-family checkpoint.
-* [ ] Milestone 4: make `Skia::Skia` derive its link interface from that
-  metadata.
-* [ ] Milestone 5: validate the package contract on representative backend
-  combinations and the available platform matrix.
-* [ ] Milestone 6: prepare and, only with explicit authorization, publish a new
-  Skia release carrying the new artifact contract.
-* [ ] Finalize the editorial report and handoff.
+  corrects GN diagnostics collection. Milestone 5 subsequently completed the
+  real macOS, iOS, and iOS Simulator generation checkpoints.
+* [x] (2026-08-11) Milestone 3 implementation: commit `f601c01` declares all 11
+  archive/config mappings, uploads sidecars from every workflow lane, requires
+  them during candidate aggregation, and installs validated pairs. The current
+  r7 default remains a warned legacy contract until release activation.
+* [x] (2026-08-11) Milestone 4: commit `1083f82` validates v1 metadata against
+  the selected archive and makes `Skia::Skia` derive repository, framework,
+  toolchain, and compile-definition requirements from effective features. The
+  exact r7 macOS ARM64 archive links through the target-only Metal fixture.
+* [x] (2026-08-11) Milestone 5 local closure: commit `caf58c7` preserves the
+  repository dependency choices at packaging, propagates platform/backend
+  definitions, and passes the synthetic matrix, exact-r7 and freshly built
+  macOS consumers, macOS/iOS/iOS Simulator build family, XCFramework packaging,
+  and explicit local TotalCross `tcvm` build. Cross-OS workflow execution is a
+  recorded pre-release CI gate because those runners are not locally available.
+* [x] (2026-08-11) Milestone 6 preparation: consumer documentation, release
+  asset/mapping checks, compatibility behavior, validation evidence, and the
+  downstream handoff are complete. Publication remains intentionally
+  unauthorized; no release metadata, tag, push, release, or downstream pin was
+  changed.
+* [x] (2026-08-11) Finalized the editorial report and handoff.
 
 ## Current Architecture and Scope
 
@@ -1009,6 +1019,31 @@ Do not create release commits, tags, pushes, or releases until authorized.
   bundle VMA, so they do not add a Vulkan loader link item. The enabled Linux
   OpenCL flag does not add sources or dependencies to the `Skia` library target.
 
+* Observation: target-local GN arguments such as the pinned Skia
+  `skia_use_system_freetype2` declaration do not appear in the global effective
+  argument listing when their target is inactive. Repository zlib/libpng
+  selection is therefore recorded from the shared build boundary that actually
+  selects those prebuilts. An absent nested declaration is the authoritative
+  inactive classification; the Linux configuration confirmed that active
+  system Freetype does appear in the effective listing.
+
+* Observation: the first local dependency synchronization attempt opened all
+  upstream clones concurrently and received HTTP 429 responses. The checkout
+  and completed caches remain recoverable; no cache was removed.
+
+* Observation: GN argument producers run in shell command substitutions, so
+  their `SKIA_DEP_USE_*` assignments do not survive until artifact packaging.
+  The first fresh sidecar exposed this by recording repository PNG/zlib as off;
+  the generated consumer then failed on PNG symbols. Re-resolving the validated
+  prebuilt selection at `copy_static_artifact()` fixed the package boundary and
+  the generator now rejects inconsistent libpng selection.
+
+* Observation: TotalCross defines the legacy `linux` macro in its macOS native
+  build. Once backend definitions were correctly propagated, that macro made
+  pinned Skia headers choose their Unix platform branch. Propagating the
+  metadata-derived `SK_BUILD_FOR_*` definition fixed the consumer without a
+  downstream workaround.
+
 Move resolved discoveries to the archive at milestone checkpoints rather than
 allowing this section to grow indefinitely.
 
@@ -1050,6 +1085,19 @@ allowing this section to grow indefinitely.
 * Decision: resolve dependencies from both platform and enabled feature.
   Rationale: `macOS => Metal` or `Linux => OpenGL` would reproduce the same
   hidden coupling in a different file and fail when future Skia flags change.
+  Date: 2026-08-11.
+
+* Decision: record repository zlib/libpng selection explicitly in the v1
+  sidecar from `configure_prebuilt_deps()` state.
+  Rationale: these inputs are validated and applied at the shared build
+  boundary, while the pinned GN graph does not expose every nested dependency
+  choice in the global `gn args --list --short` output.
+  Date: 2026-08-11.
+
+* Decision: expose the artifact platform identity through `Skia::Skia` together
+  with backend compile definitions.
+  Rationale: consumers compile Skia public headers and must see the same
+  platform branch as the prebuilt, even if their own legacy macros conflict.
   Date: 2026-08-11.
 
 * Decision: do not disable Metal, Vulkan, OpenGL, or another existing backend to
@@ -1244,16 +1292,22 @@ existing remote tag/release state
 
 ## Outcomes & Retrospective
 
-No implementation outcome is claimed yet.
+The implementation is complete through the locally available package and
+consumer gates. Three implementation commits establish the sidecar emission,
+paired publication/fetch, and metadata-driven imported-target contract; a
+fourth fixes package-boundary state and downstream platform-definition issues
+found by real builds.
 
 The plan starts from a reproduced packaging defect: the selected macOS Skia
 prebuilt contains code from backends enabled by its GN configuration, while the
 CMake imported target does not expose the corresponding link contract.
 
-The intended outcome is a general artifact-level contract rather than a
-one-platform patch.
+The outcome is a general artifact-level contract rather than a one-platform
+patch. The exact published r7 archive and a freshly built archive both link the
+same target-only Metal fixture, and the principal TotalCross consumer builds
+against the local checkout without a Metal workaround.
 
-At milestone completion, update:
+The factual final report is:
 
 ```text
 .agent/reports/skia-prebuilt-link-contract-editorial.md
@@ -1269,8 +1323,10 @@ The final report must distinguish:
 * supported platform lanes;
 * unvalidated or intentionally deferred combinations.
 
-Do not present a successful macOS link as evidence that every backend mapping is
-correct.
+Cross-platform classifier cases and the published GN/archive matrix support all
+11 mappings, but only the locally available Apple build family was rebuilt.
+Linux, Android, Windows, and WebAssembly workflow execution remains the required
+pre-release CI gate and is not implied by the successful Apple evidence.
 
 ## Revision Note
 

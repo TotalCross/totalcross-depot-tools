@@ -127,6 +127,27 @@ The pinned repository's zlib module can be integrated in this pattern:
 Confirm the actual imported target from the pinned `FindZlib.cmake`; do not rely
 on this example after intentionally changing the module contract.
 
+## Example: Skia
+
+Skia prebuilts carry a machine link contract beside each static archive. Use
+the imported target as the complete interface:
+
+    list(PREPEND CMAKE_MODULE_PATH
+      "${PROJECT_DEPOT_TOOLS_DIR}/skia/cmake")
+
+    include("${PROJECT_DEPOT_TOOLS_DIR}/skia/cmake/AutoFetchSkia.cmake")
+    tcvm_auto_fetch_skia()
+    find_package(Skia REQUIRED)
+
+    target_link_libraries(my_target PRIVATE Skia::Skia)
+
+Do not add Metal, OpenGL, Vulkan, PNG, zlib, or platform libraries based only
+on the consumer host. `FindSkia.cmake` validates the selected archive's
+`SkiaBuildConfig.cmake` and derives those requirements from the backends and
+dependency choices recorded for that artifact. A strict repository-managed
+package with missing, mismatched, or unsupported metadata fails during
+configuration rather than exposing a partially described imported target.
+
 ## Platform and architecture selection
 
 Auto-fetch modules derive the artifact platform and architecture from CMake:

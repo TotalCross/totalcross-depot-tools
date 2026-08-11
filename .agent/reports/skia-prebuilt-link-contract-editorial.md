@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 
 ## Editorial Summary
 
-Execution is in progress. Milestone 1 confirmed that the macOS ARM64 regression
-is a missing prebuilt link contract and established the current cross-platform
-feature mapping. No final implementation outcome or release readiness is yet
-claimed.
+Implementation and locally available validation are complete. The
+metadata-driven imported target closes the macOS ARM64 regression against both
+the exact r7 archive and a freshly built archive. Cross-OS GitHub workflow lanes
+remain an explicit pre-release gate; no publication was authorized or performed.
 
 ## Original Plan versus Actual Outcome
 
@@ -22,27 +22,39 @@ metadata-emission slice corrects the diagnostics invocation.
 
 ## What Changed
 
-The working tree now contains a focused generator for deterministic, versioned,
-SHA-bound CMake metadata plus integration at the shared static-artifact copy
-boundary. This section will be reconciled after the logical commit.
+Four logical commits now emit deterministic SHA-bound metadata, publish and
+fetch validated archive/sidecar pairs, and derive `Skia::Skia` link requirements
+from the package metadata. The final implementation correction preserves the
+repository dependency choice at artifact packaging and propagates the artifact
+platform definition to consumers. A strict managed package cannot expose a
+mismatched pair; current r7 remains a warned legacy package until a new release
+activates the metadata requirement.
 
 ## Decisions and Trade-offs
 
-The metadata records both graphical features and external/bundled dependency
-choices from the effective GN state. Vulkan and OpenCL are not mapped to loader
-libraries because the current `Skia` library graph does not require them.
+The metadata records graphical features from effective GN state and the actual
+repository zlib/libpng selections from the shared build boundary. Vulkan and
+OpenCL are not mapped to loader libraries because the current `Skia` library
+graph does not require them. Unsupported enabled ANGLE, Dawn, Direct3D, or
+unmanaged system dependency choices fail rather than guess.
 
 ## Unexpected Problems and Discoveries
 
-The r7 diagnostics root bug and the absence of a Vulkan/OpenCL loader link item
-are the two material findings. Linux system Freetype and Fontconfig are existing
-external runtime requirements, not dependencies added by this work.
+The r7 diagnostics root bug, GN target-local argument scope, and the absence of
+a Vulkan/OpenCL loader link item are the material findings. Linux system
+Freetype and Fontconfig are existing external runtime requirements, not
+dependencies added by this work. The local target-family sync also encountered
+recoverable upstream HTTP 429 responses.
 
 ## Validation and Measurable Results
 
 The original macOS ARM64 Metal link failure was reproduced against the exact r7
-archive. Three focused generator tests pass. No fixed consumer link is claimed
-until the resolver milestone.
+archive, then the target-only fixture linked successfully as ARM64 Mach-O.
+Fresh macOS, iOS, and iOS Simulator builds emitted validated sidecars; the iOS
+XCFramework packaged; and the principal TotalCross consumer produced ARM64
+`libtcvm.dylib` through an explicit local checkout override. Five generator,
+four paired-fetch, seven package-integrity, and the expanded synthetic resolver
+suite pass. Full cross-platform release workflow execution is not claimed.
 
 ## Useful Evidence and Examples
 
@@ -51,9 +63,9 @@ task-specific paths, and concise feature mapping.
 
 ## Limitations, Remaining Work, and Open Questions
 
-Artifact publication/fetch, metadata validation, dependency resolution,
-synthetic package tests, real consumer links, documentation, and matrix closure
-remain.
+Linux, Android, Windows, and WebAssembly runner execution, release publication,
+and downstream pin adoption remain. These are deliberate CI/authorization
+gates, not unimplemented package behavior.
 
 ## Possible Article Angles
 
@@ -67,4 +79,5 @@ versioned sidecar, and finish with a single imported-target consumer interface.
 
 ## Claims Requiring Human Review
 
-None are ready for external publication while execution remains incomplete.
+The cross-platform mapping and release-readiness claim require review of the
+full GitHub Actions matrix before external publication.

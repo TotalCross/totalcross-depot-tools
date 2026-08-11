@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+SPDX-License-Identifier: MIT
+-->
+
 # skia
 
 This dependency packages the Skia prebuilts produced by
@@ -20,6 +25,45 @@ describes the GitHub Release assets consumed by TotalCross.
 The default source is the `TotalCross/totalcross-depot-tools` release declared
 in `artifacts.json`. Override it with `--base-url`, `--github-repo`,
 `--release-tag`, or `--source`.
+
+Every metadata-enabled static archive is paired with a target-specific release
+asset named `SkiaBuildConfig-<platform>-<arch>.cmake`. `fetch.sh` validates the
+metadata version, platform, architecture, and library SHA-256 before installing
+the pair. This sidecar is fetched independently of `--install-dev`; the latter
+continues to control only headers and human-readable build diagnostics.
+
+An explicit `--source` archive must be accompanied by its matching
+`--build-config`. Alternate base URLs, repositories, and release tags are also
+treated as metadata-enabled sources. The current default r7 release predates
+the machine contract and remains on a warned legacy path until a new release
+activates `defaults.machine_build_config.required` in `artifacts.json`.
+
+## Consume from CMake
+
+```cmake
+list(PREPEND CMAKE_MODULE_PATH
+  "${TOTALCROSS_DEPOT_TOOLS_DIR}/skia/cmake")
+
+include("${TOTALCROSS_DEPOT_TOOLS_DIR}/skia/cmake/AutoFetchSkia.cmake")
+tcvm_auto_fetch_skia()
+find_package(Skia REQUIRED)
+
+target_link_libraries(my_target PRIVATE Skia::Skia)
+```
+
+`Skia::Skia` is the complete package interface. For metadata-enabled repository
+artifacts it validates `SkiaBuildConfig.cmake` against the selected archive,
+then propagates the repository PNG/zlib targets, platform frameworks or
+toolchain libraries, platform identity, and backend compile definitions required
+by that exact build. Consumers must not repeat Metal, OpenGL, Vulkan, PNG, zlib,
+or other backend requirements manually.
+
+An explicit `SKIA_LIBRARY` outside `skia/local` may omit metadata for legacy
+compatibility. CMake warns in that case and cannot infer backend dependencies;
+providing a matching `SKIA_BUILD_CONFIG` enables the metadata-driven contract.
+Repository-managed artifacts fail when metadata is required but missing,
+unsupported, for another platform/architecture, or bound to a different
+library hash.
 
 ## Build artifacts
 
@@ -51,3 +95,9 @@ Create or update those checkouts with:
 ```bash
 ./scripts/fetch-source.sh
 ```
+
+Each target build emits the static archive, its machine build config, and the
+existing human diagnostics. `skia/scripts/generate-build-config.py` reads the
+post-`gn gen` effective argument listing; repository zlib/libpng selections are
+recorded at the shared packaging boundary that validates and applies those
+prebuilts.
