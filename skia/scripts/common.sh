@@ -303,13 +303,36 @@ copy_static_artifact() {
   fi
 
   [[ -f "$build_dir/$source_name" ]] || die "missing built Skia library at $build_dir/$source_name"
+  local build_config="$build_dir/SkiaBuildConfig.cmake"
+  local upstream_revision
+  upstream_revision=$(python3 - "$ROOT_DIR/manifest.json" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(manifest["skia"]["commit"])
+PY
+  )
+
+  python3 "$ROOT_DIR/scripts/generate-build-config.py" \
+    --gn-args-file "$build_dir/logs/gn-args-list.txt" \
+    --library "$build_dir/$source_name" \
+    --platform "$platform" \
+    --architecture "$arch" \
+    --revision "$upstream_revision" \
+    --output "$build_config"
+
   cp "$build_dir/$source_name" "$DIST_DIR/$artifact_name"
+  cp "$build_config" "$DIST_DIR/SkiaBuildConfig-${manifest_key}.cmake"
   mkdir -p "$STAGING_DIR/modules/skia/out/Release/$platform/$arch"
   cp "$build_dir/$source_name" "$STAGING_DIR/modules/skia/out/Release/$platform/$arch/$installed_name"
+  cp "$build_config" "$STAGING_DIR/modules/skia/out/Release/$platform/$arch/SkiaBuildConfig.cmake"
   copy_build_manifest_if_present "$build_dir" "$manifest_key" "$platform" "$arch"
 
   echo "Created artifact:"
   echo "  $DIST_DIR/$artifact_name"
+  echo "  $DIST_DIR/SkiaBuildConfig-${manifest_key}.cmake"
 }
 
 build_key_from_dir() {
@@ -325,9 +348,11 @@ generate_gn_diagnostics() {
 
   mkdir -p "$logs_dir"
 
-  "$gn_bin" args "$build_dir" --list > "$logs_dir/gn-args-list.txt" 2>&1 || true
+  pushd "$SKIA_DIR" >/dev/null
+  "$gn_bin" args "$build_dir" --list --short > "$logs_dir/gn-args-list.txt" 2>&1
   "$gn_bin" desc "$build_dir" "$gn_target" > "$logs_dir/gn-target.txt" 2>&1 || true
   "$gn_bin" desc "$build_dir" "$gn_target" deps --all > "$logs_dir/gn-deps.txt" 2>&1 || true
+  popd >/dev/null
 
   ninja -C "$build_dir" -t compdb cc cxx objc objcxx > "$build_dir/compile_commands.json" 2>/dev/null || true
 }
