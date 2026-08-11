@@ -257,6 +257,13 @@ sequence.
 Shell scripts must use `set -euo pipefail` when Bash is required, quote paths,
 avoid leaking tokens or authenticated URLs, and emit compact summaries.
 
+Python scripts executed inside repository build images must remain compatible
+with the oldest Python interpreter supplied by those images. The current Skia
+Linux image is based on Ubuntu Bionic, so scripts executed there must support
+Python 3.6; runner-only tooling may use a newer explicitly controlled version.
+Do not assume host Python syntax or `pathlib` APIs exist in a build container.
+Validate changed container-path Python with the interpreter in the actual image.
+
 ## Repository skills
 
 Use skills for repeated workflows rather than expanding this file with procedural

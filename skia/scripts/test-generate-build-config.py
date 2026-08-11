@@ -4,8 +4,6 @@
 
 """Focused tests for generate-build-config.py."""
 
-from __future__ import annotations
-
 import hashlib
 import pathlib
 import subprocess
@@ -71,7 +69,7 @@ class GenerateBuildConfigTests(unittest.TestCase):
         *,
         repository_zlib: str = "false",
         repository_libpng: str = "false",
-    ) -> tuple[subprocess.CompletedProcess[str], pathlib.Path, pathlib.Path]:
+    ):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         root = pathlib.Path(temporary.name)
@@ -101,8 +99,9 @@ class GenerateBuildConfigTests(unittest.TestCase):
                 str(output_path),
             ],
             check=False,
-            capture_output=True,
-            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
         return result, output_path, library_path
 

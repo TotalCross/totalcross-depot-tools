@@ -274,6 +274,19 @@ jobs:
             -t ${{ matrix.image }} \
             bash -lc 'ccache --set-config=max_size=2G && ccache --show-stats'
 
+      - name: Validate build-image Python compatibility
+        run: |
+          docker run --rm \
+            --platform ${{ matrix.docker_platform }} \
+            -v "${PWD}:${PWD}" \
+            -w "${PWD}" \
+            ${{ matrix.image }} \
+            bash -lc '
+              python3 --version
+              python3 -m py_compile skia/scripts/generate-build-config.py
+              python3 skia/scripts/test-generate-build-config.py
+            '
+
       - name: Fetch zlib-ng/libpng prebuilts
         run: bash skia/scripts/fetch-prebuilt-deps.sh linux ${{ matrix.arch }}
 

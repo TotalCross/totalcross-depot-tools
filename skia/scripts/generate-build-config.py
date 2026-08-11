@@ -4,13 +4,12 @@
 
 """Generate the versioned CMake link-contract sidecar for a Skia archive."""
 
-from __future__ import annotations
-
 import argparse
 import hashlib
 import pathlib
 import re
 import sys
+from typing import Dict
 
 
 FORMAT_VERSION = 1
@@ -62,8 +61,8 @@ INTEGER_FIELDS = (("ndk_api", "SKIA_BUILD_NDK_API"),)
 ASSIGNMENT_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 
 
-def parse_effective_args(path: pathlib.Path) -> dict[str, str]:
-    values: dict[str, str] = {}
+def parse_effective_args(path: pathlib.Path) -> Dict[str, str]:
+    values = {}  # type: Dict[str, str]
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         match = ASSIGNMENT_RE.match(raw_line.strip())
         if match:
@@ -93,7 +92,7 @@ def parse_integer(name: str, raw: str) -> str:
     raise ValueError(f"effective GN argument {name} must be a non-negative integer, got {raw!r}")
 
 
-def require(values: dict[str, str], name: str) -> str:
+def require(values: Dict[str, str], name: str) -> str:
     if name not in values:
         raise ValueError(f"effective GN argument listing is missing required value {name}")
     return values[name]
@@ -186,7 +185,8 @@ def main() -> int:
         return 1
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(content, encoding="utf-8", newline="\n")
+    with args.output.open("w", encoding="utf-8", newline="\n") as output:
+        output.write(content)
     return 0
 
 

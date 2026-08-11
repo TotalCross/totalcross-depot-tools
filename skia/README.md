@@ -90,6 +90,10 @@ skia/skia/
 skia/depot_tools/
 ```
 
+Linux builds run in the repository's Ubuntu Bionic images, whose Python 3.6
+interpreter is the compatibility floor for scripts executed there. The root
+`AGENTS.md` `Scripts` section defines the build-image compatibility policy.
+
 Create or update those checkouts with:
 
 ```bash
