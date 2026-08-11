@@ -937,6 +937,9 @@ jobs:
       - build-windows
 
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
       - name: Download build artifacts
         uses: actions/download-artifact@v7
         with:
