@@ -113,9 +113,21 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 asset_name="vcruntime-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'vcruntime140.dll'
+  'manifest.txt'
+  'NOTICE.txt'
+)
+if tc_artifact_marker_matches "$dest" "vcruntime" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing vcruntime ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! tc_github_release_download "${github_repo}" "${release_tag}" "${asset_name}" "${archive}" \
   "${github_token_env}" VCRUNTIME_GITHUB_TOKEN; then
@@ -140,9 +152,7 @@ for required_file in manifest.txt NOTICE.txt; do
   fi
 done
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "vcruntime" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed vcruntime ${platform}/${arch} into ${dest}"

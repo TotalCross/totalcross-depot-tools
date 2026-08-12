@@ -106,9 +106,22 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 asset_name="libpng-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/png.h'
+  'include/pngconf.h'
+  'include/pnglibconf.h'
+  'lib/libpng*.a|lib/png*.lib|lib/libpng*.lib'
+)
+if tc_artifact_marker_matches "$dest" "libpng" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing libpng ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! tc_github_release_download "${github_repo}" "${release_tag}" "${asset_name}" "${archive}" \
   "${github_token_env}" LIBPNG_GITHUB_TOKEN; then
@@ -138,9 +151,7 @@ for header_name in png.h pngconf.h pnglibconf.h; do
   fi
 done
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "libpng" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed libpng ${platform}/${arch} into ${dest}"

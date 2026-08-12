@@ -8,6 +8,8 @@ usage() {
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 platform=""
 arch=""
 release_tag="qrcodegen-20250123"
@@ -39,9 +41,18 @@ case "${platform}/${arch}" in
 esac
 
 asset="qrcodegen-${platform}-${arch}.tar.gz"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/qrcodegen.h'
+  'lib/libqrcodegen.a|lib/qrcodegen.lib'
+)
+if tc_artifact_marker_matches "$dest" "qrcodegen" "$github_repo" "$release_tag" "$asset" "" "${requirements[@]}"; then
+  echo "Reusing qrcodegen ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-source "${script_dir}/../scripts/github-release.sh"
 tc_github_release_download "${github_repo}" "${release_tag}" "${asset}" "${tmp_dir}/${asset}" \
   "${token_env}" QRCODEGEN_GITHUB_TOKEN
 tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
@@ -50,8 +61,6 @@ root="${tmp_dir}/qrcodegen/${platform}/${arch}"
 [ -f "${root}/include/qrcodegen.h" ] || { echo "Invalid qrcodegen artifact: missing header" >&2; exit 1; }
 find "${root}/lib" -type f \( -name 'libqrcodegen.a' -o -name 'qrcodegen.lib' \) | grep -q . ||
   { echo "Invalid qrcodegen artifact: missing static library" >&2; exit 1; }
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${root}/." "${dest}/"
+tc_artifact_replace_tree "${root}" "$dest" "qrcodegen" "$github_repo" "$release_tag" "$asset" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 echo "Installed qrcodegen ${platform}/${arch} into ${dest}"

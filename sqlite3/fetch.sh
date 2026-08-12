@@ -141,6 +141,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 download_release_asset() {
   tc_github_release_download "${github_repo}" "${release_tag}" "$1" "$2" \
@@ -149,6 +150,17 @@ download_release_asset() {
 
 asset_name="sqlite3-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${install_namespace}/${platform}/${arch}"
+requirements=(
+  'include/sqlite3.h'
+  'include/sqlite3ext.h'
+  'lib/libsqlite3.a|lib/sqlite3.lib'
+)
+if tc_artifact_marker_matches "$dest" "sqlite3" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing SQLite3 ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! download_release_asset "${asset_name}" "${archive}"; then
   echo "Unable to download a SQLite3 artifact for ${github_repo}@${release_tag}/${platform}/${arch}" >&2
@@ -177,11 +189,8 @@ if ! find "${artifact_root}/lib" -type f \( -name "libsqlite3.a" -o -name "sqlit
 fi
 log "artifact root: ${artifact_root#${tmp_dir}/}"
 
-dest="${dest_root}/${install_namespace}/${platform}/${arch}"
-log "installing artifact into ${dest}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "sqlite3" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed SQLite3 ${github_repo}@${release_tag}/${platform}/${arch} into ${dest}"
 log "done"

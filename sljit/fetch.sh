@@ -8,6 +8,8 @@ usage() {
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 platform=""
 arch=""
 release_tag="sljit-20260717"
@@ -46,9 +48,23 @@ if ! [[ "${token_env}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
 fi
 
 asset="sljit-${platform}-${arch}.tar.gz"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/sljitLir.h'
+  'include/sljitConfig.h'
+  'include/sljitConfigCPU.h'
+  'include/sljitConfigInternal.h'
+  'lib/libsljit.a|lib/sljit.lib'
+  'share/licenses/sljit/LICENSE'
+  'manifest.txt'
+)
+if tc_artifact_marker_matches "$dest" "sljit" "$github_repo" "$release_tag" "$asset" "" "${requirements[@]}"; then
+  echo "Reusing sljit ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-source "${script_dir}/../scripts/github-release.sh"
 tc_github_release_download "${github_repo}" "${release_tag}" "${asset}" "${tmp_dir}/${asset}" \
   "${token_env}" SLJIT_GITHUB_TOKEN
 tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
@@ -87,8 +103,6 @@ case "${platform}" in
     grep -qx 'android_min_sdk=23' "${package_manifest}" ;;
 esac
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${root}/." "${dest}/"
+tc_artifact_replace_tree "${root}" "$dest" "sljit" "$github_repo" "$release_tag" "$asset" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 echo "Installed sljit ${platform}/${arch} into ${dest}"

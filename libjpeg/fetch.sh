@@ -107,9 +107,23 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 asset_name="libjpeg-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/jconfig.h'
+  'include/jerror.h'
+  'include/jmorecfg.h'
+  'include/jpeglib.h'
+  'lib/libjpeg.a|lib/jpeg.lib|lib/libjpeg.lib'
+)
+if tc_artifact_marker_matches "$dest" "libjpeg" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing libjpeg ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! tc_github_release_download "${github_repo}" "${release_tag}" "${asset_name}" "${archive}" \
   "${github_token_env}" LIBJPEG_GITHUB_TOKEN; then
@@ -139,9 +153,7 @@ for header_name in jconfig.h jerror.h jmorecfg.h jpeglib.h; do
   fi
 done
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "libjpeg" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed libjpeg ${platform}/${arch} into ${dest}"

@@ -8,6 +8,8 @@ usage() {
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 platform=""
 arch=""
 release_tag="qrcode-20200519"
@@ -36,9 +38,18 @@ case "${platform}/${arch}" in
   macos/aarch64|ios/aarch64|ios-simulator/aarch64) arch=arm64 ;;
 esac
 asset="qrcode-${platform}-${arch}.tar.gz"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/qrcode.h'
+  'lib/libqrcode.a|lib/qrcode.lib'
+)
+if tc_artifact_marker_matches "$dest" "qrcode" "$github_repo" "$release_tag" "$asset" "" "${requirements[@]}"; then
+  echo "Reusing qrcode ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-source "${script_dir}/../scripts/github-release.sh"
 tc_github_release_download "${github_repo}" "${release_tag}" "${asset}" "${tmp_dir}/${asset}" \
   "${token_env}" QRCODE_GITHUB_TOKEN
 tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
@@ -46,8 +57,6 @@ root="${tmp_dir}/qrcode/${platform}/${arch}"
 [ -f "${root}/include/qrcode.h" ] || { echo "Invalid qrcode artifact: missing header" >&2; exit 1; }
 find "${root}/lib" -type f \( -name 'libqrcode.a' -o -name 'qrcode.lib' \) | grep -q . ||
   { echo "Invalid qrcode artifact: missing static library" >&2; exit 1; }
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${root}/." "${dest}/"
+tc_artifact_replace_tree "${root}" "$dest" "qrcode" "$github_repo" "$release_tag" "$asset" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 echo "Installed qrcode ${platform}/${arch} into ${dest}"

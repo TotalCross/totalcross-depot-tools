@@ -8,6 +8,8 @@ usage() {
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 platform=""
 arch=""
 release_tag="axtls-2.1.5-tc.1"
@@ -39,9 +41,18 @@ case "${platform}/${arch}" in
 esac
 
 asset="axtls-${platform}-${arch}.tar.gz"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/axtls/axtls.h'
+  'lib/libaxtls.a|lib/axtls.lib'
+)
+if tc_artifact_marker_matches "$dest" "axtls" "$github_repo" "$release_tag" "$asset" "" "${requirements[@]}"; then
+  echo "Reusing axTLS ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-source "${script_dir}/../scripts/github-release.sh"
 tc_github_release_download "${github_repo}" "${release_tag}" "${asset}" "${tmp_dir}/${asset}" \
   "${token_env}" AXTLS_GITHUB_TOKEN
 tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
@@ -51,8 +62,6 @@ root="${tmp_dir}/axtls/${platform}/${arch}"
 find "${root}/lib" -type f \( -name 'libaxtls.a' -o -name 'axtls.lib' \) | grep -q . ||
   { echo "Invalid axTLS artifact: missing static library" >&2; exit 1; }
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${root}/." "${dest}/"
+tc_artifact_replace_tree "${root}" "$dest" "axtls" "$github_repo" "$release_tag" "$asset" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 echo "Installed axTLS ${platform}/${arch} into ${dest}"

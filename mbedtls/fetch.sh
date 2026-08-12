@@ -97,6 +97,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 download_release_asset() {
   tc_github_release_download "${github_repo}" "${release_tag}" "$1" "$2" \
@@ -105,6 +106,18 @@ download_release_asset() {
 
 asset_name="mbedtls-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/mbedtls/ssl.h'
+  'lib/libmbedtls.a|lib/mbedtls.lib'
+  'lib/libmbedx509.a|lib/mbedx509.lib'
+  'lib/libmbedcrypto.a|lib/mbedcrypto.lib'
+)
+if tc_artifact_marker_matches "$dest" "mbedtls" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing mbedTLS ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! download_release_asset "${asset_name}" "${archive}"; then
   echo "Unable to download an mbedTLS artifact for ${platform}/${arch}" >&2
@@ -128,9 +141,7 @@ for library_name in mbedtls mbedx509 mbedcrypto; do
   fi
 done
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "mbedtls" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed mbedTLS ${platform}/${arch} into ${dest}"

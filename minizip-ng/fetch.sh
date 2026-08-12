@@ -106,9 +106,25 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
 source "${script_dir}/../scripts/github-release.sh"
+source "${script_dir}/../scripts/artifact-install.sh"
 
 asset_name="minizip-ng-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
+dest="${dest_root}/${platform}/${arch}"
+requirements=(
+  'include/ioapi.h'
+  'include/mz.h'
+  'include/mz_zip.h'
+  'include/mz_zip_rw.h'
+  'include/unzip.h'
+  'include/zip.h'
+  'lib/libminizip*.a|lib/minizip*.a|lib/minizip*.lib|lib/libminizip*.lib'
+)
+if tc_artifact_marker_matches "$dest" "minizip-ng" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then
+  echo "Reusing minizip-ng ${platform}/${arch} from ${dest}"
+  exit 0
+fi
+
 
 if ! tc_github_release_download "${github_repo}" "${release_tag}" "${asset_name}" "${archive}" \
   "${github_token_env}" MINIZIP_NG_GITHUB_TOKEN; then
@@ -138,9 +154,7 @@ for header_name in ioapi.h mz.h mz_zip.h mz_zip_rw.h unzip.h zip.h; do
   fi
 done
 
-dest="${dest_root}/${platform}/${arch}"
-rm -rf "${dest}"
-mkdir -p "${dest}"
-cp -a "${artifact_root}/." "${dest}/"
+tc_artifact_replace_tree "${artifact_root}" "$dest" "minizip-ng" "$github_repo" "$release_tag" "$asset_name" \
+  "$TC_GITHUB_RELEASE_DOWNLOADED_SHA256" "${requirements[@]}"
 
 echo "Installed minizip-ng ${platform}/${arch} into ${dest}"
