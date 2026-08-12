@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 """Focused request-count tests for the shared GitHub Release transport."""
 
+import hashlib
 import json
 import os
 import pathlib
@@ -63,6 +64,12 @@ class GitHubReleaseTests(unittest.TestCase):
         self.curl.chmod(self.curl.stat().st_mode | stat.S_IXUSR)
         self.state = self.root / "state.json"
         self.cache = self.root / "cache"
+        digest = hashlib.sha256(b"artifact-content").hexdigest()
+        self.checksums = self.root / "checksums.json"
+        self.checksums.write_text(json.dumps({
+            "schema": 1,
+            "repositories": {"owner/repo": {"tag": {"asset-a.tar.gz": digest, "asset-b.tar.gz": digest}}},
+        }))
 
     def tearDown(self):
         self.temp.cleanup()
@@ -77,6 +84,7 @@ class GitHubReleaseTests(unittest.TestCase):
             "TOTALCROSS_DEPOT_FETCH_CACHE_DIR": str(self.cache),
             "TOTALCROSS_DEPOT_FETCH_ATTEMPTS": "3",
             "TOTALCROSS_DEPOT_FETCH_RETRY_DELAY": "0",
+            "TOTALCROSS_DEPOT_CHECKSUMS_FILE": str(self.checksums),
             "TOTALCROSS_GITHUB_WEB_BASE_URL": "https://web.test",
             "TOTALCROSS_GITHUB_API_BASE_URL": "https://api.test",
         })
@@ -121,6 +129,18 @@ class GitHubReleaseTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertEqual("keep", output.read_text())
         self.assertEqual(6, len(self.requests()))
+
+    def test_checksum_mismatch_fails_without_replacing_output(self):
+        payload = json.loads(self.checksums.read_text())
+        payload["repositories"]["owner/repo"]["tag"]["asset-a.tar.gz"] = "0" * 64
+        self.checksums.write_text(json.dumps(payload))
+        output = self.root / "existing-checksum"
+        output.write_text("keep")
+        result = self.run_download("fallback-success", output=output)
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual("keep", output.read_text())
+        self.assertIn("checksum mismatch", result.stderr)
+        self.assertEqual(["direct"], [item["kind"] for item in self.requests()])
 
 
 if __name__ == "__main__":

@@ -5,6 +5,9 @@
 # Shared GitHub Release transport for dependency fetchers. Callers remain
 # responsible for validating and installing the downloaded artifact.
 
+TC_GITHUB_RELEASE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOTALCROSS_DEPOT_CHECKSUMS_FILE="${TOTALCROSS_DEPOT_CHECKSUMS_FILE:-${TC_GITHUB_RELEASE_SCRIPT_DIR}/native-artifact-checksums.json}"
+
 tc_github_release_log() {
   printf '[github-release] %s\n' "$*" >&2
 }
@@ -35,6 +38,46 @@ tc_github_release_sha256_text() {
     tc_github_release_log 'error: sha256sum, shasum, or openssl is required'
     return 1
   fi
+}
+
+tc_github_release_pinned_sha256() {
+  local repo="$1"
+  local tag="$2"
+  local asset="$3"
+  local checksums="${TOTALCROSS_DEPOT_CHECKSUMS_FILE}"
+  [ -s "$checksums" ] || return 1
+  python3 - "$checksums" "$repo" "$tag" "$asset" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r") as handle:
+    data = json.load(handle)
+digest = data.get("repositories", {}).get(sys.argv[2], {}).get(sys.argv[3], {}).get(sys.argv[4], "")
+if not isinstance(digest, str) or len(digest) != 64:
+    raise SystemExit(1)
+print(digest)
+PY
+}
+
+tc_github_release_verify_download() {
+  local destination="$1"
+  local expected="$2"
+  local label="$3"
+  local actual
+  if [ -z "$expected" ]; then
+    tc_github_release_log "error: no SHA-256 is available for ${label}"
+    rm -f "$destination"
+    return 1
+  fi
+  actual="$(tc_github_release_sha256_file "$destination")" || return
+  if [ "$actual" != "$expected" ]; then
+    tc_github_release_log "error: checksum mismatch for ${label}: expected ${expected}, got ${actual}"
+    rm -f "$destination"
+    return 1
+  fi
+  TC_GITHUB_RELEASE_DOWNLOADED_SHA256="$actual"
+  TC_GITHUB_RELEASE_EXPECTED_SHA256="$expected"
+  export TC_GITHUB_RELEASE_DOWNLOADED_SHA256 TC_GITHUB_RELEASE_EXPECTED_SHA256
 }
 
 tc_github_release_token() {
@@ -239,9 +282,13 @@ tc_github_release_download() {
   local asset_info
   local asset_api_url
   local asset_digest
+  local expected_sha256
+  local downloaded="${destination}.download.$$"
   local paths
 
+  rm -f "$downloaded"
   token="$(tc_github_release_token "$explicit_token_env" "$default_token_env")" || return
+  expected_sha256="$(tc_github_release_pinned_sha256 "$repo" "$tag" "$asset" 2>/dev/null || true)"
   paths="$(tc_github_release_metadata_paths "$repo" "$tag")" || return
   metadata_path="$(printf '%s\n' "$paths" | sed -n '1p')"
   api_only_path="$(printf '%s\n' "$paths" | sed -n '2p')"
@@ -249,9 +296,22 @@ tc_github_release_download() {
 
   if [ ! -f "$api_only_path" ]; then
     tc_github_release_log "downloading ${repo}@${tag}/${asset}"
-    if tc_github_release_download_url "$direct_url" "$destination" "${repo}@${tag}/${asset}" "$token"; then
-      TC_GITHUB_RELEASE_DOWNLOADED_SHA256="$(tc_github_release_sha256_file "$destination")" || return
-      export TC_GITHUB_RELEASE_DOWNLOADED_SHA256
+    if tc_github_release_download_url "$direct_url" "$downloaded" "${repo}@${tag}/${asset}" "$token"; then
+      if [ -z "$expected_sha256" ]; then
+        paths="$(tc_github_release_metadata "$repo" "$tag" "$token")" || {
+          rm -f "$downloaded"
+          return 1
+        }
+        metadata_path="$(printf '%s\n' "$paths" | sed -n '1p')"
+        asset_info="$(tc_github_release_asset_info "$metadata_path" "$asset")" || {
+          tc_github_release_log "error: release ${repo}@${tag} has no digest metadata for ${asset}"
+          rm -f "$downloaded"
+          return 1
+        }
+        expected_sha256="$(printf '%s\n' "$asset_info" | sed -n '2p')"
+      fi
+      tc_github_release_verify_download "$downloaded" "$expected_sha256" "${repo}@${tag}/${asset}" || return
+      mv -f "$downloaded" "$destination"
       return 0
     fi
     tc_github_release_log "using GitHub asset API fallback for ${repo}@${tag}/${asset}"
@@ -264,15 +324,23 @@ tc_github_release_download() {
   api_only_path="$(printf '%s\n' "$paths" | sed -n '2p')"
   asset_info="$(tc_github_release_asset_info "$metadata_path" "$asset")" || {
     tc_github_release_log "error: release ${repo}@${tag} has no asset named ${asset}"
+    rm -f "$downloaded"
     return 1
   }
   asset_api_url="$(printf '%s\n' "$asset_info" | sed -n '1p')"
   asset_digest="$(printf '%s\n' "$asset_info" | sed -n '2p')"
-  if ! tc_github_release_download_url "$asset_api_url" "$destination" "asset API ${repo}@${tag}/${asset}" "$token" -H 'Accept: application/octet-stream'; then
+  if [ -n "$expected_sha256" ] && [ -n "$asset_digest" ] && [ "$expected_sha256" != "$asset_digest" ]; then
+    tc_github_release_log "error: published digest disagrees with the pinned checksum for ${repo}@${tag}/${asset}"
+    rm -f "$downloaded"
+    return 1
+  fi
+  [ -n "$expected_sha256" ] || expected_sha256="$asset_digest"
+  if ! tc_github_release_download_url "$asset_api_url" "$downloaded" "asset API ${repo}@${tag}/${asset}" "$token" -H 'Accept: application/octet-stream'; then
     return 1
   fi
   : > "$api_only_path"
-  TC_GITHUB_RELEASE_DOWNLOADED_SHA256="$(tc_github_release_sha256_file "$destination")" || return
   TC_GITHUB_RELEASE_API_SHA256="$asset_digest"
-  export TC_GITHUB_RELEASE_DOWNLOADED_SHA256 TC_GITHUB_RELEASE_API_SHA256
+  export TC_GITHUB_RELEASE_API_SHA256
+  tc_github_release_verify_download "$downloaded" "$expected_sha256" "${repo}@${tag}/${asset}" || return
+  mv -f "$downloaded" "$destination"
 }

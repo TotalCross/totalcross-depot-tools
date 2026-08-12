@@ -96,7 +96,7 @@ verify_sha256() {
 
   if [[ -n "$expected_sha" ]]; then
     local actual_sha
-    actual_sha=$(shasum -a 256 "$file_path" | awk '{print $1}')
+    actual_sha=$(tc_github_release_sha256_file "$file_path")
     [[ "$actual_sha" == "$expected_sha" ]] || die "checksum mismatch for ${label}: expected ${expected_sha}, got ${actual_sha}"
   else
     echo "warning: no sha256 configured for ${label} in ${MANIFEST_PATH}" >&2

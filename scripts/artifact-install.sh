@@ -45,6 +45,9 @@ tc_artifact_marker_matches() {
   local marker="${destination}/${TC_ARTIFACT_MARKER_NAME}"
   local python_bin=''
 
+  if [ -z "$expected_sha256" ] && declare -F tc_github_release_pinned_sha256 >/dev/null 2>&1; then
+    expected_sha256="$(tc_github_release_pinned_sha256 "$repository" "$release_tag" "$asset_name" 2>/dev/null || true)"
+  fi
   [ "${TOTALCROSS_DEPOT_FORCE_REFETCH:-0}" != 1 ] || return 1
   [ -d "$destination" ] && [ -s "$marker" ] || return 1
   tc_artifact_requirements_present "$destination" "$@" || return 1

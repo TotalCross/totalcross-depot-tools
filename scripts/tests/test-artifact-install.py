@@ -4,6 +4,7 @@
 """Integration tests for provenance-aware native artifact installation."""
 
 import json
+import hashlib
 import os
 import pathlib
 import stat
@@ -66,6 +67,15 @@ class ArtifactInstallTests(unittest.TestCase):
         (package / "lib" / "libpng.a").write_bytes(b"library")
         with tarfile.open(str(self.archive), "w:gz") as handle:
             handle.add(str(self.root / "package" / "libpng"), arcname="libpng")
+        digest = hashlib.sha256(self.archive.read_bytes()).hexdigest()
+        self.checksums = self.root / "checksums.json"
+        self.checksums.write_text(json.dumps({
+            "schema": 1,
+            "repositories": {"TotalCross/totalcross-depot-tools": {
+                "libpng-1.6.48-r3": {"libpng-linux-x86_64.tar.gz": digest},
+                "libpng-1.6.48-r4": {"libpng-linux-x86_64.tar.gz": digest},
+            }},
+        }))
         self.curl = self.root / "curl"
         self.curl.write_text(FAKE_CURL)
         self.curl.chmod(self.curl.stat().st_mode | stat.S_IXUSR)
@@ -84,6 +94,7 @@ class ArtifactInstallTests(unittest.TestCase):
             "TOTALCROSS_DEPOT_FETCH_CACHE_DIR": str(self.root / "session"),
             "TOTALCROSS_DEPOT_FETCH_ATTEMPTS": "2",
             "TOTALCROSS_DEPOT_FETCH_RETRY_DELAY": "0",
+            "TOTALCROSS_DEPOT_CHECKSUMS_FILE": str(self.checksums),
         })
         if extra_env:
             env.update(extra_env)
