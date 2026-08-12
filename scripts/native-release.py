@@ -11,6 +11,7 @@ deterministic without contacting GitHub.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -21,6 +22,7 @@ from typing import Any, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CHECKSUMS_PATH = Path("scripts/native-artifact-checksums.json")
 TAG_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
@@ -253,6 +255,56 @@ def prepare_metadata(root: Path, library: str, tag: str) -> list[Path]:
     return paths
 
 
+def record_artifact_checksums(
+    root: Path,
+    repository: str,
+    library: str,
+    tag: str,
+    patterns: Sequence[str],
+) -> list[Path]:
+    if not repository or "/" not in repository:
+        raise NativeReleaseError("repository must use OWNER/REPO format")
+    files = [path for pattern in patterns for path in root.glob(pattern) if path.is_file()]
+    actual = {path.name: path for path in files}
+    expected = set(expected_assets(root, library))
+    if set(actual) != expected:
+        missing = sorted(expected - set(actual))
+        unexpected = sorted(set(actual) - expected)
+        raise NativeReleaseError(
+            "cannot record checksums; missing=%s unexpected=%s"
+            % (",".join(missing) or "none", ",".join(unexpected) or "none")
+        )
+    digests = {
+        name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for name, path in sorted(actual.items())
+    }
+    checksum_path = root / CHECKSUMS_PATH
+    try:
+        payload = json.loads(checksum_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        payload = {"schema": 1, "repositories": {}}
+    if payload.get("schema") != 1 or not isinstance(payload.get("repositories"), dict):
+        raise NativeReleaseError(f"invalid checksum manifest: {checksum_path}")
+    payload["repositories"].setdefault(repository, {})[tag] = digests
+    checksum_path.parent.mkdir(parents=True, exist_ok=True)
+    checksum_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    paths = [checksum_path]
+
+    if library == "skia":
+        artifacts_path = root / "skia" / "artifacts.json"
+        artifacts = json.loads(artifacts_path.read_text(encoding="utf-8"))
+        for item in artifacts.get("artifacts", {}).values():
+            item["sha256"] = digests[item["artifact_name"]]
+        dev_bundle = artifacts.get("defaults", {}).get("dev_bundle", {})
+        dev_bundle["sha256"] = digests[dev_bundle["artifact_name"]]
+        for group in artifacts.get("metadata", {}).values():
+            for item in group.values():
+                item["sha256"] = digests[item["artifact_name"]]
+        artifacts_path.write_text(json.dumps(artifacts, indent=2) + "\n", encoding="utf-8")
+        paths.append(artifacts_path)
+    return paths
+
+
 def _emit(value: Any) -> None:
     print(json.dumps(value, sort_keys=True, separators=(",", ":")))
 
@@ -279,18 +331,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     verify_command = commands.add_parser("verify-assets")
     verify_command.add_argument("library")
     verify_command.add_argument("--paths", nargs="+", required=True)
+    checksum_command = commands.add_parser("record-checksums")
+    checksum_command.add_argument("library")
+    checksum_command.add_argument("--effective-tag", required=True)
+    checksum_command.add_argument("--paths", nargs="+", required=True)
     args = parser.parse_args(argv)
     try:
         root = args.root.resolve()
         if args.tags_file:
             tags = _load_json(args.tags_file, [])
-        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets"):
+        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets", "record-checksums"):
             tags = []
         else:
             tags = _remote_tags(args.remote)
         if args.releases_file:
             releases = _load_json(args.releases_file, [])
-        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets"):
+        elif args.command in ("prepare-metadata", "validate-contract", "verify-assets", "record-checksums"):
             releases = []
         else:
             if not args.repository:
@@ -314,13 +370,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "validate-contract":
             assets = expected_assets(root, args.library)
             _emit({"library": args.library, "assets": len(assets), "status": "valid"})
-        else:
+        elif args.command == "verify-assets":
             actual = {Path(path).name for raw in args.paths for path in root.glob(raw) if Path(path).is_file()}
             expected = set(expected_assets(root, args.library))
             result = {"expected": sorted(expected), "actual": sorted(actual), "missing": sorted(expected - actual), "unexpected": sorted(actual - expected)}
             _emit(result)
             if result["missing"] or result["unexpected"]:
                 return 2
+        else:
+            if not args.repository:
+                raise NativeReleaseError("repository is required to record checksums")
+            paths = record_artifact_checksums(
+                root, args.repository, args.library, args.effective_tag, args.paths
+            )
+            _emit({"paths": [str(path.relative_to(root)) for path in paths], "assets": len(expected_assets(root, args.library))})
         return 0
     except NativeReleaseError as error:
         print(f"native-release: {error}", file=sys.stderr)

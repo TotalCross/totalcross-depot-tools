@@ -57,6 +57,14 @@ runs:
         LIBRARY: ${{ inputs.library }}
         EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
       run: python3 scripts/native-release.py prepare-metadata "${LIBRARY}" --effective-tag "${EFFECTIVE_TAG}" > native-release-metadata.json
+    - name: Record immutable artifact checksums
+      if: ${{ steps.recheck.outputs.status == 'build-required' }}
+      shell: bash
+      env:
+        LIBRARY: ${{ inputs.library }}
+        EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+        REPOSITORY: ${{ github.repository }}
+      run: python3 scripts/native-release.py --repository "${REPOSITORY}" record-checksums "${LIBRARY}" --effective-tag "${EFFECTIVE_TAG}" --paths "${{ inputs.assets-directory }}/*"
     - name: Commit and push release metadata
       if: ${{ steps.recheck.outputs.status == 'build-required' }}
       shell: bash
@@ -67,6 +75,7 @@ runs:
         set -euo pipefail
         paths=()
         while IFS= read -r path; do paths+=("${path}"); done < <(python3 -c 'import json; print("\n".join(json.load(open("native-release-metadata.json"))["paths"]))')
+        paths+=(scripts/native-artifact-checksums.json)
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add "${paths[@]}"

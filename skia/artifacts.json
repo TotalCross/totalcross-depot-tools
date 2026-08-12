@@ -60,7 +60,8 @@
       "tag": "skia-158dc9d7-r8"
     },
     "dev_bundle": {
-      "artifact_name": "skia-dev-headers-158dc9d7.zip"
+      "artifact_name": "skia-dev-headers-158dc9d7.zip",
+      "sha256": "75d3749ce633ad92abbe035722f1f740346c5d70d073c1ac9a26807e4d0a6948"
     },
     "machine_build_config": {
       "required": true
@@ -69,141 +70,175 @@
   "artifacts": {
     "linux-x86_64": {
       "artifact_name": "libskia-linux-x86_64.a",
-      "target_path": "local/out/Release/linux/x86_64/libskia.a"
+      "target_path": "local/out/Release/linux/x86_64/libskia.a",
+      "sha256": "cf91ad98d7f20365245cb2aa84dce825402b2838c05dee8d6d2b9cdbf076f8c3"
     },
     "linux-aarch64": {
       "artifact_name": "libskia-linux-aarch64.a",
-      "target_path": "local/out/Release/linux/aarch64/libskia.a"
+      "target_path": "local/out/Release/linux/aarch64/libskia.a",
+      "sha256": "9c034d320313f3ce83868391fde6d01b1e8834fe97f42743727b72b2d0f66b26"
     },
     "linux-armv7l": {
       "artifact_name": "libskia-linux-armv7l.a",
-      "target_path": "local/out/Release/linux/armv7l/libskia.a"
+      "target_path": "local/out/Release/linux/armv7l/libskia.a",
+      "sha256": "630ce8030425e9b91a88a8dc55e13020f36c438a68853433f2e5046e270d0e98"
     },
     "wasm-wasm32": {
       "artifact_name": "libskia-wasm32.a",
-      "target_path": "local/out/Release/wasm/wasm32/libskia.a"
+      "target_path": "local/out/Release/wasm/wasm32/libskia.a",
+      "sha256": "53d05623bcd514932aa1def3201b7ccdf7683f9080321e9faa0b717e10e49777"
     },
     "android-arm64-v8a": {
       "artifact_name": "libskia-android-arm64-v8a.a",
-      "target_path": "local/out/Release/android/arm64-v8a/libskia.a"
+      "target_path": "local/out/Release/android/arm64-v8a/libskia.a",
+      "sha256": "06be713f925efd86a0c34b189ea2c291f245e43fd38c4a047286c95be35a568d"
     },
     "macos-arm64": {
       "artifact_name": "libskia-macos-arm64.a",
-      "target_path": "local/out/Release/macos/arm64/libskia.a"
+      "target_path": "local/out/Release/macos/arm64/libskia.a",
+      "sha256": "f2a6158c3df3eb00fc115a14d727f9000b2bd738f031ed06b6c62179a6135238"
     },
     "ios-arm64": {
       "artifact_name": "libskia-ios-arm64.a",
-      "target_path": "local/out/Release/ios/arm64/libskia.a"
+      "target_path": "local/out/Release/ios/arm64/libskia.a",
+      "sha256": "6be1ca62729ea0d1d8b1b28b678add4a9a204fded126e1f4dc4df1ba38aa0700"
     },
     "ios-simulator-arm64": {
       "artifact_name": "libskia-ios-simulator-arm64.a",
-      "target_path": "local/out/Release/ios-simulator/arm64/libskia.a"
+      "target_path": "local/out/Release/ios-simulator/arm64/libskia.a",
+      "sha256": "dced970df3b949eb5a5f5b25e99a5c2ed3813522f9b14bf60fa357bd7fa0aa2a"
     },
     "windows-x86": {
       "artifact_name": "libskia-windows-x86.lib",
-      "target_path": "local/out/Release/windows/x86/libskia.lib"
+      "target_path": "local/out/Release/windows/x86/libskia.lib",
+      "sha256": "27d9a34f721340d5bf45181fc087568022433683830cd8526ceb38b857f27d3a"
     },
     "windows-x64": {
       "artifact_name": "libskia-windows-x64.lib",
-      "target_path": "local/out/Release/windows/x64/libskia.lib"
+      "target_path": "local/out/Release/windows/x64/libskia.lib",
+      "sha256": "6674e7b8cf100d8255976af77c5f8c24775d81fb1bb6a20b362d44d6b61d574f"
     },
     "windows-arm64": {
       "artifact_name": "libskia-windows-arm64.lib",
-      "target_path": "local/out/Release/windows/arm64/libskia.lib"
+      "target_path": "local/out/Release/windows/arm64/libskia.lib",
+      "sha256": "3a38a1613bf5f5bfb81f7c83590e43a9cb50f4c0ecc68bbeba5fd604ae71f5b4"
     }
   },
   "metadata": {
     "machine-build-configs": {
       "linux-x86_64": {
         "artifact_name": "SkiaBuildConfig-linux-x86_64.cmake",
-        "target_path": "local/out/Release/linux/x86_64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/linux/x86_64/SkiaBuildConfig.cmake",
+        "sha256": "8229081c7020343f15c409c5ab2cf3ee850b8bde66c80d87fabc8448fd92f858"
       },
       "linux-aarch64": {
         "artifact_name": "SkiaBuildConfig-linux-aarch64.cmake",
-        "target_path": "local/out/Release/linux/aarch64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/linux/aarch64/SkiaBuildConfig.cmake",
+        "sha256": "04152ca5e7a098de13879d35dac9ab164c0752419ab8dd71ba3fe270a7ce4bc9"
       },
       "linux-armv7l": {
         "artifact_name": "SkiaBuildConfig-linux-armv7l.cmake",
-        "target_path": "local/out/Release/linux/armv7l/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/linux/armv7l/SkiaBuildConfig.cmake",
+        "sha256": "7b6d071894f210074d4ee2a51c852e8a5923a1853f47ece59d54c38546ad8abb"
       },
       "wasm-wasm32": {
         "artifact_name": "SkiaBuildConfig-wasm-wasm32.cmake",
-        "target_path": "local/out/Release/wasm/wasm32/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/wasm/wasm32/SkiaBuildConfig.cmake",
+        "sha256": "1099a6fac10bb7e23dd3588f568fcec352fb676bf13fce46bf3d4c634c8744d5"
       },
       "android-arm64-v8a": {
         "artifact_name": "SkiaBuildConfig-android-arm64-v8a.cmake",
-        "target_path": "local/out/Release/android/arm64-v8a/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/android/arm64-v8a/SkiaBuildConfig.cmake",
+        "sha256": "29491f88b2408cd1b8a67a03c8a1f2bfca572e23a24d531e83c7f67287cf292a"
       },
       "macos-arm64": {
         "artifact_name": "SkiaBuildConfig-macos-arm64.cmake",
-        "target_path": "local/out/Release/macos/arm64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/macos/arm64/SkiaBuildConfig.cmake",
+        "sha256": "d1e801aa14c497eb8dde3a9dfe4efe512a856ce5405c8a77da9b15eafec3ea71"
       },
       "ios-arm64": {
         "artifact_name": "SkiaBuildConfig-ios-arm64.cmake",
-        "target_path": "local/out/Release/ios/arm64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/ios/arm64/SkiaBuildConfig.cmake",
+        "sha256": "c3f779bc90d243014d3d19fa4fb5169e69c2a20bc2a24aa3e0c8ad4160253a15"
       },
       "ios-simulator-arm64": {
         "artifact_name": "SkiaBuildConfig-ios-simulator-arm64.cmake",
-        "target_path": "local/out/Release/ios-simulator/arm64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/ios-simulator/arm64/SkiaBuildConfig.cmake",
+        "sha256": "5402a551ccda195995bc85b9431447413484fbe6edc475356a0ef52762c4983e"
       },
       "windows-x86": {
         "artifact_name": "SkiaBuildConfig-windows-x86.cmake",
-        "target_path": "local/out/Release/windows/x86/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/windows/x86/SkiaBuildConfig.cmake",
+        "sha256": "f7cfe45e7903b36f4f30664b642e0c6ab9b3d13570d8715d43aaa444b336350b"
       },
       "windows-x64": {
         "artifact_name": "SkiaBuildConfig-windows-x64.cmake",
-        "target_path": "local/out/Release/windows/x64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/windows/x64/SkiaBuildConfig.cmake",
+        "sha256": "b0846eb21ca723c1c7264ba818250ea9d4f9ff1d3e2868e38b2492c97b8e52ab"
       },
       "windows-arm64": {
         "artifact_name": "SkiaBuildConfig-windows-arm64.cmake",
-        "target_path": "local/out/Release/windows/arm64/SkiaBuildConfig.cmake"
+        "target_path": "local/out/Release/windows/arm64/SkiaBuildConfig.cmake",
+        "sha256": "2e43466f77bf1fe478528fc88b9e0d9a26d9544cf4dec10ece453d693f790962"
       }
     },
     "build-manifests": {
       "linux-x86_64": {
         "artifact_name": "build_config_manifest-linux-x86_64.md",
-        "target_path": "local/out/Release/linux/x86_64/build_config_manifest.md"
+        "target_path": "local/out/Release/linux/x86_64/build_config_manifest.md",
+        "sha256": "52fd601b315d7d29f4a95eb932926e2888512ef37ddde9199065b424d8dad9c7"
       },
       "linux-aarch64": {
         "artifact_name": "build_config_manifest-linux-aarch64.md",
-        "target_path": "local/out/Release/linux/aarch64/build_config_manifest.md"
+        "target_path": "local/out/Release/linux/aarch64/build_config_manifest.md",
+        "sha256": "a5b3420c9f187265a62e3e18b6db68cacbcccbb237cefe5c980b2e209a259f20"
       },
       "linux-armv7l": {
         "artifact_name": "build_config_manifest-linux-armv7l.md",
-        "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md"
+        "target_path": "local/out/Release/linux/armv7l/build_config_manifest.md",
+        "sha256": "3fcfa1e505c3c97e956838d605190a85a244654323ab402aedb56e63f3a25140"
       },
       "wasm-wasm32": {
         "artifact_name": "build_config_manifest-wasm-wasm32.md",
-        "target_path": "local/out/Release/wasm/wasm32/build_config_manifest.md"
+        "target_path": "local/out/Release/wasm/wasm32/build_config_manifest.md",
+        "sha256": "11e76f6869fa04f310b2d421a620447db7eeef717f43c8847ac90f528310824c"
       },
       "android-arm64-v8a": {
         "artifact_name": "build_config_manifest-android-arm64-v8a.md",
-        "target_path": "local/out/Release/android/arm64-v8a/build_config_manifest.md"
+        "target_path": "local/out/Release/android/arm64-v8a/build_config_manifest.md",
+        "sha256": "e42c20cb0eb9800989a243990a8f83b867e5f5d53c0e47a54824026c43b6ec5a"
       },
       "macos-arm64": {
         "artifact_name": "build_config_manifest-macos-arm64.md",
-        "target_path": "local/out/Release/macos/arm64/build_config_manifest.md"
+        "target_path": "local/out/Release/macos/arm64/build_config_manifest.md",
+        "sha256": "99aae4ee2ae7ee296407d682bd046b3bcb1c47e460c3dea468443841e50fd071"
       },
       "ios-arm64": {
         "artifact_name": "build_config_manifest-ios-arm64.md",
-        "target_path": "local/out/Release/ios/arm64/build_config_manifest.md"
+        "target_path": "local/out/Release/ios/arm64/build_config_manifest.md",
+        "sha256": "1021317717a1a74aa1331208d8415ab6656512d4cd56f27497fc9f6841af68eb"
       },
       "ios-simulator-arm64": {
         "artifact_name": "build_config_manifest-ios-simulator-arm64.md",
-        "target_path": "local/out/Release/ios-simulator/arm64/build_config_manifest.md"
+        "target_path": "local/out/Release/ios-simulator/arm64/build_config_manifest.md",
+        "sha256": "a2c7014d562175c8f3277b38c8b07aab5e6093526d08b490678434bf17fdebcd"
       },
       "windows-x86": {
         "artifact_name": "build_config_manifest-windows-x86.md",
-        "target_path": "local/out/Release/windows/x86/build_config_manifest.md"
+        "target_path": "local/out/Release/windows/x86/build_config_manifest.md",
+        "sha256": "72f052e74ce651d071607257c866d174aa0b556c6c8ba5003fa0fcd2f0be8cd8"
       },
       "windows-x64": {
         "artifact_name": "build_config_manifest-windows-x64.md",
-        "target_path": "local/out/Release/windows/x64/build_config_manifest.md"
+        "target_path": "local/out/Release/windows/x64/build_config_manifest.md",
+        "sha256": "2acc8b118997077491ff0455d1d0fb9b9b06137dcb2c0adfb7e5a3156cacce14"
       },
       "windows-arm64": {
         "artifact_name": "build_config_manifest-windows-arm64.md",
-        "target_path": "local/out/Release/windows/arm64/build_config_manifest.md"
+        "target_path": "local/out/Release/windows/arm64/build_config_manifest.md",
+        "sha256": "6abe97a6186b824092037f71007bc90cb0d642b3407cd3c1cc2fc33ed8fb92fa"
       }
     }
   }
 }
+

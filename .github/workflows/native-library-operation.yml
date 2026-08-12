@@ -268,6 +268,14 @@ jobs:
         if: ${{ steps.recheck.outputs.status == 'build-required' }}
         shell: bash
         run: python3 scripts/native-release.py prepare-metadata "${{ inputs.library }}" --effective-tag "${{ steps.recheck.outputs.effective_release_tag }}"
+      - name: Record immutable artifact checksums
+        if: ${{ steps.recheck.outputs.status == 'build-required' }}
+        shell: bash
+        env:
+          LIBRARY: ${{ inputs.library }}
+          EFFECTIVE_TAG: ${{ steps.recheck.outputs.effective_release_tag }}
+          REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/native-release.py --repository "${REPOSITORY}" record-checksums "${LIBRARY}" --effective-tag "${EFFECTIVE_TAG}" --paths 'release-assets/*'
       - name: Commit and push release metadata
         if: ${{ steps.recheck.outputs.status == 'build-required' }}
         shell: bash
@@ -278,7 +286,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add deps.yml "${LIBRARY}/manifest.yml"
+          git add deps.yml "${LIBRARY}/manifest.yml" scripts/native-artifact-checksums.json
           git commit -m "chore(${LIBRARY}): prepare ${EFFECTIVE_TAG} release" -m "Pin the effective release in the dependency manifest and compatible bundle index before tagging."
           git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Create immutable release tag

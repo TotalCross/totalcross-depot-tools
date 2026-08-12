@@ -121,6 +121,24 @@ class NativeReleaseTests(unittest.TestCase):
         self.assertEqual({"zlib-macos-arm64.tar.gz"}, expected - actual)
         self.assertEqual({"unexpected.tar.gz"}, actual - expected)
 
+    def test_record_checksums_persists_every_declared_asset(self) -> None:
+        assets = self.root / "assets"
+        assets.mkdir()
+        for name in NATIVE_RELEASE.expected_assets(self.root, "zlib"):
+            (assets / name).write_bytes(name.encode("utf-8"))
+        paths = NATIVE_RELEASE.record_artifact_checksums(
+            self.root,
+            "owner/repo",
+            "zlib",
+            "zlib-1.3.1-r2",
+            ["assets/*"],
+        )
+        self.assertEqual([self.root / NATIVE_RELEASE.CHECKSUMS_PATH], paths)
+        payload = json.loads(paths[0].read_text(encoding="utf-8"))
+        recorded = payload["repositories"]["owner/repo"]["zlib-1.3.1-r2"]
+        self.assertEqual(set(NATIVE_RELEASE.expected_assets(self.root, "zlib")), set(recorded))
+        self.assertTrue(all(len(digest) == 64 for digest in recorded.values()))
+
     def test_skia_contract_rejects_undeclared_machine_config_and_diagnostics(self) -> None:
         skia = self.root / "skia"
         skia.mkdir()
