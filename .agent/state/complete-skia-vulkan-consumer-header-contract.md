@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 
 Status: complete; all acceptance criteria are proven.
 
-Last logical commit: `b8a7435` (`test(skia): cover Vulkan consumer header
-contract`) in a detached checkout.
+Last delivered logical commit: `6b99a23` (`docs(skia): document Vulkan header
+contract`) in a detached checkout. This completed-state pointer is recorded by
+the follow-up agent-state commit.
 
 Active paths:
 

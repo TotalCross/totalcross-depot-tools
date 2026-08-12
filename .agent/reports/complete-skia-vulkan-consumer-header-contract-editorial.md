@@ -53,6 +53,9 @@ The published Linux x86-64 r8 artifact and metadata compiled the same source to
 an ELF relocatable object without an external Vulkan SDK. The published ZIP
 contains both required Vulkan headers.
 
+The delivered logical slices are `3a5272c` (production contract), `b8a7435`
+(regression coverage), and `6b99a23` (consumer documentation and final report).
+
 ## Useful Evidence and Examples
 
 The generated macOS and Linux compile flags contain

@@ -42,7 +42,7 @@ for the shared consumption contract, `docs/CONSUMING_DEPOT_TOOLS.md`.
   missing-header failures, and the real consumer fixture as `b8a7435`.
 - [x] (2026-08-12T00:00:00-03:00) Documented the self-contained header
   contract; completed Linux/macOS, Metal, release-boundary, and downstream
-  audits; finalized the plan and report.
+  audits; finalized the plan and report in `6b99a23`.
 
 ## Current Architecture and Scope
 
