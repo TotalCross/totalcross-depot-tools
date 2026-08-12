@@ -63,7 +63,7 @@
       "artifact_name": "skia-dev-headers-158dc9d7.zip"
     },
     "machine_build_config": {
-      "required": false
+      "required": true
     }
   },
   "artifacts": {
