@@ -96,76 +96,11 @@ esac
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
-github_token=""
-if [ -n "${github_token_env}" ]; then
-  github_token="${!github_token_env:-}"
-elif [ -n "${MBEDTLS_GITHUB_TOKEN:-}" ]; then
-  github_token="${MBEDTLS_GITHUB_TOKEN}"
-elif [ -n "${GITHUB_TOKEN:-}" ]; then
-  github_token="${GITHUB_TOKEN}"
-fi
-
-github_curl() {
-  if [ -n "${github_token}" ]; then
-    curl -fsSL \
-      -H "Authorization: Bearer ${github_token}" \
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      "$@"
-  else
-    curl -fsSL "$@"
-  fi
-}
+source "${script_dir}/../scripts/github-release.sh"
 
 download_release_asset() {
-  local candidate="$1"
-  local archive_path="$2"
-  local download_url="https://github.com/${github_repo}/releases/download/${release_tag}/${candidate}"
-
-  echo "Downloading mbedTLS artifact ${candidate} from ${github_repo}@${release_tag}"
-
-  if github_curl -o "${archive_path}" "${download_url}"; then
-    return 0
-  fi
-
-  if [ -z "${github_token}" ]; then
-    return 1
-  fi
-
-  local release_json="${tmp_dir}/release.json"
-  local asset_id=""
-  github_curl \
-    -o "${release_json}" \
-    "https://api.github.com/repos/${github_repo}/releases/tags/${release_tag}"
-
-  asset_id="$(
-    awk -v asset_name="${candidate}" '
-      /"id":/ && id == "" {
-        line = $0
-        sub(/.*"id": */, "", line)
-        sub(/,.*/, "", line)
-        id = line
-      }
-      /"name":/ {
-        line = $0
-        sub(/.*"name": "/, "", line)
-        sub(/".*/, "", line)
-        if (line == asset_name) {
-          print id
-          exit
-        }
-        id = ""
-      }
-    ' "${release_json}"
-  )"
-
-  if [ -z "${asset_id}" ]; then
-    return 1
-  fi
-
-  github_curl \
-    -H "Accept: application/octet-stream" \
-    -o "${archive_path}" \
-    "https://api.github.com/repos/${github_repo}/releases/assets/${asset_id}"
+  tc_github_release_download "${github_repo}" "${release_tag}" "$1" "$2" \
+    "${github_token_env}" MBEDTLS_GITHUB_TOKEN
 }
 
 asset_name="mbedtls-${platform}-${arch}.tar.gz"

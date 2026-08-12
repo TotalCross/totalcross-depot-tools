@@ -41,11 +41,9 @@ esac
 asset="qrcodegen-${platform}-${arch}.tar.gz"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
-token="${!token_env:-${GITHUB_TOKEN:-}}"
-curl_args=(-fsSL --retry 3 --retry-delay 2)
-[ -z "${token}" ] || curl_args+=(-H "Authorization: Bearer ${token}")
-curl "${curl_args[@]}" -o "${tmp_dir}/${asset}" \
-  "https://github.com/${github_repo}/releases/download/${release_tag}/${asset}"
+source "${script_dir}/../scripts/github-release.sh"
+tc_github_release_download "${github_repo}" "${release_tag}" "${asset}" "${tmp_dir}/${asset}" \
+  "${token_env}" QRCODEGEN_GITHUB_TOKEN
 tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
 
 root="${tmp_dir}/qrcodegen/${platform}/${arch}"

@@ -105,97 +105,13 @@ esac
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 
-github_token=""
-if [ -n "${github_token_env}" ]; then
-  github_token="${!github_token_env:-}"
-elif [ -n "${LIBPNG_GITHUB_TOKEN:-}" ]; then
-  github_token="${LIBPNG_GITHUB_TOKEN}"
-elif [ -n "${GITHUB_TOKEN:-}" ]; then
-  github_token="${GITHUB_TOKEN}"
-fi
-
-github_curl() {
-  if [ -n "${github_token}" ]; then
-    curl -fsSL \
-      --globoff \
-      --http1.1 \
-      --retry 3 \
-      --retry-delay 2 \
-      -H "Authorization: Bearer ${github_token}" \
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      "$@"
-  else
-    curl -fsSL \
-      --globoff \
-      --http1.1 \
-      --retry 3 \
-      --retry-delay 2 \
-      "$@"
-  fi
-}
-
-download_release_asset() {
-  local candidate="$1"
-  local archive_path="$2"
-  local download_url="https://github.com/${github_repo}/releases/download/${release_tag}/${candidate}"
-
-  echo "Downloading libpng artifact ${candidate} from ${github_repo}@${release_tag}"
-
-  if github_curl -o "${archive_path}" "${download_url}"; then
-    return 0
-  fi
-
-  if [ -z "${github_token}" ]; then
-    return 1
-  fi
-
-  echo "Direct libpng artifact download failed; trying GitHub release asset API"
-
-  local release_json="${tmp_dir}/release.json"
-  local asset_id=""
-  if ! github_curl \
-    -o "${release_json}" \
-    "https://api.github.com/repos/${github_repo}/releases/tags/${release_tag}"; then
-    return 1
-  fi
-
-  asset_id="$(
-    awk -v asset_name="${candidate}" '
-      /"assets"[[:space:]]*:/ {
-        in_assets = 1
-      }
-      in_assets && /"url"[[:space:]]*:[[:space:]]*"https:\/\/api.github.com\/repos\/[^"]+\/releases\/assets\// {
-        line = $0
-        sub(/.*\/releases\/assets\//, "", line)
-        sub(/".*/, "", line)
-        current_id = line
-      }
-      in_assets && /"name"[[:space:]]*:/ {
-        line = $0
-        sub(/.*"name"[[:space:]]*:[[:space:]]*"/, "", line)
-        sub(/".*/, "", line)
-        if (line == asset_name && current_id != "") {
-          print current_id
-          exit
-        }
-      }
-    ' "${release_json}"
-  )"
-
-  if [ -z "${asset_id}" ]; then
-    return 1
-  fi
-
-  github_curl \
-    -H "Accept: application/octet-stream" \
-    -o "${archive_path}" \
-    "https://api.github.com/repos/${github_repo}/releases/assets/${asset_id}"
-}
+source "${script_dir}/../scripts/github-release.sh"
 
 asset_name="libpng-${platform}-${arch}.tar.gz"
 archive="${tmp_dir}/${asset_name}"
 
-if ! download_release_asset "${asset_name}" "${archive}"; then
+if ! tc_github_release_download "${github_repo}" "${release_tag}" "${asset_name}" "${archive}" \
+  "${github_token_env}" LIBPNG_GITHUB_TOKEN; then
   echo "Unable to download a libpng artifact for ${platform}/${arch}" >&2
   exit 1
 fi

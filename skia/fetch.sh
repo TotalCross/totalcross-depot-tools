@@ -4,6 +4,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "$ROOT_DIR/../scripts/github-release.sh"
 MANIFEST_PATH="$ROOT_DIR/artifacts.json"
 BASE_URL="${SKIA_ARTIFACT_BASE_URL:-}"
 GITHUB_REPO="${SKIA_GITHUB_REPO:-}"
@@ -62,64 +63,27 @@ require_cmd() {
 }
 
 github_token() {
-  if [[ -n "$GITHUB_TOKEN_ENV" ]]; then
-    printf '%s' "${!GITHUB_TOKEN_ENV:-}"
-  elif [[ -n "${SKIA_GITHUB_TOKEN:-}" ]]; then
-    printf '%s' "$SKIA_GITHUB_TOKEN"
-  elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    printf '%s' "$GITHUB_TOKEN"
-  fi
-}
-
-github_curl() {
-  local token
-  token=$(github_token)
-
-  if [[ -n "$token" ]]; then
-    curl \
-      -H "Authorization: Bearer ${token}" \
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      "$@"
-  else
-    curl "$@"
-  fi
+  tc_github_release_token "$GITHUB_TOKEN_ENV" SKIA_GITHUB_TOKEN
 }
 
 SKIA_DOWNLOAD_RETRIES="${SKIA_DOWNLOAD_RETRIES:-5}"
 SKIA_DOWNLOAD_RETRY_DELAY="${SKIA_DOWNLOAD_RETRY_DELAY:-2}"
 
-should_retry_download() {
-  local status="$1"
-  [[ "$status" == "000" || "$status" == "408" || "$status" == "429" || "$status" == "500" || "$status" == "502" || "$status" == "503" || "$status" == "504" ]]
-}
-
 download_to_file() {
   local url="$1"
   local out="$2"
-  local attempt=1
-  local max_attempts="$SKIA_DOWNLOAD_RETRIES"
-  local delay="$SKIA_DOWNLOAD_RETRY_DELAY"
-  local status
-  local curl_exit
+  local token
+  token="$(github_token)"
+  TOTALCROSS_DEPOT_FETCH_ATTEMPTS="${TOTALCROSS_DEPOT_FETCH_ATTEMPTS:-$SKIA_DOWNLOAD_RETRIES}" \
+    TOTALCROSS_DEPOT_FETCH_RETRY_DELAY="${TOTALCROSS_DEPOT_FETCH_RETRY_DELAY:-$SKIA_DOWNLOAD_RETRY_DELAY}" \
+    tc_github_release_download_url "$url" "$out" 'Skia artifact URL' "$token"
+}
 
-  require_cmd curl
-
-  while true; do
-    status=$(github_curl -w "%{http_code}" -fsSL -o "$out" "$url") && return 0
-    curl_exit=$?
-
-    if [[ $attempt -ge $max_attempts ]] || ! should_retry_download "${status:-000}"; then
-      rm -f "$out"
-      echo "error: failed to download '$url' after $attempt attempt(s) (curl exit $curl_exit, http ${status:-000})" >&2
-      return "$curl_exit"
-    fi
-
-    rm -f "$out"
-    echo "warning: transient download failure for '$url' (attempt $attempt/$max_attempts, curl exit $curl_exit, http ${status:-000}); retrying in ${delay}s" >&2
-    sleep "$delay"
-    attempt=$((attempt + 1))
-    delay=$((delay * 2))
-  done
+download_github_asset() {
+  local asset_name="$1"
+  local out="$2"
+  tc_github_release_download "$GITHUB_REPO" "$RELEASE_TAG" "$asset_name" "$out" \
+    "$GITHUB_TOKEN_ENV" SKIA_GITHUB_TOKEN
 }
 
 verify_sha256() {
@@ -177,7 +141,7 @@ PY
     if [[ -n "$BASE_URL" ]]; then
       download_to_file "${BASE_URL%/}/${manifest_name}" "$manifest_tmp"
     elif [[ -n "$GITHUB_REPO" && -n "$RELEASE_TAG" ]]; then
-      download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${manifest_name}" "$manifest_tmp"
+      download_github_asset "$manifest_name" "$manifest_tmp"
     else
       rm -f "$manifest_tmp"
       die "build manifest installation requires a GitHub release or --base-url"
@@ -425,7 +389,7 @@ elif [[ -n "$BASE_URL" ]]; then
 elif [[ "$DEFAULT_SOURCE_TYPE" == "github_release" || -n "$GITHUB_REPO" || -n "$RELEASE_TAG" ]]; then
   [[ -n "$GITHUB_REPO" ]] || die "missing GitHub repo. Use --github-repo or set defaults.source.repo in the manifest"
   [[ -n "$RELEASE_TAG" ]] || die "missing release tag. Use --release-tag or set defaults.source.tag in the manifest"
-  download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${ARTIFACT_NAME}" "$TMP_FILE"
+  download_github_asset "$ARTIFACT_NAME" "$TMP_FILE"
 else
   die "either --source, --base-url/SKIA_ARTIFACT_BASE_URL, or a GitHub release default is required"
 fi
@@ -452,7 +416,7 @@ elif [[ $INSTALL_BUILD_CONFIG -eq 1 && -n "$SOURCE" ]]; then
 elif [[ $INSTALL_BUILD_CONFIG -eq 1 && -n "$BASE_URL" ]]; then
   download_to_file "${BASE_URL%/}/${BUILD_CONFIG_NAME}" "$TMP_BUILD_CONFIG"
 elif [[ $INSTALL_BUILD_CONFIG -eq 1 && ( "$DEFAULT_SOURCE_TYPE" == "github_release" || -n "$GITHUB_REPO" || -n "$RELEASE_TAG" ) ]]; then
-  download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${BUILD_CONFIG_NAME}" "$TMP_BUILD_CONFIG"
+  download_github_asset "$BUILD_CONFIG_NAME" "$TMP_BUILD_CONFIG"
 elif [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
   die "unable to resolve matching Skia build metadata"
 fi
@@ -495,7 +459,7 @@ if [[ $INSTALL_DEV_BUNDLE -eq 1 ]]; then
   if [[ -n "$BASE_URL" ]]; then
     download_to_file "${BASE_URL%/}/${DEV_BUNDLE_NAME}" "$TMP_DEV_FILE"
   elif [[ -n "$GITHUB_REPO" && -n "$RELEASE_TAG" ]]; then
-    download_to_file "https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${DEV_BUNDLE_NAME}" "$TMP_DEV_FILE"
+    download_github_asset "$DEV_BUNDLE_NAME" "$TMP_DEV_FILE"
   else
     die "--install-dev requires a GitHub release or --base-url"
   fi
