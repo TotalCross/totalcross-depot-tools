@@ -148,6 +148,15 @@ dependency choices recorded for that artifact. A strict repository-managed
 package with missing, mismatched, or unsupported metadata fails during
 configuration rather than exposing a partially described imported target.
 
+The machine contract covers compile definitions, public include directories,
+and link dependencies separately. For a Vulkan-enabled repository artifact,
+`Skia::Skia` exports `SK_VULKAN` and the development bundle's
+`include/third_party/vulkan` directory so Skia public headers compile without an
+external Vulkan SDK. The bundled header check is deterministic and fails during
+configuration when the managed package is incomplete. It does not add a Vulkan
+loader library or provide an application-level Vulkan runtime; applications
+that directly load Vulkan remain responsible for that separate integration.
+
 ## Platform and architecture selection
 
 Auto-fetch modules derive the artifact platform and architecture from CMake:

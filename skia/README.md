@@ -58,6 +58,19 @@ toolchain libraries, platform identity, and backend compile definitions required
 by that exact build. Consumers must not repeat Metal, OpenGL, Vulkan, PNG, zlib,
 or other backend requirements manually.
 
+Repository-managed development bundles are self-contained for public build-time
+headers. When the selected metadata enables Vulkan, `Skia::Skia` propagates both
+`SK_VULKAN` and the bundle's `include/third_party/vulkan` directory, which makes
+Skia's `<vulkan/vulkan_core.h>` include resolve without a separately installed
+Vulkan SDK. Android metadata also validates the bundled `vulkan_android.h`.
+Missing required headers make a managed package fail during CMake configuration
+instead of falling back to whatever system headers happen to be installed.
+
+This header contract does not add a Vulkan loader library and does not claim to
+provide an application-level Vulkan runtime. An application that directly uses
+a platform Vulkan loader remains responsible for its own runtime integration;
+merely compiling against this Skia prebuilt does not require one.
+
 An explicit `SKIA_LIBRARY` outside `skia/local` may omit metadata for legacy
 compatibility. CMake warns in that case and cannot infer backend dependencies;
 providing a matching `SKIA_BUILD_CONFIG` enables the metadata-driven contract.
