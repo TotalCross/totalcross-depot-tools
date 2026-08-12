@@ -64,6 +64,7 @@ class FindSkiaTests(unittest.TestCase):
         self.module_dir.mkdir(parents=True)
         shutil.copy2(MODULE_DIR / "FindSkia.cmake", self.module_dir)
         shutil.copy2(MODULE_DIR / "SkiaLinkDependencies.cmake", self.module_dir)
+        shutil.copy2(MODULE_DIR / "SkiaConsumerRequirements.cmake", self.module_dir)
         (self.dependency / "artifacts.json").write_text(
             json.dumps({"defaults": {"machine_build_config": {"required": False}}}),
             encoding="utf-8",
@@ -80,8 +81,9 @@ class FindSkiaTests(unittest.TestCase):
                     f'list(PREPEND CMAKE_MODULE_PATH "{self.module_dir.as_posix()}")',
                     "find_package(Skia REQUIRED)",
                     "get_target_property(test_links Skia::Skia INTERFACE_LINK_LIBRARIES)",
+                    "get_target_property(test_includes Skia::Skia INTERFACE_INCLUDE_DIRECTORIES)",
                     "get_target_property(test_definitions Skia::Skia INTERFACE_COMPILE_DEFINITIONS)",
-                    'file(WRITE "${CMAKE_BINARY_DIR}/result.txt" "links=${test_links}\\ndefinitions=${test_definitions}\\n")',
+                    'file(WRITE "${CMAKE_BINARY_DIR}/result.txt" "links=${test_links}\\nincludes=${test_includes}\\ndefinitions=${test_definitions}\\n")',
                     "",
                 ]
             ),
@@ -107,7 +109,14 @@ class FindSkiaTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-    def create_layout(self, root: pathlib.Path) -> pathlib.Path:
+    def create_layout(
+        self,
+        root: pathlib.Path,
+        *,
+        platform: str = "macos",
+        architecture: str = "arm64",
+        vulkan_headers: tuple[str, ...] = (),
+    ) -> pathlib.Path:
         for relative in (
             "include/config/SkUserConfig.h",
             "include/core/SkCanvas.h",
@@ -119,7 +128,11 @@ class FindSkiaTests(unittest.TestCase):
             path = root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("// test fixture\n", encoding="utf-8")
-        library = root / "out" / "Release" / "macos" / "arm64" / "libskia.a"
+        for header in vulkan_headers:
+            path = root / "include" / "third_party" / "vulkan" / "vulkan" / header
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("// test Vulkan fixture\n", encoding="utf-8")
+        library = root / "out" / "Release" / platform / architecture / "libskia.a"
         library.parent.mkdir(parents=True, exist_ok=True)
         library.write_bytes(b"skia-find-package-fixture")
         return library
@@ -165,6 +178,7 @@ class FindSkiaTests(unittest.TestCase):
         skia_dir: pathlib.Path | None = None,
         library: pathlib.Path | None = None,
         require_metadata: bool = False,
+        android_abi: str | None = None,
     ) -> tuple[subprocess.CompletedProcess[str], pathlib.Path]:
         build = self.root / f"build-{len(list(self.root.glob('build-*')))}"
         command = [
@@ -181,11 +195,16 @@ class FindSkiaTests(unittest.TestCase):
             command.append(f"-DSKIA_LIBRARY={library}")
         if require_metadata:
             command.append("-DSKIA_REQUIRE_BUILD_CONFIG=ON")
+        if android_abi is not None:
+            command.append(f"-DANDROID_ABI={android_abi}")
         result = subprocess.run(command, check=False, capture_output=True, text=True)
         return result, build
 
     def test_metadata_drives_metal_gl_links_and_definitions(self) -> None:
-        library = self.create_layout(self.managed_root)
+        library = self.create_layout(
+            self.managed_root,
+            vulkan_headers=("vulkan_core.h",),
+        )
         self.write_metadata(
             library,
             features={
@@ -209,7 +228,53 @@ class FindSkiaTests(unittest.TestCase):
         self.assertIn("Foundation.framework", interface)
         self.assertIn("OpenGL.framework", interface)
         self.assertIn("PNG::PNG;ZLIB::ZLIB", interface)
+        vulkan_include = self.managed_root / "include" / "third_party" / "vulkan"
+        self.assertIn(f"includes={self.managed_root};", interface)
+        self.assertEqual(interface.count(vulkan_include.as_posix()), 1)
         self.assertIn("definitions=SK_BUILD_FOR_MAC;SK_GL;SK_METAL;SK_VULKAN", interface)
+
+    def test_vulkan_off_adds_no_definition_or_bundled_include(self) -> None:
+        library = self.create_layout(self.managed_root)
+        self.write_metadata(library)
+
+        result, build = self.configure(require_metadata=True)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        interface = (build / "result.txt").read_text(encoding="utf-8")
+        self.assertNotIn("SK_VULKAN", interface)
+        self.assertNotIn("include/third_party/vulkan", interface)
+
+    def test_missing_managed_vulkan_core_header_fails(self) -> None:
+        library = self.create_layout(self.managed_root)
+        self.write_metadata(library, features={"SKIA_BUILD_USE_VULKAN": True})
+
+        result, _ = self.configure(require_metadata=True)
+
+        self.assertNotEqual(result.returncode, 0)
+        output = result.stdout + result.stderr
+        self.assertRegex(output, r"missing required bundled\s+header")
+        self.assertIn("vulkan/vulkan_core.h", output)
+
+    def test_missing_managed_android_vulkan_header_fails(self) -> None:
+        library = self.create_layout(
+            self.managed_root,
+            platform="android",
+            architecture="arm64-v8a",
+            vulkan_headers=("vulkan_core.h",),
+        )
+        self.write_metadata(
+            library,
+            platform="android",
+            architecture="arm64-v8a",
+            features={"SKIA_BUILD_USE_VULKAN": True},
+        )
+
+        result, _ = self.configure(require_metadata=True, android_abi="arm64-v8a")
+
+        self.assertNotEqual(result.returncode, 0)
+        output = result.stdout + result.stderr
+        self.assertRegex(output, r"missing required bundled\s+header")
+        self.assertIn("vulkan/vulkan_android.h", output)
 
     def test_metal_off_removes_metal_requirements(self) -> None:
         library = self.create_layout(self.managed_root)
@@ -268,6 +333,17 @@ class FindSkiaTests(unittest.TestCase):
         self.assertIn("legacy behavior is used", result.stdout + result.stderr)
         interface = (build / "result.txt").read_text(encoding="utf-8")
         self.assertIn("PNG::PNG;ZLIB::ZLIB", interface)
+
+    def test_external_metadata_does_not_require_repository_bundled_headers(self) -> None:
+        library = self.create_layout(self.external_root)
+        self.write_metadata(library, features={"SKIA_BUILD_USE_VULKAN": True})
+
+        result, build = self.configure(skia_dir=self.external_root, library=library)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        interface = (build / "result.txt").read_text(encoding="utf-8")
+        self.assertIn("SK_VULKAN", interface)
+        self.assertNotIn("include/third_party/vulkan", interface)
 
 
 if __name__ == "__main__":
