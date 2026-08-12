@@ -73,7 +73,7 @@ tc_github_release_verify_download() {
   if [ "$actual" != "$expected" ]; then
     tc_github_release_log "error: checksum mismatch for ${label}: expected ${expected}, got ${actual}"
     rm -f "$destination"
-    return 1
+    return 3
   fi
   TC_GITHUB_RELEASE_DOWNLOADED_SHA256="$actual"
   TC_GITHUB_RELEASE_EXPECTED_SHA256="$expected"
@@ -119,7 +119,7 @@ tc_github_release_curl() {
   local token="$1"
   shift
   local curl_bin="${TOTALCROSS_DEPOT_CURL:-curl}"
-  local args=(--silent --show-error --location --globoff --http1.1)
+  local args=(--silent --show-error --location --globoff --http1.1 --fail)
   if [ -n "$token" ]; then
     args+=(
       -H "Authorization: Bearer ${token}"
@@ -283,6 +283,7 @@ tc_github_release_download() {
   local asset_api_url
   local asset_digest
   local expected_sha256
+  local verify_exit
   local downloaded="${destination}.download.$$"
   local paths
 
@@ -310,11 +311,19 @@ tc_github_release_download() {
         }
         expected_sha256="$(printf '%s\n' "$asset_info" | sed -n '2p')"
       fi
-      tc_github_release_verify_download "$downloaded" "$expected_sha256" "${repo}@${tag}/${asset}" || return
-      mv -f "$downloaded" "$destination"
-      return 0
+      if tc_github_release_verify_download "$downloaded" "$expected_sha256" "${repo}@${tag}/${asset}"; then
+        mv -f "$downloaded" "$destination"
+        return 0
+      else
+        verify_exit=$?
+        if [ "$verify_exit" -ne 3 ]; then
+          return "$verify_exit"
+        fi
+        tc_github_release_log "using GitHub asset API fallback after direct checksum mismatch for ${repo}@${tag}/${asset}"
+      fi
+    else
+      tc_github_release_log "using GitHub asset API fallback for ${repo}@${tag}/${asset}"
     fi
-    tc_github_release_log "using GitHub asset API fallback for ${repo}@${tag}/${asset}"
   else
     tc_github_release_log "reusing API-only release routing for ${repo}@${tag}/${asset}"
   fi
