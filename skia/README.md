@@ -14,12 +14,13 @@ describes the GitHub Release assets consumed by TotalCross.
 ## Fetch release artifacts
 
 ```bash
-./fetch.sh --platform linux --arch x86_64 --install-dev
-./fetch.sh --platform wasm --arch wasm32 --install-dev
-./fetch.sh --platform macos --arch arm64 --install-dev
+./fetch.sh --install-shared
+./fetch.sh --platform linux --arch x86_64
+./fetch.sh --platform wasm --arch wasm32
+./fetch.sh --platform macos --arch arm64
 ./fetch.sh --platform android --arch arm64-v8a
-./fetch.sh --platform ios --arch arm64 --install-dev
-./fetch.sh --platform ios-simulator --arch arm64 --install-dev
+./fetch.sh --platform ios --arch arm64
+./fetch.sh --platform ios-simulator --arch arm64
 ```
 
 The default source is the `TotalCross/totalcross-depot-tools` release declared
@@ -29,14 +30,14 @@ in `artifacts.json`. Override it with `--base-url`, `--github-repo`,
 Every metadata-enabled static archive is paired with a target-specific release
 asset named `SkiaBuildConfig-<platform>-<arch>.cmake`. `fetch.sh` validates the
 metadata version, platform, architecture, and library SHA-256 before installing
-the pair. This sidecar is fetched independently of `--install-dev`; the latter
-continues to control only headers and human-readable build diagnostics.
+the pair. Run `--install-shared` once per release preparation to install the
+development bundle and every human-readable build manifest. The legacy
+`--install-dev` option remains compatible and performs the selected target fetch
+followed by the same idempotent shared installation.
 
 An explicit `--source` archive must be accompanied by its matching
 `--build-config`. Alternate base URLs, repositories, and release tags are also
-treated as metadata-enabled sources. The current default r7 release predates
-the machine contract and remains on a warned legacy path until a new release
-activates `defaults.machine_build_config.required` in `artifacts.json`.
+treated as metadata-enabled sources.
 
 ## Consume from CMake
 

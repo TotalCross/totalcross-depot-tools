@@ -5,6 +5,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$ROOT_DIR/../scripts/github-release.sh"
+source "$ROOT_DIR/../scripts/artifact-install.sh"
 MANIFEST_PATH="$ROOT_DIR/artifacts.json"
 BASE_URL="${SKIA_ARTIFACT_BASE_URL:-}"
 GITHUB_REPO="${SKIA_GITHUB_REPO:-}"
@@ -15,6 +16,7 @@ ARCH=""
 SOURCE=""
 BUILD_CONFIG_SOURCE=""
 INSTALL_DEV_BUNDLE=0
+INSTALL_SHARED_ONLY=0
 
 usage() {
   cat <<EOF
@@ -38,7 +40,8 @@ Options:
                       Environment variable containing a GitHub token,
                       default: SKIA_GITHUB_TOKEN, then GITHUB_TOKEN.
   --manifest <file>   Manifest file. Default: $MANIFEST_PATH
-  --install-dev       Install the shared dev bundle declared in the manifest.
+  --install-dev       Install the target and shared release content (legacy).
+  --install-shared    Install only shared release content; no target is required.
   --print-target      Print the resolved output path and exit.
   -h, --help          Show this help.
 
@@ -98,63 +101,6 @@ verify_sha256() {
   else
     echo "warning: no sha256 configured for ${label} in ${MANIFEST_PATH}" >&2
   fi
-}
-
-install_build_manifests() {
-  local metadata_info
-
-  metadata_info=$(
-    python3 - "$MANIFEST_PATH" <<'PY'
-import json
-import pathlib
-import sys
-
-manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
-metadata = manifest.get("metadata", {})
-entries = metadata.get("build-manifests", {})
-for key, info in sorted(entries.items()):
-    print(key)
-    print(info["artifact_name"])
-    print(info["target_path"])
-    print(info.get("sha256", ""))
-
-for arch, info in sorted(metadata.get("linux-build-manifests", {}).items()):
-    print(f"linux-{arch}")
-    print(info["artifact_name"])
-    print(info["target_path"])
-    print(info.get("sha256", ""))
-PY
-  )
-
-  [[ -n "$metadata_info" ]] || return 0
-
-  while IFS= read -r manifest_arch; do
-    [[ -n "$manifest_arch" ]] || break
-    IFS= read -r manifest_name || break
-    IFS= read -r manifest_target_rel || break
-    IFS= read -r manifest_sha || break
-
-    local manifest_target="$ROOT_DIR/$manifest_target_rel"
-    local manifest_tmp
-    manifest_tmp=$(mktemp /tmp/skia-linux-manifest.XXXXXX)
-
-    if [[ -n "$BASE_URL" ]]; then
-      download_to_file "${BASE_URL%/}/${manifest_name}" "$manifest_tmp"
-    elif [[ -n "$GITHUB_REPO" && -n "$RELEASE_TAG" ]]; then
-      download_github_asset "$manifest_name" "$manifest_tmp"
-    else
-      rm -f "$manifest_tmp"
-      die "build manifest installation requires a GitHub release or --base-url"
-    fi
-
-    verify_sha256 "$manifest_tmp" "$manifest_sha" "build-manifest-${manifest_arch}"
-    mkdir -p "$(dirname "$manifest_target")"
-    cp "$manifest_tmp" "$manifest_target"
-    rm -f "$manifest_tmp"
-
-    echo "Installed Skia build manifest for ${manifest_arch} at:"
-    echo "  $manifest_target"
-  done <<< "$metadata_info"
 }
 
 normalize_platform() {
@@ -244,6 +190,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_DEV_BUNDLE=1
       shift
       ;;
+    --install-shared)
+      INSTALL_SHARED_ONLY=1
+      shift
+      ;;
     --print-target)
       PRINT_TARGET=1
       shift
@@ -259,6 +209,20 @@ while [[ $# -gt 0 ]]; do
 done
 
 require_cmd python3
+
+install_shared_release() {
+  local args=(--manifest "$MANIFEST_PATH")
+  [[ -z "$GITHUB_REPO" ]] || args+=(--github-repo "$GITHUB_REPO")
+  [[ -z "$RELEASE_TAG" ]] || args+=(--release-tag "$RELEASE_TAG")
+  [[ -z "$GITHUB_TOKEN_ENV" ]] || args+=(--github-token-env "$GITHUB_TOKEN_ENV")
+  [[ -z "$BASE_URL" ]] || args+=(--base-url "$BASE_URL")
+  bash "$ROOT_DIR/scripts/install-shared-release.sh" "${args[@]}"
+}
+
+if [[ $INSTALL_SHARED_ONLY -eq 1 ]]; then
+  install_shared_release
+  exit 0
+fi
 
 [[ -n "$PLATFORM" ]] || PLATFORM=$(detect_platform)
 [[ -n "$ARCH" ]] || ARCH=$(detect_arch)
@@ -350,6 +314,16 @@ if [[ $PRINT_TARGET -eq 1 ]]; then
   exit 0
 fi
 
+TARGET_ROOT="$(dirname "$TARGET_PATH")"
+TARGET_REQUIREMENTS=("$(basename "$TARGET_PATH")" "$(basename "$BUILD_CONFIG_TARGET")")
+if tc_artifact_marker_matches "$TARGET_ROOT" skia "$GITHUB_REPO" "$RELEASE_TAG" "$ARTIFACT_NAME" "$EXPECTED_SHA" "${TARGET_REQUIREMENTS[@]}"; then
+  echo "Reusing ${ARTIFACT_KEY} Skia artifact from ${TARGET_ROOT}"
+  if [[ $INSTALL_DEV_BUNDLE -eq 1 ]]; then
+    install_shared_release
+  fi
+  exit 0
+fi
+
 mkdir -p "$(dirname "$TARGET_PATH")"
 mkdir -p "$(dirname "$BUILD_CONFIG_TARGET")"
 
@@ -357,8 +331,6 @@ TMP_FILE=$(mktemp /tmp/skia-artifact.XXXXXX)
 TMP_BUILD_CONFIG=$(mktemp /tmp/skia-build-config.XXXXXX)
 TARGET_TMP=""
 BUILD_CONFIG_TARGET_TMP=""
-TMP_DEV_FILE=""
-TMP_DEV_DIR=""
 cleanup() {
   rm -f "$TMP_FILE"
   rm -f "$TMP_BUILD_CONFIG"
@@ -367,12 +339,6 @@ cleanup() {
   fi
   if [[ -n "$BUILD_CONFIG_TARGET_TMP" ]]; then
     rm -f "$BUILD_CONFIG_TARGET_TMP"
-  fi
-  if [[ -n "$TMP_DEV_FILE" ]]; then
-    rm -f "$TMP_DEV_FILE"
-  fi
-  if [[ -n "$TMP_DEV_DIR" ]]; then
-    rm -rf "$TMP_DEV_DIR"
   fi
   return 0
 }
@@ -451,45 +417,9 @@ if [[ $INSTALL_BUILD_CONFIG -eq 1 ]]; then
   echo "  $BUILD_CONFIG_TARGET"
 fi
 
+ACTUAL_SHA="$(tc_github_release_sha256_file "$TARGET_PATH")"
+tc_artifact_write_marker "$TARGET_ROOT" skia "$GITHUB_REPO" "$RELEASE_TAG" "$ARTIFACT_NAME" "$ACTUAL_SHA"
+
 if [[ $INSTALL_DEV_BUNDLE -eq 1 ]]; then
-  [[ -n "$DEV_BUNDLE_NAME" ]] || die "no defaults.dev_bundle.artifact_name configured in ${MANIFEST_PATH}"
-  TMP_DEV_FILE=$(mktemp /tmp/skia-dev-bundle.XXXXXX.tar.gz)
-  TMP_DEV_DIR=$(mktemp -d /tmp/skia-dev-bundle.XXXXXX)
-
-  if [[ -n "$BASE_URL" ]]; then
-    download_to_file "${BASE_URL%/}/${DEV_BUNDLE_NAME}" "$TMP_DEV_FILE"
-  elif [[ -n "$GITHUB_REPO" && -n "$RELEASE_TAG" ]]; then
-    download_github_asset "$DEV_BUNDLE_NAME" "$TMP_DEV_FILE"
-  else
-    die "--install-dev requires a GitHub release or --base-url"
-  fi
-
-  verify_sha256 "$TMP_DEV_FILE" "$DEV_BUNDLE_SHA" "dev-bundle"
-  case "$DEV_BUNDLE_NAME" in
-    *.zip)
-      python3 - "$TMP_DEV_FILE" "$TMP_DEV_DIR" <<'PY'
-import pathlib
-import sys
-import zipfile
-
-zip_path = pathlib.Path(sys.argv[1])
-dest = pathlib.Path(sys.argv[2])
-with zipfile.ZipFile(zip_path) as archive:
-    archive.extractall(dest)
-PY
-      ;;
-    *)
-      tar -xzf "$TMP_DEV_FILE" -C "$TMP_DEV_DIR"
-      ;;
-  esac
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a "$TMP_DEV_DIR/modules/skia/" "$ROOT_DIR/local/"
-  else
-    mkdir -p "$ROOT_DIR/local"
-    cp -R "$TMP_DEV_DIR/modules/skia/." "$ROOT_DIR/local/"
-  fi
-  install_build_manifests
-
-  echo "Installed Skia dev bundle at:"
-  echo "  $ROOT_DIR/local"
+  install_shared_release
 fi
