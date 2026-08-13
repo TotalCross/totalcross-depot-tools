@@ -153,7 +153,6 @@ archive="${tmp_dir}/${asset_name}"
 dest="${dest_root}/${install_namespace}/${platform}/${arch}"
 requirements=(
   'include/sqlite3.h'
-  'include/sqlite3ext.h'
   'lib/libsqlite3.a|lib/sqlite3.lib'
 )
 if tc_artifact_marker_matches "$dest" "sqlite3" "$github_repo" "$release_tag" "$asset_name" "" "${requirements[@]}"; then

@@ -16,6 +16,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LIBPNG_FETCH = ROOT / "libpng" / "fetch.sh"
+SQLITE_FETCH = ROOT / "sqlite3" / "fetch.sh"
 INSTALL_HELPER = ROOT / "scripts" / "artifact-install.sh"
 
 
@@ -197,6 +198,88 @@ class ArtifactInstallTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("missing one of: lib/libsqlite3.a | lib/sqlite3.lib", result.stderr)
         self.assertFalse(destination.exists())
+
+
+class SQLiteCompatibleOverrideTests(unittest.TestCase):
+    REPOSITORY = "example/sqlite-overrides"
+    RELEASE_TAG = "sqlite3-see-compatible"
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = pathlib.Path(self.temp.name)
+        self.archive = self.root / "sqlite3-linux-x86_64.tar.gz"
+        package = self.root / "package" / "sqlite3" / "see" / "linux" / "x86_64"
+        (package / "include").mkdir(parents=True)
+        (package / "lib").mkdir()
+        (package / "include" / "sqlite3.h").write_text("sqlite3 header")
+        (package / "lib" / "libsqlite3.a").write_bytes(b"sqlite3 library")
+        with tarfile.open(str(self.archive), "w:gz") as handle:
+            handle.add(str(self.root / "package" / "sqlite3"), arcname="sqlite3")
+        digest = hashlib.sha256(self.archive.read_bytes()).hexdigest()
+        self.checksums = self.root / "checksums.json"
+        self.checksums.write_text(json.dumps({
+            "schema": 1,
+            "repositories": {self.REPOSITORY: {
+                self.RELEASE_TAG: {self.archive.name: digest},
+            }},
+        }))
+        self.curl = self.root / "curl"
+        self.curl.write_text(FAKE_CURL)
+        self.curl.chmod(self.curl.stat().st_mode | stat.S_IXUSR)
+        self.counter = self.root / "curl-count"
+        self.dest = self.root / "install"
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def fetch(self):
+        env = os.environ.copy()
+        env.update({
+            "FAKE_CURL_ARCHIVE": str(self.archive),
+            "FAKE_CURL_COUNTER": str(self.counter),
+            "TOTALCROSS_DEPOT_CURL": str(self.curl),
+            "TOTALCROSS_DEPOT_FETCH_CACHE_DIR": str(self.root / "session"),
+            "TOTALCROSS_DEPOT_FETCH_ATTEMPTS": "2",
+            "TOTALCROSS_DEPOT_FETCH_RETRY_DELAY": "0",
+            "TOTALCROSS_DEPOT_CHECKSUMS_FILE": str(self.checksums),
+        })
+        return subprocess.run(
+            [
+                "bash", str(SQLITE_FETCH),
+                "--platform", "linux",
+                "--arch", "x86_64",
+                "--release-tag", self.RELEASE_TAG,
+                "--github-repo", self.REPOSITORY,
+                "--dest", str(self.dest),
+            ],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+    def request_count(self):
+        return int(self.counter.read_text()) if self.counter.exists() else 0
+
+    def test_override_without_sqlite3ext_is_installed_and_reused(self):
+        first = self.fetch()
+        self.assertEqual(0, first.returncode, first.stderr)
+        self.assertEqual(1, self.request_count())
+
+        installs = list(self.dest.glob("*/linux/x86_64"))
+        self.assertEqual(1, len(installs))
+        target = installs[0]
+        self.assertTrue((target / "include" / "sqlite3.h").is_file())
+        self.assertFalse((target / "include" / "sqlite3ext.h").exists())
+        self.assertTrue((target / "lib" / "libsqlite3.a").is_file())
+        marker = json.loads((target / ".totalcross-artifact.json").read_text())
+        self.assertEqual(self.REPOSITORY, marker["repository"])
+        self.assertEqual(self.RELEASE_TAG, marker["release_tag"])
+
+        second = self.fetch()
+        self.assertEqual(0, second.returncode, second.stderr)
+        self.assertIn("Reusing SQLite3 linux/x86_64", second.stdout)
+        self.assertEqual(1, self.request_count())
 
 
 if __name__ == "__main__":
