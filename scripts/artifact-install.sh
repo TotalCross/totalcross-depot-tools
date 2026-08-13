@@ -11,10 +11,17 @@ tc_artifact_log() {
 tc_artifact_requirements_present() {
   local root="$1"
   shift
+  local diagnostic_context=''
   local requirement
   local alternative
   local found
   local old_ifs
+
+  if [ "${1:-}" = '--diagnose' ]; then
+    diagnostic_context="${2:-}"
+    shift 2
+  fi
+
   for requirement in "$@"; do
     found=0
     old_ifs="$IFS"
@@ -29,6 +36,14 @@ tc_artifact_requirements_present() {
     done
     IFS="$old_ifs"
     if [ "$found" -ne 1 ]; then
+      if [ -n "$diagnostic_context" ]; then
+        tc_artifact_log "error: ${diagnostic_context}:"
+        if [[ "$requirement" == *'|'* ]]; then
+          tc_artifact_log "missing one of: ${requirement//|/ | }"
+        else
+          tc_artifact_log "missing ${requirement}"
+        fi
+      fi
       return 1
     fi
   done
@@ -146,8 +161,8 @@ tc_artifact_replace_tree() {
   staging="$(mktemp -d "${parent}/.${base}.staging.XXXXXX")"
   backup="${parent}/.${base}.backup.$$"
   cp -a "${source_root}/." "${staging}/"
-  tc_artifact_requirements_present "$staging" "$@" || {
-    tc_artifact_log "error: staged ${dependency} artifact is incomplete"
+  tc_artifact_requirements_present "$staging" --diagnose \
+    "staged ${dependency} artifact is incomplete" "$@" || {
     rm -rf "$staging"
     return 1
   }

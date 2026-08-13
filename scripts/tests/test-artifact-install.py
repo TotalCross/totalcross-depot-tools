@@ -169,6 +169,35 @@ class ArtifactInstallTests(unittest.TestCase):
         restored = json.loads((old / ".totalcross-artifact.json").read_text())
         self.assertEqual("old-tag", restored["release_tag"])
 
+    def test_incomplete_tree_reports_missing_requirement(self):
+        source = self.root / "incomplete"
+        source.mkdir()
+        destination = self.root / "missing-install"
+        command = [
+            "bash", "-c",
+            'source "$1"; tc_artifact_replace_tree "$2" "$3" sqlite3 owner/repo tag asset.tar.gz "3"$(printf "3%.0s" {1..63}) include/sqlite3.h',
+            "test", str(INSTALL_HELPER), str(source), str(destination),
+        ]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("error: staged sqlite3 artifact is incomplete:", result.stderr)
+        self.assertIn("missing include/sqlite3.h", result.stderr)
+        self.assertFalse(destination.exists())
+
+    def test_incomplete_tree_reports_missing_alternatives(self):
+        source = self.root / "incomplete-alternatives"
+        source.mkdir()
+        destination = self.root / "missing-library-install"
+        command = [
+            "bash", "-c",
+            'source "$1"; tc_artifact_replace_tree "$2" "$3" sqlite3 owner/repo tag asset.tar.gz "4"$(printf "4%.0s" {1..63}) "lib/libsqlite3.a|lib/sqlite3.lib"',
+            "test", str(INSTALL_HELPER), str(source), str(destination),
+        ]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("missing one of: lib/libsqlite3.a | lib/sqlite3.lib", result.stderr)
+        self.assertFalse(destination.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
