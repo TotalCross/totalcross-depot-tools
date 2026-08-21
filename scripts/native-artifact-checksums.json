@@ -115,6 +115,15 @@
         "qrcodegen-windows-x64.tar.gz": "ca6ece370775ccc40399678629d797b5c8401bfb4128c3522fd4f6a7dcf3dbe7",
         "qrcodegen-windows-x86.tar.gz": "d813de8d235f958777a23254efa7ec29198889f4257ac3cf603ff83897da86df"
       },
+      "sdl2-2.32.8": {
+        "sdl2-linux-aarch64.tar.gz": "4fd22efff04adf51ac673cb4e3ed9b7b9d5d1952b4d33a031ecd2fdfadcbd7d5",
+        "sdl2-linux-armv7l.tar.gz": "f99464d2e5d7d6b583cd15ff3e37967d761c0a508f6108c4b417f1c294888809",
+        "sdl2-linux-x86_64.tar.gz": "620e6258a4c4a9abc7203df1561bd1b950289431a0d039e70eb1d9968db6b1d0",
+        "sdl2-macos-arm64.tar.gz": "2f64f8a9c430a940d2defe9a9bbb493a044bd56bedaf9d5911afca561f03078d",
+        "sdl2-windows-arm64.tar.gz": "e11926b843a13bbcfb63cdf5dd4aabc41e2982c80b3b9f2897e4c53761786292",
+        "sdl2-windows-x64.tar.gz": "7219e99d75dc121535e4db882b1c3b2be26a3a4b90fb3cde50cbc14d93dbd30d",
+        "sdl2-windows-x86.tar.gz": "dc8144c1ad7d4fbbfc5940e1aaf5be6c8c4c74359ba9269ec63637a178aff3df"
+      },
       "skia-158dc9d7-r8": {
         "SHA256SUMS": "881f2a68e97629aadab2730c2dc39f4cf9eb4a8101e67b8351a12f3673cca0d1",
         "SkiaBuildConfig-android-arm64-v8a.cmake": "29491f88b2408cd1b8a67a03c8a1f2bfca572e23a24d531e83c7f67287cf292a",
