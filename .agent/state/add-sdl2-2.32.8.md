@@ -5,13 +5,13 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Milestone 2 — build and package SDL2.
+Active milestone: Milestone 3 — fetch and strict CMake consumption.
 
-Active slice: implement the immutable source archive, static/PIC external build,
-upstream install metadata preservation, and deterministic packaging. Scaffold
-TODOs intentionally remain in fetch, CMake consumption, workflow, and README.
+Active slice: implement pin-aware atomic fetch, platform mapping, staged artifact
+completeness checks, direct loading of upstream config metadata, and strict
+imported-path verification.
 
-Last logical commit: `fb75cb4 feat(sdl2): scaffold SDL2 2.32.8 dependency`.
+Last logical commit: `90572fa build(sdl2): add reproducible static builds and packaging`.
 
 Active paths:
 
@@ -24,9 +24,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: configure, build, install, and package `macos-arm64`; inspect the
-archive and exported metadata, compile a direct installed-package smoke consumer,
-then create the Milestone 2 logical commit.
+Next action: stage the preserved macOS archive through a local release transport,
+prove repeat fetch reuse, configure/link the strict consumer, and prove incomplete
+staging cannot fall back to a host SDL2 package.
 
 Deferred validation: native builds and consumer checks belong to later
 milestones. Publication, tags, GitHub Releases, and the `deps.yml` pin remain

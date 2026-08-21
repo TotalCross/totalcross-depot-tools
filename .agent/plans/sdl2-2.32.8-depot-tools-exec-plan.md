@@ -90,8 +90,9 @@ status, hashes, paths, and limitations.
   static PIC build, and public target `SDL2::SDL2`.
 - [x] (2026-08-21T01:05:00Z) Milestone 1: scaffold and metadata/source
   contracts committed as `fb75cb4`.
-- [ ] Milestone 2: build and packaging; implement and validate the macOS ARM64
-  host target first.
+- [x] (2026-08-21T01:35:00Z) Milestone 2: immutable static/PIC build and
+  deterministic packaging committed as `90572fa`; macOS ARM64 package and
+  linked upstream-config consumer passed.
 - [ ] Milestone 3: fetch and strict CMake consumption.
 - [ ] Milestone 4: workflow and desktop target validation.
 - [ ] Milestone 5: documentation and publication readiness.
