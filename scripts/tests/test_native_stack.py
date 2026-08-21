@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -85,6 +86,38 @@ class NativeStackTests(unittest.TestCase):
         plan = self.plan("graphics", "build", [], requested="zlib,minizip")
         linux_x64 = next(lane for lane in plan["lanes"] if lane["target"] == "linux-x86_64")
         self.assertEqual(["zlib", "minizip"], linux_x64["libraries"])
+
+    def test_unpublished_stack_member_can_plan_build_from_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = root / "sdl2" / "manifest.yml"
+            manifest.parent.mkdir()
+            manifest.write_text("version: 2.32.8\nrelease: sdl2-2.32.8\n", encoding="utf-8")
+            plan = NATIVE_STACK.plan_stack(
+                self.config,
+                "others",
+                "build",
+                "sdl2",
+                lambda library: NATIVE_STACK._build_metadata(root, library),
+                [],
+                [],
+            )
+        self.assertEqual(["sdl2"], plan["publication_order"])
+        self.assertEqual("build", plan["libraries"][0]["action"])
+        self.assertEqual("2.32.8", plan["libraries"][0]["version"])
+
+    def test_unpublished_stack_member_still_requires_pin_for_release(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "deps.yml").write_text("dependencies:\n", encoding="utf-8")
+            manifest = root / "sdl2" / "manifest.yml"
+            manifest.parent.mkdir()
+            manifest.write_text("version: 2.32.8\nrelease: sdl2-2.32.8\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                NATIVE_STACK.NATIVE_RELEASE.NativeReleaseError,
+                "has no sdl2 dependency",
+            ):
+                NATIVE_STACK.NATIVE_RELEASE.metadata(root, "sdl2")
 
     def test_recovery_state_is_reported_without_selecting_publication(self) -> None:
         plan = self.plan("graphics", "release", [{"tag": "libpng-1", "draft": True, "url": "https://example.test/draft"}], requested="libpng")

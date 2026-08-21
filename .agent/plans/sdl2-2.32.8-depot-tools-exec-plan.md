@@ -442,6 +442,10 @@ After publication, run one real default-pin auto-fetch + consumer test.
 
 ## Surprises & Discoveries
 
+- The stack planner requested `deps.yml` release metadata even for `build`, which
+  prevented an intentionally unpublished stack member from reaching its build
+  lanes. Build planning now uses manifest identity; release planning still
+  requires the compatible pin.
 - The native policy-literal validator requires nested MSVC runtime propagation
   to use the value established by `TotalCrossWindowsStaticRuntime.cmake`; the
   initial literal was replaced and validated in `af214f3`.

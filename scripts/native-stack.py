@@ -34,6 +34,33 @@ class NativeStackError(ValueError):
     """A compact stack-planning error."""
 
 
+def _build_metadata(root: Path, library: str) -> dict[str, str]:
+    """Read build identity without requiring a published deps.yml pin."""
+    manifest_path = root / library / "manifest.yml"
+    if not manifest_path.is_file():
+        raise NativeStackError(f"missing manifest for {library}: {manifest_path}")
+    values: dict[str, str] = {}
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        for key in ("version", "release"):
+            if line.startswith(f"{key}:"):
+                values[key] = line.split(":", 1)[1].strip()
+    for key in ("version", "release"):
+        if not values.get(key):
+            raise NativeStackError(f"{manifest_path} has no {key} field")
+    base_tag = f"{library}-{values['version']}"
+    if not values["release"].startswith(base_tag):
+        raise NativeStackError(
+            f"{library} manifest release {values['release']} does not match source version {values['version']}"
+        )
+    return {
+        "library": library,
+        "version": values["version"],
+        "base_tag": base_tag,
+        "deps_release": values["release"],
+        "manifest_release": values["release"],
+    }
+
+
 def _requested_members(config: dict[str, Any], stack: str, requested: str | None) -> list[str]:
     members = list(config["stacks"][stack]["libraries"])
     if requested in (None, "", "all"):
@@ -295,12 +322,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if not args.repository:
                     raise NativeStackError("repository is required when no releases fixture is supplied")
                 releases = NATIVE_RELEASE._remote_releases(args.repository)
+        if args.operation == "build":
+            release_info = lambda library: _build_metadata(root, library)
+        else:
+            release_info = lambda library: NATIVE_RELEASE.metadata(root, library)
         outcome = plan_stack(
             config,
             args.stack,
             args.operation,
             args.libraries,
-            lambda library: NATIVE_RELEASE.metadata(root, library),
+            release_info,
             tags,
             releases,
         )
