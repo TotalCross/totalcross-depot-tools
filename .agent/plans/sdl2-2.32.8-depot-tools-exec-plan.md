@@ -108,6 +108,9 @@ status, hashes, paths, and limitations.
 - [x] (2026-08-21T03:35:00Z) Fixed first-publication release selection and
   metadata insertion in `9525565`; release planning selects `sdl2-2.32.8` from
   the manifest and the authorized prepare step creates the bundle pin.
+- [x] (2026-08-21) Fixed platform packaging assumptions in `2695085`; archive
+  creation no longer requires Python, and the wrapper follows SDL's distinct
+  MSVC license install path.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 
@@ -448,6 +451,9 @@ After publication, run one real default-pin auto-fetch + consumer test.
 
 ## Surprises & Discoveries
 
+- The native Linux images do not provide `python3`, so dependency packaging must
+  rely only on the standard shell archive tools already present. SDL also installs
+  its license below `licenses/SDL2` on MSVC rather than the Unix `share` path.
 - The shared release helper assumed every initial release already had the
   `deps.yml` entry that publication itself is responsible for creating. Initial
   selection and metadata preparation now distinguish unpublished dependencies.
@@ -607,6 +613,13 @@ and central plan declare three Linux, three Windows, and one macOS target, but
 Linux Docker and Windows MSVC execution were unavailable locally and are not
 claimed as completed platform evidence. See
 `.agent/evidence/add-sdl2-2.32.8.md` and the editorial report for exact results.
+
+After remote platform failures exposed missing Python in the Linux images and
+SDL's MSVC-specific license layout, packaging was changed to deterministic shell
+archive tools and the wrapper's install rule was aligned with upstream. A full
+macOS build and repeat package passed, and an MSVC-mode configure generated the
+expected `licenses/SDL2/LICENSE.txt` source rule. Actual Linux and Windows builds
+remain CI evidence.
 
 No release, tag, push, checksum publication metadata, or `deps.yml` sdl2 pin was
 created. The publication gate remains deliberately open pending explicit

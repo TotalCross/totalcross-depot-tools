@@ -39,6 +39,18 @@ SPDX-License-Identifier: MIT
   entry only in a temporary metadata-preparation root. Existing-release recovery,
   all seven build lanes, the seven-asset contract, and 55 focused build, stack,
   and release tests passed. Repository `deps.yml` remained unchanged.
+- 2026-08-21, platform correction at `2695085`: a complete macOS ARM64 build
+  passed with the shell-only archive writer, the installed license was present,
+  and two package runs produced identical SHA-256
+  `f8843327a034dfb6b87041e63322e913c26eb632d16b0fd0d1986bae63aa16c8`.
+  The archive contained 87 file entries and the required header, static library,
+  upstream CMake config, and manifest. An MSVC-mode outer configure generated an
+  install rule sourcing `sdl2-install/licenses/SDL2/LICENSE.txt`. Structure,
+  shell syntax, graph and release contracts, policy literals, headers, scoped
+  diff checks, and 40 focused build/release/stack tests passed. Logs:
+  `.agent/logs/sdl2-platform-fix-macos.log`,
+  `.agent/logs/sdl2-platform-fix-repackage.log`, and
+  `.agent/logs/sdl2-msvc-license-config-2.log`.
 - Limitation: this macOS host has no Docker, PowerShell, or MSVC. Linux x86_64,
   Linux ARMv7, Linux AArch64, Windows x86, Windows x64, Windows ARM64, and the
   Windows static-runtime verifier were not executed locally. No remote workflow

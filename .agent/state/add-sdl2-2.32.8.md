@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 
 Active milestone: Publication workflow retry pending.
 
-Active slice: the initial-release automation correction is complete. The remote
-release workflow must be retried from a revision containing the fix; local
-publication state remains unchanged.
+Active slice: the Linux packaging and Windows license-path corrections are
+complete. The remote release workflow must be retried from a revision containing
+the fixes; local publication state remains unchanged.
 
 Last implementation commit:
-`9525565 fix(release): support initial dependency publication`.
+`2695085 fix(sdl2): remove platform packaging assumptions`.
 
 Active paths:
 
@@ -25,9 +25,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: push or otherwise make `9525565` available to the workflow branch,
-then retry `operation=release`. Review the seven platform builds and `/MT`
-verification before accepting the metadata commit, tag, and GitHub Release.
+Next action: push or otherwise make `2695085` available to the workflow branch,
+then retry `operation=release`. Review all seven platform builds and the Windows
+`/MT` verification before accepting publication metadata, tags, or releases.
 
 Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
 this host and require CI before publication. Publication, tags, GitHub Releases,

@@ -56,6 +56,11 @@ identity independently. Initial release planning reads the same manifest identit
 and the authorized metadata-preparation step creates the mandatory `deps.yml`
 entry before the release tag is created.
 
+Remote Linux builds then exposed that the shared images do not provide Python,
+while Windows exposed SDL's MSVC-only `licenses/SDL2` install layout. Packaging
+now uses shell, tar, and gzip only, and the outer install rule selects the same
+license path branch as upstream SDL.
+
 ## Validation and Measurable Results
 
 The macOS archive contained 96 entries and no shared library or SDL2main. Upstream
@@ -76,6 +81,12 @@ After the initial-release correction, release selection produced
 `sdl2-2.32.8` as `build-required` without a pre-existing pin. Metadata
 preparation inserted the complete dependency entry in an isolated test root, and
 55 focused regression tests passed without changing repository `deps.yml`.
+
+After the platform correction, a complete macOS ARM64 build and two package runs
+passed with an identical archive hash. An MSVC-mode configure generated the
+expected `sdl2-install/licenses/SDL2/LICENSE.txt` input, and 40 focused
+build/release/stack tests passed. The Linux GNU tar branch and real Windows MSVC
+install still require the next CI run.
 
 ## Useful Evidence and Examples
 
