@@ -29,6 +29,11 @@ function(tcvm_auto_fetch_sqlite3)
     set(SQLITE3_GITHUB_REPO "TotalCross/totalcross-depot-tools")
   endif()
 
+  # Keep the artifact identity visible to FindSQLite3.cmake after this
+  # function returns so both modules resolve the same local namespace.
+  set(SQLITE3_RELEASE_TAG "${SQLITE3_RELEASE_TAG}" PARENT_SCOPE)
+  set(SQLITE3_GITHUB_REPO "${SQLITE3_GITHUB_REPO}" PARENT_SCOPE)
+
   if(NOT DEFINED SQLITE3_GITHUB_TOKEN_ENV AND DEFINED ENV{SQLITE3_GITHUB_TOKEN_ENV})
     set(SQLITE3_GITHUB_TOKEN_ENV "$ENV{SQLITE3_GITHUB_TOKEN_ENV}")
   elseif(NOT DEFINED SQLITE3_GITHUB_TOKEN_ENV)
