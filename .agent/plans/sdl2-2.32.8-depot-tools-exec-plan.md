@@ -93,7 +93,9 @@ status, hashes, paths, and limitations.
 - [x] (2026-08-21T01:35:00Z) Milestone 2: immutable static/PIC build and
   deterministic packaging committed as `90572fa`; macOS ARM64 package and
   linked upstream-config consumer passed.
-- [ ] Milestone 3: fetch and strict CMake consumption.
+- [x] (2026-08-21T01:55:00Z) Milestone 3: checksum-pinned atomic fetch,
+  idempotent reuse, strict depot CMake resolution, and failure-with-host-prefix
+  consumer validation committed as `dee4140`.
 - [ ] Milestone 4: workflow and desktop target validation.
 - [ ] Milestone 5: documentation and publication readiness.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
@@ -436,6 +438,9 @@ After publication, run one real default-pin auto-fetch + consumer test.
 
 ## Surprises & Discoveries
 
+- The native policy-literal validator requires nested MSVC runtime propagation
+  to use the value established by `TotalCrossWindowsStaticRuntime.cmake`; the
+  initial literal was replaced and validated in `af214f3`.
 - SDL 2.32.8 supports static-only installs and exposes `SDL2::SDL2` through
   `SDL2::SDL2-static`.
 - Static filenames differ on MSVC versus Unix-like systems.

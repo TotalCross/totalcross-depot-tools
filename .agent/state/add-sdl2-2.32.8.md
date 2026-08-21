@@ -5,13 +5,13 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Milestone 3 — fetch and strict CMake consumption.
+Active milestone: Milestone 4 — workflow and desktop matrix.
 
-Active slice: implement pin-aware atomic fetch, platform mapping, staged artifact
-completeness checks, direct loading of upstream config metadata, and strict
-imported-path verification.
+Active slice: delegate the sdl2 operation workflow to shared native-library
+orchestration and validate the generated seven-target build plan, target commands,
+available host builds, and platform policy checks without invoking publication.
 
-Last logical commit: `90572fa build(sdl2): add reproducible static builds and packaging`.
+Last logical commit: `af214f3 fix(sdl2): inherit central Windows runtime policy`.
 
 Active paths:
 
@@ -24,9 +24,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: stage the preserved macOS archive through a local release transport,
-prove repeat fetch reuse, configure/link the strict consumer, and prove incomplete
-staging cannot fall back to a host SDL2 package.
+Next action: validate workflow delegation and build-mode planning, inspect all
+seven resolved commands, run available Linux Docker targets if the local engine
+is available, and record unavailable Windows CI validation explicitly.
 
 Deferred validation: native builds and consumer checks belong to later
 milestones. Publication, tags, GitHub Releases, and the `deps.yml` pin remain
