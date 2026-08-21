@@ -23,11 +23,11 @@ SPDX-License-Identifier: MIT
 - 2026-08-21, Milestone 4 at `28cdf4a`: native build plan returned seven exact
   targets; seven wrapper dry runs resolved central policy; release contract
   reported seven assets; 28 focused orchestration tests passed.
-- 2026-08-21, Milestone 5 final gate: a freshly checksum-staged corrected macOS
-  archive configured, linked, and ran the strict consumer. Dependency structure,
-  shell syntax, central graph, seven-asset release contract, native policy
-  literals, changed-file headers, scoped diff checks, and 28 orchestration tests
-  passed. `deps.yml` remained unchanged.
+- 2026-08-21, Milestone 5 at `61d3f3e`: a freshly checksum-staged corrected
+  macOS archive configured, linked, and ran the strict consumer. Dependency
+  structure, shell syntax, central graph, seven-asset release contract, native
+  policy literals, changed-file headers, scoped diff checks, and 28 orchestration
+  tests passed. `deps.yml` remained unchanged.
 - Limitation: this macOS host has no Docker, PowerShell, or MSVC. Linux x86_64,
   Linux ARMv7, Linux AArch64, Windows x86, Windows x64, Windows ARM64, and the
   Windows static-runtime verifier were not executed locally. No remote workflow

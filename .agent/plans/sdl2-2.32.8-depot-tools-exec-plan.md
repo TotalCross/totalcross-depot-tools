@@ -101,7 +101,7 @@ status, hashes, paths, and limitations.
   as `28cdf4a`; platform execution limitations are recorded in evidence.
 - [x] (2026-08-21T02:40:00Z) Milestone 5: documentation, fresh-artifact
   consumer, structural, header, syntax, graph, contract, policy, and focused
-  orchestration validation passed.
+  orchestration validation passed and was committed as `61d3f3e`.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 

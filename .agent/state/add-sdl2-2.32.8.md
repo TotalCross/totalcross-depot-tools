@@ -11,8 +11,8 @@ Active slice: all non-publication implementation and focused validation are
 complete. Do not continue into publication without explicit authorization and
 successful Linux/Windows workflow evidence.
 
-Last implementation commit: `28cdf4a ci(sdl2): add desktop build and release workflow`;
-the final documentation/report commit is the next logical checkpoint.
+Last implementation commit:
+`61d3f3e docs(sdl2): document usage and finalize onboarding`.
 
 Active paths:
 
@@ -25,9 +25,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: commit documentation and final plan evidence. Any later resume must
-first obtain publication authorization, run the seven workflow lanes, and review
-Linux backend plus Windows `/MT` evidence before adding the `deps.yml` pin.
+Next action: any later resume must first obtain publication authorization, run
+the seven workflow lanes, and review Linux backend plus Windows `/MT` evidence
+before adding the `deps.yml` pin.
 
 Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
 this host and require CI before publication. Publication, tags, GitHub Releases,
