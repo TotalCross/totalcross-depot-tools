@@ -56,6 +56,7 @@ cp -R "${install_dir}/lib" "${artifact_dir}/lib"
 
 compiler="unknown"
 video_backends=""
+msvc_runtime="not-applicable"
 upstream_cache="${build_dir}/sdl2-build/CMakeCache.txt"
 if [ -f "${upstream_cache}" ]; then
   compiler_metadata="$(find "${build_dir}/sdl2-build/CMakeFiles" -name CMakeCCompiler.cmake -type f | head -n 1)"
@@ -73,6 +74,13 @@ if [ -f "${upstream_cache}" ]; then
     fi
   done
 fi
+outer_cache="${build_dir}/CMakeCache.txt"
+if [ -f "${outer_cache}" ]; then
+  resolved_msvc_runtime="$(sed -n 's/^CMAKE_MSVC_RUNTIME_LIBRARY:[^=]*=//p' "${outer_cache}" | head -n 1)"
+  if [ -n "${resolved_msvc_runtime}" ]; then
+    msvc_runtime="${resolved_msvc_runtime}"
+  fi
+fi
 
 cat > "${artifact_dir}/manifest.txt" <<EOF
 name=sdl2
@@ -85,7 +93,7 @@ configuration=Release
 static=ON
 pic=ON
 sdl2main=OFF
-msvc_runtime=MultiThreaded
+msvc_runtime=${msvc_runtime}
 compiler=${compiler}
 video_backends=${video_backends:-platform-default}
 static_library=$(basename "${static_library}")
