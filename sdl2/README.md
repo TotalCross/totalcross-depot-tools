@@ -58,10 +58,11 @@ Unix-like artifacts normally contain `lib/libSDL2.a`; MSVC artifacts may contain
 platform filename. The packaged upstream config supplies the platform system
 libraries or Apple frameworks needed by the static target.
 
-The archive writer normalizes entry ordering, timestamps, ownership, and gzip
-metadata. `manifest.txt` records the source revision, target, Release/static/PIC
-policy, SDL2main state, selected compiler, observed video backends, and the
-resolved MSVC runtime when applicable.
+The archive writer uses only standard shell archive tools and normalizes entry
+ordering, timestamps, and gzip metadata; GNU tar builds also normalize ownership.
+`manifest.txt` records the source revision, target, Release/static/PIC policy,
+SDL2main state, selected compiler, observed video backends, and the resolved MSVC
+runtime when applicable.
 
 ## Local builds
 

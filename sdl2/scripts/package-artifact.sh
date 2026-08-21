@@ -100,6 +100,6 @@ static_library=$(basename "${static_library}")
 EOF
 
 archive_path="${build_dir}/sdl2-${artifact_name_platform}.tar.gz"
-python3 "$(dirname "$0")/create-deterministic-archive.py" \
+bash "$(dirname "$0")/create-deterministic-archive.sh" \
   "${artifact_root}" "sdl2" "${archive_path}"
 echo "${archive_path}"
