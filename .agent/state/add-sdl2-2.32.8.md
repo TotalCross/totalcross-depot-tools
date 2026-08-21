@@ -5,14 +5,14 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Post-onboarding build-planner correction.
+Active milestone: Publication gate — explicit authorization required.
 
-Active slice: allow build-only stack planning to use manifest identity for an
-unpublished dependency while preserving `deps.yml` as mandatory release
-metadata.
+Active slice: all non-publication implementation and build-planner corrections
+are complete. Do not continue into publication without explicit authorization
+and successful Linux/Windows workflow evidence.
 
 Last implementation commit:
-`61d3f3e docs(sdl2): document usage and finalize onboarding`.
+`530fbff fix(stack): allow unpublished build members`.
 
 Active paths:
 
@@ -25,8 +25,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: reproduce the failing `others build` plan, validate the focused
-planner tests, commit the correction, then return to the publication gate.
+Next action: any later resume must first obtain publication authorization, run
+the seven workflow lanes, and review Linux backend plus Windows `/MT` evidence
+before adding the `deps.yml` pin.
 
 Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
 this host and require CI before publication. Publication, tags, GitHub Releases,

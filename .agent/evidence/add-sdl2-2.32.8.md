@@ -28,6 +28,11 @@ SPDX-License-Identifier: MIT
   structure, shell syntax, central graph, seven-asset release contract, native
   policy literals, changed-file headers, scoped diff checks, and 28 orchestration
   tests passed. `deps.yml` remained unchanged.
+- 2026-08-21, build-planner follow-up at `530fbff`: reproduced the `others
+  build` failure caused by missing sdl2 release metadata, changed build-only
+  stack planning to read manifest identity, and produced all seven sdl2 lanes
+  without a bundle pin. Release planning still rejects the missing pin. The 52
+  focused build, stack, and release regression tests passed.
 - Limitation: this macOS host has no Docker, PowerShell, or MSVC. Linux x86_64,
   Linux ARMv7, Linux AArch64, Windows x86, Windows x64, Windows ARM64, and the
   Windows static-runtime verifier were not executed locally. No remote workflow

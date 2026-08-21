@@ -50,6 +50,10 @@ Moving the first CMake build directory made its cache non-reusable because CMake
 records absolute build paths. The evidence was preserved and a fresh build
 directory was used for the corrected validation.
 
+The first `others` stack build failed because stack planning loaded publication
+metadata even for build-only operations. Build planning now reads manifest
+identity, while release operations retain the mandatory `deps.yml` contract.
+
 ## Validation and Measurable Results
 
 The macOS archive contained 96 entries and no shared library or SDL2main. Upstream
@@ -62,6 +66,9 @@ call. An incomplete depot root failed even with a valid SDL config on the host
 prefix. Central configuration, the seven-target plan, seven dry-run commands,
 release asset contract, shell syntax, headers, policy literals, and focused
 orchestration tests passed.
+
+After the stack-planner correction, `others build` produced seven sdl2 lanes and
+the 52 focused build, stack, and release regression tests passed.
 
 ## Useful Evidence and Examples
 

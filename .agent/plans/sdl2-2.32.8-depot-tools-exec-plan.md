@@ -102,6 +102,9 @@ status, hashes, paths, and limitations.
 - [x] (2026-08-21T02:40:00Z) Milestone 5: documentation, fresh-artifact
   consumer, structural, header, syntax, graph, contract, policy, and focused
   orchestration validation passed and was committed as `61d3f3e`.
+- [x] (2026-08-21T03:10:00Z) Fixed unpublished-member stack build planning in
+  `530fbff`; `others build` now produces all seven sdl2 lanes without a
+  `deps.yml` pin, while release planning still requires one.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 
