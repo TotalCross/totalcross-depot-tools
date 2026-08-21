@@ -96,8 +96,12 @@ status, hashes, paths, and limitations.
 - [x] (2026-08-21T01:55:00Z) Milestone 3: checksum-pinned atomic fetch,
   idempotent reuse, strict depot CMake resolution, and failure-with-host-prefix
   consumer validation committed as `dee4140`.
-- [ ] Milestone 4: workflow and desktop target validation.
-- [ ] Milestone 5: documentation and publication readiness.
+- [x] (2026-08-21T02:20:00Z) Milestone 4: shared workflow, seven-target plan,
+  release contract, dry-run commands, and focused orchestration tests committed
+  as `28cdf4a`; platform execution limitations are recorded in evidence.
+- [x] (2026-08-21T02:40:00Z) Milestone 5: documentation, fresh-artifact
+  consumer, structural, header, syntax, graph, contract, policy, and focused
+  orchestration validation passed.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 
@@ -579,13 +583,21 @@ remaining work, and deferred expensive validation.
 
 ## Outcomes & Retrospective
 
-No implementation has been executed yet.
+All five non-publication milestones are complete. SDL 2.32.8 is pinned to an
+immutable revision and archive digest, builds static PIC with SDL2main disabled,
+packages relocatable upstream metadata deterministically, stages checksum-pinned
+artifacts atomically, and resolves only the selected depot root through
+`SDL2::SDL2`.
 
-At milestone completion record factual outcomes only: observable behavior,
-targets actually built/packaged/consumer-tested, deviations from the planned
-CMake metadata approach, release state, and remaining limitations.
+macOS ARM64 was built, packaged, fetched, linked, and run. The generated workflow
+and central plan declare three Linux, three Windows, and one macOS target, but
+Linux Docker and Windows MSVC execution were unavailable locally and are not
+claimed as completed platform evidence. See
+`.agent/evidence/add-sdl2-2.32.8.md` and the editorial report for exact results.
 
-Do not call a target supported solely because it appears in configuration.
+No release, tag, push, checksum publication metadata, or `deps.yml` sdl2 pin was
+created. The publication gate remains deliberately open pending explicit
+authorization and successful CI platform evidence.
 
 Final editorial report:
 
@@ -596,3 +608,6 @@ Final editorial report:
 2026-08-21: Initial ExecPlan created from current repository policy and upstream
 SDL 2.32.8 CMake contracts. The first depot SDL2 integration is intentionally
 desktop-only, static/PIC, repository-named `sdl2`, and pinned to 2.32.8.
+
+2026-08-21: Consolidated the completed non-publication milestones and recorded
+platform execution limits. Publication remains a separate authorized operation.

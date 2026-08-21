@@ -5,13 +5,14 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Milestone 4 — workflow and desktop matrix.
+Active milestone: Publication gate — explicit authorization required.
 
-Active slice: delegate the sdl2 operation workflow to shared native-library
-orchestration and validate the generated seven-target build plan, target commands,
-available host builds, and platform policy checks without invoking publication.
+Active slice: all non-publication implementation and focused validation are
+complete. Do not continue into publication without explicit authorization and
+successful Linux/Windows workflow evidence.
 
-Last logical commit: `af214f3 fix(sdl2): inherit central Windows runtime policy`.
+Last implementation commit: `28cdf4a ci(sdl2): add desktop build and release workflow`;
+the final documentation/report commit is the next logical checkpoint.
 
 Active paths:
 
@@ -24,13 +25,13 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: validate workflow delegation and build-mode planning, inspect all
-seven resolved commands, run available Linux Docker targets if the local engine
-is available, and record unavailable Windows CI validation explicitly.
+Next action: commit documentation and final plan evidence. Any later resume must
+first obtain publication authorization, run the seven workflow lanes, and review
+Linux backend plus Windows `/MT` evidence before adding the `deps.yml` pin.
 
-Deferred validation: native builds and consumer checks belong to later
-milestones. Publication, tags, GitHub Releases, and the `deps.yml` pin remain
-explicitly gated.
+Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
+this host and require CI before publication. Publication, tags, GitHub Releases,
+the final `deps.yml` pin, and default-pin auto-fetch remain explicitly gated.
 
 Deliberate out-of-scope paths: all pre-existing untracked proposal, local cache,
 log, and `__pycache__` paths shown by the initial status inspection.
