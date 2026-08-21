@@ -105,6 +105,9 @@ status, hashes, paths, and limitations.
 - [x] (2026-08-21T03:10:00Z) Fixed unpublished-member stack build planning in
   `530fbff`; `others build` now produces all seven sdl2 lanes without a
   `deps.yml` pin.
+- [x] (2026-08-21T03:35:00Z) Fixed first-publication release selection and
+  metadata insertion in `9525565`; release planning selects `sdl2-2.32.8` from
+  the manifest and the authorized prepare step creates the bundle pin.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 

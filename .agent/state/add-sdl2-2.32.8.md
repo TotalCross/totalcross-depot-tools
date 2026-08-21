@@ -5,14 +5,14 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Initial-release automation correction.
+Active milestone: Publication workflow retry pending.
 
-Active slice: allow an explicitly requested first release to select its tag from
-the manifest and insert the compatible bundle entry during metadata preparation,
-without pre-adding a `deps.yml` pin.
+Active slice: the initial-release automation correction is complete. The remote
+release workflow must be retried from a revision containing the fix; local
+publication state remains unchanged.
 
 Last implementation commit:
-`530fbff fix(stack): allow unpublished build members`.
+`9525565 fix(release): support initial dependency publication`.
 
 Active paths:
 
@@ -25,9 +25,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: reproduce the failing `select-tag` command with local fixtures,
-validate initial metadata insertion and recovery behavior, then commit the
-release-automation correction without publishing.
+Next action: push or otherwise make `9525565` available to the workflow branch,
+then retry `operation=release`. Review the seven platform builds and `/MT`
+verification before accepting the metadata commit, tag, and GitHub Release.
 
 Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
 this host and require CI before publication. Publication, tags, GitHub Releases,

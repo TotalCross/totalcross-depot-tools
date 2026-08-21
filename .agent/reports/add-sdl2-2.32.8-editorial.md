@@ -72,6 +72,11 @@ orchestration tests passed.
 After the stack-planner correction, `others build` produced seven sdl2 lanes and
 the 52 focused build, stack, and release regression tests passed.
 
+After the initial-release correction, release selection produced
+`sdl2-2.32.8` as `build-required` without a pre-existing pin. Metadata
+preparation inserted the complete dependency entry in an isolated test root, and
+55 focused regression tests passed without changing repository `deps.yml`.
+
 ## Useful Evidence and Examples
 
 Compact evidence and log paths are recorded in

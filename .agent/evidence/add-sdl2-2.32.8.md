@@ -33,6 +33,12 @@ SPDX-License-Identifier: MIT
   stack planning to read manifest identity, and produced all seven sdl2 lanes
   without a bundle pin. The 52 focused build, stack, and release regression
   tests passed.
+- 2026-08-21, initial-release follow-up at `9525565`: reproduced
+  `select-tag sdl2 --operation release` without a bundle pin, selected
+  `sdl2-2.32.8` as `build-required`, and inserted the complete sdl2 dependency
+  entry only in a temporary metadata-preparation root. Existing-release recovery,
+  all seven build lanes, the seven-asset contract, and 55 focused build, stack,
+  and release tests passed. Repository `deps.yml` remained unchanged.
 - Limitation: this macOS host has no Docker, PowerShell, or MSVC. Linux x86_64,
   Linux ARMv7, Linux AArch64, Windows x86, Windows x64, Windows ARM64, and the
   Windows static-runtime verifier were not executed locally. No remote workflow
