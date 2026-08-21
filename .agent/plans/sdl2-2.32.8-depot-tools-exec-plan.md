@@ -88,8 +88,10 @@ status, hashes, paths, and limitations.
   contracts.
 - [x] Fixed initial decisions: `sdl2`, version 2.32.8, seven desktop targets,
   static PIC build, and public target `SDL2::SDL2`.
-- [ ] Milestone 1: scaffold and metadata/source contracts.
-- [ ] Milestone 2: build and packaging.
+- [x] (2026-08-21T01:05:00Z) Milestone 1: scaffold and metadata/source
+  contracts committed as `fb75cb4`.
+- [ ] Milestone 2: build and packaging; implement and validate the macOS ARM64
+  host target first.
 - [ ] Milestone 3: fetch and strict CMake consumption.
 - [ ] Milestone 4: workflow and desktop target validation.
 - [ ] Milestone 5: documentation and publication readiness.
