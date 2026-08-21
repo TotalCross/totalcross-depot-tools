@@ -44,6 +44,14 @@ class NativeReleaseTests(unittest.TestCase):
             NATIVE_RELEASE.metadata(self.root, "zlib"), tags, releases, effective_tag
         )
 
+    def add_unpublished_sdl2(self) -> None:
+        (self.root / "sdl2").mkdir()
+        (self.root / "sdl2" / "manifest.yml").write_text(
+            "name: sdl2\nversion: 2.32.8\nrelease: sdl2-2.32.8\nartifact:\n"
+            "  archives:\n    - sdl2-linux-x86_64.tar.gz\n",
+            encoding="utf-8",
+        )
+
     def test_release_uses_configured_base_tag_when_missing(self) -> None:
         result = self.inspect([], [])
         self.assertEqual("build-required", result["status"])
@@ -110,6 +118,37 @@ class NativeReleaseTests(unittest.TestCase):
         self.assertEqual([self.root / "deps.yml", self.root / "zlib" / "manifest.yml"], paths)
         self.assertEqual("zlib-1.3.1-r2", NATIVE_RELEASE.metadata(self.root, "zlib")["deps_release"])
         self.assertEqual("zlib-1.3.1-r2", NATIVE_RELEASE.metadata(self.root, "zlib")["manifest_release"])
+
+    def test_initial_release_uses_manifest_before_bundle_pin_exists(self) -> None:
+        self.add_unpublished_sdl2()
+        info = NATIVE_RELEASE.metadata(self.root, "sdl2")
+        result = NATIVE_RELEASE.inspect_release(info, [], [])
+        self.assertFalse(info["deps_pinned"])
+        self.assertEqual("2.32.8", info["version"])
+        self.assertEqual("sdl2-2.32.8", result["effective_release_tag"])
+        self.assertEqual("build-required", result["status"])
+
+    def test_initial_release_with_existing_remote_release_requires_recovery(self) -> None:
+        self.add_unpublished_sdl2()
+        result = NATIVE_RELEASE.inspect_release(
+            NATIVE_RELEASE.metadata(self.root, "sdl2"),
+            ["sdl2-2.32.8"],
+            [{"tag": "sdl2-2.32.8", "draft": False, "url": "https://example.test/sdl2"}],
+        )
+        self.assertEqual("recovery-required", result["status"])
+        self.assertEqual("metadata_mismatch", result["reason"])
+
+    def test_prepare_metadata_inserts_initial_bundle_pin(self) -> None:
+        self.add_unpublished_sdl2()
+        paths = NATIVE_RELEASE.prepare_metadata(self.root, "sdl2", "sdl2-2.32.8")
+        self.assertEqual([self.root / "deps.yml", self.root / "sdl2" / "manifest.yml"], paths)
+        info = NATIVE_RELEASE.metadata(self.root, "sdl2")
+        self.assertTrue(info["deps_pinned"])
+        self.assertEqual("sdl2-2.32.8", info["deps_release"])
+        self.assertIn(
+            "  sdl2:\n    version: 2.32.8\n    release: sdl2-2.32.8\n    path: sdl2\n",
+            (self.root / "deps.yml").read_text(encoding="utf-8"),
+        )
 
     def test_asset_verification_fixture_reports_missing_and_unexpected(self) -> None:
         assets = self.root / "assets"

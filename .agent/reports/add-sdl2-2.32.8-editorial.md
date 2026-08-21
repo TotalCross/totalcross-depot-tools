@@ -52,7 +52,9 @@ directory was used for the corrected validation.
 
 The first `others` stack build failed because stack planning loaded publication
 metadata even for build-only operations. Build planning now reads manifest
-identity, while release operations retain the mandatory `deps.yml` contract.
+identity independently. Initial release planning reads the same manifest identity
+and the authorized metadata-preparation step creates the mandatory `deps.yml`
+entry before the release tag is created.
 
 ## Validation and Measurable Results
 

@@ -106,18 +106,24 @@ class NativeStackTests(unittest.TestCase):
         self.assertEqual("build", plan["libraries"][0]["action"])
         self.assertEqual("2.32.8", plan["libraries"][0]["version"])
 
-    def test_unpublished_stack_member_still_requires_pin_for_release(self) -> None:
+    def test_unpublished_stack_member_can_plan_initial_release(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "deps.yml").write_text("dependencies:\n", encoding="utf-8")
             manifest = root / "sdl2" / "manifest.yml"
             manifest.parent.mkdir()
             manifest.write_text("version: 2.32.8\nrelease: sdl2-2.32.8\n", encoding="utf-8")
-            with self.assertRaisesRegex(
-                NATIVE_STACK.NATIVE_RELEASE.NativeReleaseError,
-                "has no sdl2 dependency",
-            ):
-                NATIVE_STACK.NATIVE_RELEASE.metadata(root, "sdl2")
+            plan = NATIVE_STACK.plan_stack(
+                self.config,
+                "others",
+                "release",
+                "sdl2",
+                lambda library: NATIVE_STACK.NATIVE_RELEASE.metadata(root, library),
+                [],
+                [],
+            )
+        self.assertEqual(["sdl2"], plan["publication_order"])
+        self.assertEqual("build-and-release", plan["libraries"][0]["action"])
 
     def test_recovery_state_is_reported_without_selecting_publication(self) -> None:
         plan = self.plan("graphics", "release", [{"tag": "libpng-1", "draft": True, "url": "https://example.test/draft"}], requested="libpng")

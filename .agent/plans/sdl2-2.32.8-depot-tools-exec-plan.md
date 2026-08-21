@@ -104,7 +104,7 @@ status, hashes, paths, and limitations.
   orchestration validation passed and was committed as `61d3f3e`.
 - [x] (2026-08-21T03:10:00Z) Fixed unpublished-member stack build planning in
   `530fbff`; `others build` now produces all seven sdl2 lanes without a
-  `deps.yml` pin, while release planning still requires one.
+  `deps.yml` pin.
 - [ ] Publication gate: release and `deps.yml` pin only when explicitly
   authorized.
 
@@ -445,10 +445,13 @@ After publication, run one real default-pin auto-fetch + consumer test.
 
 ## Surprises & Discoveries
 
+- The shared release helper assumed every initial release already had the
+  `deps.yml` entry that publication itself is responsible for creating. Initial
+  selection and metadata preparation now distinguish unpublished dependencies.
 - The stack planner requested `deps.yml` release metadata even for `build`, which
   prevented an intentionally unpublished stack member from reaching its build
-  lanes. Build planning now uses manifest identity; release planning still
-  requires the compatible pin.
+  lanes. Build planning now uses manifest identity independently of publication
+  state.
 - The native policy-literal validator requires nested MSVC runtime propagation
   to use the value established by `TotalCrossWindowsStaticRuntime.cmake`; the
   initial literal was replaced and validated in `af214f3`.

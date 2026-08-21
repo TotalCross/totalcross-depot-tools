@@ -44,6 +44,20 @@ def _read_indented_value(path: Path, section: str, key: str) -> str:
     raise NativeReleaseError(f"{path} has no {key} for {section}")
 
 
+def _read_top_level_value(path: Path, key: str) -> str:
+    match = next(
+        (
+            match
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if (match := re.match(rf"^{re.escape(key)}:\s*(\S.*?)\s*$", line))
+        ),
+        None,
+    )
+    if not match:
+        raise NativeReleaseError(f"{path} has no {key} field")
+    return match.group(1)
+
+
 def _replace_scalar(path: Path, key: str, value: str) -> None:
     source = path.read_text(encoding="utf-8")
     updated, count = re.subn(rf"^{re.escape(key)}:\s*\S.*$", f"{key}: {value}", source, count=1, flags=re.MULTILINE)
@@ -61,6 +75,26 @@ def _replace_dependency_release(path: Path, library: str, tag: str) -> None:
     path.write_text(updated, encoding="utf-8")
 
 
+def _insert_dependency(path: Path, library: str, version: str, tag: str) -> None:
+    source = path.read_text(encoding="utf-8")
+    entry = (
+        f"  {library}:\n"
+        f"    version: {version}\n"
+        f"    release: {tag}\n"
+        f"    path: {library}\n"
+    )
+    updated, count = re.subn(
+        r"^(dependencies:[ \t]*\n)",
+        rf"\g<1>{entry}",
+        source,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    if count != 1:
+        raise NativeReleaseError(f"{path} has no dependencies mapping")
+    path.write_text(updated, encoding="utf-8")
+
+
 def _manifest_path(root: Path, library: str) -> Path:
     path = root / library / "manifest.yml"
     if not path.is_file():
@@ -71,14 +105,19 @@ def _manifest_path(root: Path, library: str) -> Path:
 def metadata(root: Path, library: str) -> dict[str, Any]:
     deps_path = root / "deps.yml"
     manifest_path = _manifest_path(root, library)
-    version = _read_indented_value(deps_path, library, "version")
-    deps_release = _read_indented_value(deps_path, library, "release")
-    manifest_release = next(
-        (line.split(":", 1)[1].strip() for line in manifest_path.read_text(encoding="utf-8").splitlines() if line.startswith("release:")),
-        "",
-    )
-    if not manifest_release:
-        raise NativeReleaseError(f"{manifest_path} has no release field")
+    manifest_version = _read_top_level_value(manifest_path, "version")
+    manifest_release = _read_top_level_value(manifest_path, "release")
+    deps_pinned = f"  {library}:" in deps_path.read_text(encoding="utf-8").splitlines()
+    if deps_pinned:
+        version = _read_indented_value(deps_path, library, "version")
+        deps_release = _read_indented_value(deps_path, library, "release")
+        if version != manifest_version:
+            raise NativeReleaseError(
+                f"{library} bundle version {version} does not match manifest version {manifest_version}"
+            )
+    else:
+        version = manifest_version
+        deps_release = manifest_release
     base_tag = f"{library}-{version}"
     if not deps_release.startswith(base_tag):
         raise NativeReleaseError(f"{library} release pin {deps_release} does not match source version {version}")
@@ -87,6 +126,7 @@ def metadata(root: Path, library: str) -> dict[str, Any]:
         "version": version,
         "base_tag": base_tag,
         "deps_release": deps_release,
+        "deps_pinned": deps_pinned,
         "manifest_release": manifest_release,
         "deps_path": str(deps_path),
         "manifest_path": str(manifest_path),
@@ -156,14 +196,23 @@ def inspect_release(info: dict[str, Any], tags: Sequence[str], releases: Sequenc
     tags_set = set(tags)
     result: dict[str, Any] = {**info, "effective_release_tag": tag, "tags": _matching_tags(info["base_tag"], tags)}
     if release and not release.get("draft", False):
-        if info["deps_release"] != tag or info["manifest_release"] != tag:
+        if (
+            not info.get("deps_pinned", True)
+            or info["deps_release"] != tag
+            or info["manifest_release"] != tag
+        ):
             return {**result, "status": "recovery-required", "reason": "metadata_mismatch", "release_url": release.get("url", "")}
         return {**result, "status": "existing-release", "release_url": release.get("url", ""), "assets": release.get("assets", [])}
     if release and release.get("draft", False):
         return {**result, "status": "recovery-required", "reason": "draft_release", "release_url": release.get("url", "")}
     if tag in tags_set:
         return {**result, "status": "recovery-required", "reason": "tag_without_release"}
-    if info["deps_release"] == tag and info["manifest_release"] == tag and tag != info["base_tag"]:
+    if (
+        info.get("deps_pinned", True)
+        and info["deps_release"] == tag
+        and info["manifest_release"] == tag
+        and tag != info["base_tag"]
+    ):
         return {**result, "status": "recovery-required", "reason": "metadata_commit_without_tag"}
     return {**result, "status": "build-required", "release_url": ""}
 
@@ -239,7 +288,10 @@ def prepare_metadata(root: Path, library: str, tag: str) -> list[Path]:
     if not tag.startswith(info["base_tag"]) or not TAG_PATTERN.fullmatch(tag):
         raise NativeReleaseError(f"{tag} is not a valid {library} release tag")
     paths = [root / "deps.yml", _manifest_path(root, library)]
-    _replace_dependency_release(paths[0], library, tag)
+    if info["deps_pinned"]:
+        _replace_dependency_release(paths[0], library, tag)
+    else:
+        _insert_dependency(paths[0], library, info["version"], tag)
     _replace_scalar(paths[1], "release", tag)
     if library == "skia":
         for relative in ("skia/manifest.json", "skia/artifacts.json"):

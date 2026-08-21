@@ -5,11 +5,11 @@ SPDX-License-Identifier: MIT
 
 # SDL2 2.32.8 ExecPlan state
 
-Active milestone: Publication gate — explicit authorization required.
+Active milestone: Initial-release automation correction.
 
-Active slice: all non-publication implementation and build-planner corrections
-are complete. Do not continue into publication without explicit authorization
-and successful Linux/Windows workflow evidence.
+Active slice: allow an explicitly requested first release to select its tag from
+the manifest and insert the compatible bundle entry during metadata preparation,
+without pre-adding a `deps.yml` pin.
 
 Last implementation commit:
 `530fbff fix(stack): allow unpublished build members`.
@@ -25,9 +25,9 @@ Source contract: SDL `release-2.32.8` resolves to
 `98d1f3a45aae568ccd6ed5fec179330f47d4d356` and uses the upstream Zlib license
 from `LICENSE.txt`.
 
-Next action: any later resume must first obtain publication authorization, run
-the seven workflow lanes, and review Linux backend plus Windows `/MT` evidence
-before adding the `deps.yml` pin.
+Next action: reproduce the failing `select-tag` command with local fixtures,
+validate initial metadata insertion and recovery behavior, then commit the
+release-automation correction without publishing.
 
 Deferred validation: Linux Docker and Windows MSVC execution are unavailable on
 this host and require CI before publication. Publication, tags, GitHub Releases,
