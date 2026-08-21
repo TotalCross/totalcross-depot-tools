@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: sdl2
+version: 2.32.8
+release: sdl2-2.32.8
+build_system: cmake
+stack: others
+source:
+  type: git
+  url: https://github.com/libsdl-org/SDL.git
+  tag: release-2.32.8
+  revision: 98d1f3a45aae568ccd6ed5fec179330f47d4d356
+  license: Zlib
+  license_file: LICENSE.txt
+cmake:
+  package: SDL2
+  imported_target: SDL2::SDL2
+artifact:
+  include:
+    - SDL2/SDL.h
+  libraries:
+    - SDL2
+  archives:
+    - sdl2-linux-x86_64.tar.gz
+    - sdl2-linux-armv7l.tar.gz
+    - sdl2-linux-aarch64.tar.gz
+    - sdl2-windows-x86.tar.gz
+    - sdl2-windows-x64.tar.gz
+    - sdl2-windows-arm64.tar.gz
+    - sdl2-macos-arm64.tar.gz
+dependencies: []
+targets:
+  - linux-x86_64
+  - linux-armv7l
+  - linux-aarch64
+  - windows-x86
+  - windows-x64
+  - windows-arm64
+  - macos-arm64

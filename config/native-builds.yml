@@ -262,6 +262,17 @@ libraries:
       - macos-arm64
       - ios-arm64
       - ios-simulator-arm64
+  sdl2:
+    build_system: cmake
+    package_script: sdl2/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - macos-arm64
   skia:
     build_system: gn
     long_running: true
@@ -374,6 +385,7 @@ stacks:
     libraries:
       - qrcode
       - qrcodegen
+      - sdl2
       - axtls
       - mbedtls
       - sqlite3
