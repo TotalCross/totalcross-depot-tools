@@ -5,7 +5,7 @@ bundle: native-deps-totalcross-7.2.0
 dependencies:
   sdl2:
     version: 2.32.8
-    release: sdl2-2.32.8
+    release: sdl2-2.32.8-r2
     path: sdl2
   sljit:
     version: 20260717

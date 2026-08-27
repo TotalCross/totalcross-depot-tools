@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: sdl2
 version: 2.32.8
-release: sdl2-2.32.8
+release: sdl2-2.32.8-r2
 build_system: cmake
 stack: others
 source:
