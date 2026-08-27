@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: qrcodegen
 version: 20250123
-release: qrcodegen-20250123-r1
+release: qrcodegen-20250123-r2
 upstream_version: 2c9044de6b049ca25cb3cd1649ed7e27aa055138
 source:
   type: archive

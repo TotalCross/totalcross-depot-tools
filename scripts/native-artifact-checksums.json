@@ -141,6 +141,19 @@
         "qrcodegen-windows-x64.tar.gz": "ca6ece370775ccc40399678629d797b5c8401bfb4128c3522fd4f6a7dcf3dbe7",
         "qrcodegen-windows-x86.tar.gz": "d813de8d235f958777a23254efa7ec29198889f4257ac3cf603ff83897da86df"
       },
+      "qrcodegen-20250123-r2": {
+        "qrcodegen-android-arm64-v8a.tar.gz": "053c6f5ed89304a1cb2de7dc2b9cb506438f41174397be4efc748ad3c5c2b09e",
+        "qrcodegen-ios-arm64.tar.gz": "fc186ab68d5e38e2ff4685d463f3678eb760777d6ed2bcf4f4de19a39d55bc7d",
+        "qrcodegen-ios-simulator-arm64.tar.gz": "da867c6ea74a23e42442eecfbddb03fe0273e8a2f491b86ccbab51601e250ce5",
+        "qrcodegen-ios.xcframework.zip": "0d26b804ccaf45cbc80180decf6a6d3e2a28195d3e4b1b148ed1ae3ea4671a83",
+        "qrcodegen-linux-aarch64.tar.gz": "4ffe432f75329bd56caec7e708aaba5cf0d63a907d37d3d7c23711e5283f64f4",
+        "qrcodegen-linux-armv7l.tar.gz": "caef12fd3f05e18b7092a7eac3bd72cd6404c8c08132e3070baf3103bb3ed6b0",
+        "qrcodegen-linux-x86_64.tar.gz": "d34048785f24d73999bbfca4890188724224c8a70b564c0d354aa30f57ab32ee",
+        "qrcodegen-macos-arm64.tar.gz": "1049dd43c5f8bdfca838fc42dba0a60b081b0a1038f93d154981b2343d811245",
+        "qrcodegen-windows-arm64.tar.gz": "5d8236cf4b93e1d83deb54296f55cc3f3e180000a0f50c85318ecb8c9e1730d5",
+        "qrcodegen-windows-x64.tar.gz": "c85787f6714eced45b29cd240ab774bd719e709a8f5f157f7c308beb647b0e67",
+        "qrcodegen-windows-x86.tar.gz": "528403b513c136a707cdab0337edd7d8227ab9f611612cd896900600e40c4dc3"
+      },
       "sdl2-2.32.8": {
         "sdl2-linux-aarch64.tar.gz": "4fd22efff04adf51ac673cb4e3ed9b7b9d5d1952b4d33a031ecd2fdfadcbd7d5",
         "sdl2-linux-armv7l.tar.gz": "f99464d2e5d7d6b583cd15ff3e37967d761c0a508f6108c4b417f1c294888809",
