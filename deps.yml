@@ -21,7 +21,7 @@ dependencies:
     path: qrcode
   axtls:
     version: 2.1.5-tc.1
-    release: axtls-2.1.5-tc.1
+    release: axtls-2.1.5-tc.1-r2
     path: axtls
   sqlite3:
     version: 3.32.3

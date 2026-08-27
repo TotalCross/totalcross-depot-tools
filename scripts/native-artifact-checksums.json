@@ -14,6 +14,19 @@
         "axtls-windows-x64.tar.gz": "28de66f41619df8bbd9f8e6873829ab2a5b66dbd28e635d83af7e52e65a400d7",
         "axtls-windows-x86.tar.gz": "9c80d0aab3e636bf10006f46541c80bb466a4ae09685addddcb865165da93286"
       },
+      "axtls-2.1.5-tc.1-r2": {
+        "axtls-android-arm64-v8a.tar.gz": "9704e9e5e4b476ec0d206d4c092738d893d39aba3a4732ffd2cfea554b1f519a",
+        "axtls-ios-arm64.tar.gz": "dfb3c308a10c4be28554c4cc1ed5b2fdcfefc5da9ca668850568d6e9f04f1e34",
+        "axtls-ios-simulator-arm64.tar.gz": "f6585b555cc2f3a0373458298bd694f31bee597919cd1dbf85c48ac908ade670",
+        "axtls-ios.xcframework.zip": "6a9d8cbdc1e876e44b0028d31340876f6894c7fc4a707cfa0253f73fbe00e680",
+        "axtls-linux-aarch64.tar.gz": "f8ed28dfa6ee7c6c872be191a0736d041fe7194be0a18b0aa5a4bd82a4a8d1bf",
+        "axtls-linux-armv7l.tar.gz": "bde0bd8b0aa5bff517ba4268c1e94b1fa5383d292a22c49dabc6f78ae06423a5",
+        "axtls-linux-x86_64.tar.gz": "daa12a805798fcc9c04e9f59041e1d5b15eb76c2d5c50dc0aac392074fda90cf",
+        "axtls-macos-arm64.tar.gz": "a32215d46e958a26bf4fd28f187e630c9774439df733904140fc61d4864e0aa2",
+        "axtls-windows-arm64.tar.gz": "ed8cd6ceded1dae6e08bb81c28ef612a0a675380fbcb6d8a4824c2dd63377cda",
+        "axtls-windows-x64.tar.gz": "2f2b12b3a56ff1f451023412436432f162f79b52a13b0a98d248f3782d6762f0",
+        "axtls-windows-x86.tar.gz": "102cc14ae733fdc68f23f3ec0b8d960ddf0d35467da4d83af8fa52b7395af878"
+      },
       "libjpeg-10-r2": {
         "libjpeg-android-arm64-v8a.tar.gz": "bbfb310708ce43876e80c759e1c03a1715d1f07a6679c7e9a5145af108160695",
         "libjpeg-ios-arm64.tar.gz": "9e64ccb4957c3dc131010a01962e4d6d42ce34931eaf7624d146cf9101d92f77",

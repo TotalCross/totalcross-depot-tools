@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: axtls
 version: 2.1.5-tc.1
-release: axtls-2.1.5-tc.1
+release: axtls-2.1.5-tc.1-r2
 upstream_version: 2.1.5
 source:
   type: archive
