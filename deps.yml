@@ -45,7 +45,7 @@ dependencies:
     path: minizip
   minizip-ng:
     version: 4.2.2
-    release: minizip-ng-4.2.2-r2
+    release: minizip-ng-4.2.2-r3
     path: minizip-ng
   libpng:
     version: 1.6.48

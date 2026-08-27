@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: minizip-ng
 version: 4.2.2
-release: minizip-ng-4.2.2
+release: minizip-ng-4.2.2-r3
 source:
   type: git
   url: https://github.com/zlib-ng/minizip-ng.git

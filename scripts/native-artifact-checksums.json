@@ -92,6 +92,19 @@
         "minizip-ng-windows-x64.tar.gz": "ed0ac9aa98d10df2ee3bfa17a2151d331e7e502c8d336761d16a7e2a9c955b06",
         "minizip-ng-windows-x86.tar.gz": "f10fd996dfc81c5cecae7f2accace4993eaac6609db67c40ff58fbeb4065998a"
       },
+      "minizip-ng-4.2.2-r3": {
+        "minizip-ng-android-arm64-v8a.tar.gz": "422be7d951e7a6cb52735f40c44b7563eeaa424e81e4ceb89838513f464363f9",
+        "minizip-ng-ios-arm64.tar.gz": "64b09c09e0719d5d5e12f69940c17834c0e29eecf6e07d26cd2c78d2c7950185",
+        "minizip-ng-ios-simulator-arm64.tar.gz": "dd9a0797bbb87c31c70a32f5983b551cd8b36a266916cbe6f61331599c2d1324",
+        "minizip-ng-ios.xcframework.zip": "3f6ee344b68cd5fde573c1f25f265b6011ecef0634ae0079017d4de232aa73d6",
+        "minizip-ng-linux-aarch64.tar.gz": "e6b211e3514c3550cc158124637bfc9d88f3086aab72433497cd06e006d72574",
+        "minizip-ng-linux-armv7l.tar.gz": "99704e1dd30354a523c6cbcad14503fddb2635f86b6b0bcce44882f09ba561a9",
+        "minizip-ng-linux-x86_64.tar.gz": "6a6fd01823e0ae1a356654360d0814df82281e5011433e2875affac437cb400c",
+        "minizip-ng-macos-arm64.tar.gz": "b5bf00e37185b67db549210e135937be69abc731b834ad0358523964cd09b7b4",
+        "minizip-ng-windows-arm64.tar.gz": "61393adf071aacdd3dc27d34d4efa80ff9e4407d66ce390c70b40d7553919c9d",
+        "minizip-ng-windows-x64.tar.gz": "0b701a8d738b67e165286be973a4615efa00f9029956368faf58f84765c7df86",
+        "minizip-ng-windows-x86.tar.gz": "e00fef41c352d08fd924ec7a4cfa908452480a8f670318f67a2e35ce652d7d7c"
+      },
       "qrcode-20200519": {
         "qrcode-android-arm64-v8a.tar.gz": "1ecad26529ffcdfb5a252b06f9cd81018e8f87a6dce3b2374abf7db716966dbc",
         "qrcode-ios-arm64.tar.gz": "3f57afd487e33486f5148308aac9eaf6df0c83cde4f26eaacea5442b3961173b",
