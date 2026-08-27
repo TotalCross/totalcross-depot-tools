@@ -5,7 +5,7 @@ get_filename_component(TC_QRCODEGEN_DEP_DIR "${TC_QRCODEGEN_AUTOFETCH_DIR}/.." A
 
 function(tcvm_auto_fetch_qrcodegen)
   if(NOT DEFINED QRCODEGEN_RELEASE_TAG)
-    set(QRCODEGEN_RELEASE_TAG "qrcodegen-20250123")
+    set(QRCODEGEN_RELEASE_TAG "qrcodegen-20250123-r1")
   endif()
   if(NOT DEFINED QRCODEGEN_GITHUB_REPO)
     set(QRCODEGEN_GITHUB_REPO "TotalCross/totalcross-depot-tools")

@@ -13,7 +13,7 @@ dependencies:
     path: sljit
   qrcodegen:
     version: 20250123
-    release: qrcodegen-20250123
+    release: qrcodegen-20250123-r1
     path: qrcodegen
   qrcode:
     version: 20200519
