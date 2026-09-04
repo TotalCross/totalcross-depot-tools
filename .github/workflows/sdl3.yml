@@ -1,22 +1,41 @@
 # SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
 # SPDX-License-Identifier: MIT
-name: SDL3
+name: sdl3 native operation
+
 on:
+  workflow_call:
+    inputs:
+      operation:
+        required: false
+        default: build
+        type: string
+    outputs:
+      status:
+        value: ${{ jobs.operation.outputs.status }}
+      effective_release_tag:
+        value: ${{ jobs.operation.outputs.effective_release_tag }}
+      release_url:
+        value: ${{ jobs.operation.outputs.release_url }}
+      artifact_manifest:
+        value: ${{ jobs.operation.outputs.artifact_manifest }}
   workflow_dispatch:
     inputs:
       operation:
-        description: Build or publish sdl3
+        description: Build, release, or force-release.
         required: true
         default: build
         type: choice
         options: [build, release, force-release]
+  pull_request:
+    branches: [main, master]
+    paths: [deps.yml, config/native-builds.yml, sdl3/**, scripts/build-cmake-multi.sh, scripts/build-native-target.sh, scripts/fetch-native-dependencies.sh, scripts/native-build.py, .github/actions/build-native-library/action.yml, .github/workflows/sdl3.yml, .github/workflows/native-library-operation.yml]
+
 permissions:
   contents: write
+
 jobs:
   operation:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v6
-      - run: |
-          echo "TC_DEPOT_SCAFFOLD_TODO: delegate to shared operation tooling" >&2
-          exit 2
+    uses: ./.github/workflows/native-library-operation.yml
+    with:
+      library: sdl3
+      operation: ${{ inputs.operation || 'build' }}

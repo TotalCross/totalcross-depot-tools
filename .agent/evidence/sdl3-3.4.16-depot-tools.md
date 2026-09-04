@@ -29,3 +29,8 @@ SPDX-License-Identifier: MIT
   with `BOARD_BACKEND=SDL3`, `MAGIC_BACKEND=CPU`, `DOODLE_RENDERER=NONE`, tests
   and examples disabled, and the staged SDL3 CONFIG package. Log:
   `/tmp/sdl3-m3-mbd.log`.
+- 2026-09-04, Milestone 4: the `others build` planner produced exactly seven
+  unpublished SDL3 lanes and all seven wrapper dry runs resolved central runner,
+  image, generator, architecture, Release, and `/MT` policy. The focused native
+  build/stack/release suite passed 42 tests. Cross-platform execution remains
+  deferred because this host provides Linux x86_64 only.
