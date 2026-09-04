@@ -34,3 +34,8 @@ SPDX-License-Identifier: MIT
   image, generator, architecture, Release, and `/MT` policy. The focused native
   build/stack/release suite passed 42 tests. Cross-platform execution remains
   deferred because this host provides Linux x86_64 only.
+- 2026-09-04, Milestone 5: all scaffold placeholders were removed; structure,
+  shell syntax, central configuration, release contract, policy literals,
+  changed-file SPDX headers, and scoped diff checks passed. Fresh package module,
+  CONFIG, explicit-static, and MBD-shaped consumers remained green. `deps.yml`
+  was unchanged and no workflow, tag, release, or push was created.

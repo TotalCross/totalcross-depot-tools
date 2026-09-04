@@ -116,6 +116,8 @@ current `sdl2/` implementation as the closest proven dependency.
 - [x] (2026-09-04) Milestone 4: added the current one-workflow operation and
   validated planning and policy for all seven lanes; unavailable cross-platform
   execution remains a pre-publication CI gate.
+- [x] (2026-09-04) Milestone 5: completed documentation, cross-consumer proof,
+  tracked artifacts, and non-publication readiness.
 - [ ] Milestone 5: documentation, cross-consumer proof, tracked artifacts, readiness.
 - [ ] Publication gate: first release only with explicit authorization.
 
@@ -612,15 +614,16 @@ assets as recovery states rather than blindly creating new state.
 
 ## Outcomes & Retrospective
 
-Keep this short while active. At milestone/final completion record factual
-implementation commits, source checksum, final profile, changed paths, seven
-artifact hashes/build results, Linux backend summaries, Windows
-runtime/architecture/allocator/static-link results, macOS link result, module and
-CONFIG consumers, MBD tested revision/configuration, workflow run IDs, release
-tag/URL when authorized, metadata/checksum commit, and remaining downstream work.
+Milestones 1–5 delivered the SDL3 3.4.16 dependency, deterministic static
+packaging, strict fetching/discovery, seven-lane shared workflow, consumers, and
+documentation without changing `deps.yml` or publishing. Linux x86_64 built with
+the required backend profile; repeated archives matched; module, CONFIG,
+explicit-static, and MBD-shaped consumers passed.
 
-The final editorial report must contain the sections required by
-`.agent/PLANS.md`. Never describe planned behavior as delivered behavior.
+The other six lanes were planned and policy-resolved but could not execute on
+this Linux-only host. Their artifacts, Windows safety checks, macOS static-link
+metadata, workflow IDs, hashes, and release state remain part of the explicit
+publication gate. See `.agent/reports/sdl3-3.4.16-depot-tools-editorial.md`.
 
 ## Revision Note
 
