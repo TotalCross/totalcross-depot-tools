@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: SDL3
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Build or publish sdl3
+        required: true
+        default: build
+        type: choice
+        options: [build, release, force-release]
+permissions:
+  contents: write
+jobs:
+  operation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: |
+          echo "TC_DEPOT_SCAFFOLD_TODO: delegate to shared operation tooling" >&2
+          exit 2

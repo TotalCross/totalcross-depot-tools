@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+# SPDX-License-Identifier: MIT
+name: sdl3
+version: 3.4.16
+release: sdl3-3.4.16
+build_system: cmake
+stack: others
+source:
+  type: git
+  url: https://github.com/libsdl-org/SDL.git
+  tag: release-3.4.16
+  revision: fa2c02bb6e21974a89ea9824bc53c9932abe5f9c
+  license: Zlib
+  license_file: LICENSE.txt
+cmake:
+  package: SDL3
+  imported_target: SDL3::SDL3
+artifact:
+  include:
+    - SDL3/SDL.h
+  libraries:
+    - SDL3
+  archives:
+    - sdl3-linux-x86_64.tar.gz
+    - sdl3-linux-armv7l.tar.gz
+    - sdl3-linux-aarch64.tar.gz
+    - sdl3-windows-x86.tar.gz
+    - sdl3-windows-x64.tar.gz
+    - sdl3-windows-arm64.tar.gz
+    - sdl3-macos-arm64.tar.gz
+dependencies: []
+targets:
+  - linux-x86_64
+  - linux-armv7l
+  - linux-aarch64
+  - windows-x86
+  - windows-x64
+  - windows-arm64
+  - macos-arm64

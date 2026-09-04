@@ -107,7 +107,8 @@ current `sdl2/` implementation as the closest proven dependency.
   Windows runtime, and allocator behavior.
 - [x] Reviewed MBD's SDL3 contract: CONFIG-mode discovery and `SDL3::SDL3`, with
   desktop OpenGL, Metal, or Vulkan backends.
-- [ ] Milestone 1: scaffold `sdl3` and lock source/metadata/feature contracts.
+- [x] (2026-09-04) Milestone 1: scaffolded `sdl3` and locked the
+  source/metadata/feature contracts.
 - [ ] Milestone 2: implement reproducible static build and deterministic package.
 - [ ] Milestone 3: implement strict fetch/CMake consumption and consumer fixtures.
 - [ ] Milestone 4: add the current one-workflow operation and validate seven lanes.
