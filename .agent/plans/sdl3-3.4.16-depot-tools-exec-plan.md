@@ -66,11 +66,11 @@ Plan path:
 
 Plan key and tracked execution artifacts:
 
-    add-sdl3-3.4.16
-    .agent/state/add-sdl3-3.4.16.md
-    .agent/evidence/add-sdl3-3.4.16.md
-    .agent/archive/add-sdl3-3.4.16-history.md
-    .agent/reports/add-sdl3-3.4.16-editorial.md
+    sdl3-3.4.16-depot-tools
+    .agent/state/sdl3-3.4.16-depot-tools.md
+    .agent/evidence/sdl3-3.4.16-depot-tools.md
+    .agent/archive/sdl3-3.4.16-depot-tools-history.md
+    .agent/reports/sdl3-3.4.16-depot-tools-editorial.md
 
 The plan itself and every durable first-party execution artifact above must be
 committed. Create state/evidence in the first implementation slice; create the
@@ -84,7 +84,7 @@ results, paths, hashes, and limitations in evidence.
 
 On resume:
 
-1. Read `.agent/state/add-sdl3-3.4.16.md`.
+1. Read `.agent/state/sdl3-3.4.16-depot-tools.md`.
 2. Inspect `git status --short -- <active paths>` and only the active milestone diff.
 3. Continue from the next concrete action in state.
 4. Search evidence/history only for a specific prior result.
@@ -118,7 +118,6 @@ current `sdl2/` implementation as the closest proven dependency.
   execution remains a pre-publication CI gate.
 - [x] (2026-09-04) Milestone 5: completed documentation, cross-consumer proof,
   tracked artifacts, and non-publication readiness.
-- [ ] Milestone 5: documentation, cross-consumer proof, tracked artifacts, readiness.
 - [ ] Publication gate: first release only with explicit authorization.
 
 ## Current Architecture and Scope
