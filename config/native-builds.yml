@@ -273,6 +273,17 @@ libraries:
       - windows-x64
       - windows-arm64
       - macos-arm64
+  sdl3:
+    build_system: cmake
+    package_script: sdl3/scripts/package-artifact.sh
+    targets:
+      - linux-x86_64
+      - linux-armv7l
+      - linux-aarch64
+      - windows-x86
+      - windows-x64
+      - windows-arm64
+      - macos-arm64
   skia:
     build_system: gn
     long_running: true
@@ -386,6 +397,7 @@ stacks:
       - qrcode
       - qrcodegen
       - sdl2
+      - sdl3
       - axtls
       - mbedtls
       - sqlite3

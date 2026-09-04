@@ -1,0 +1,41 @@
+<!--
+SPDX-FileCopyrightText: 2026 Amalgam Solucoes em TI Ltda.
+SPDX-License-Identifier: MIT
+-->
+
+# SDL3 3.4.16 evidence
+
+- 2026-09-04, source contract: `release-3.4.16` resolved to
+  `fa2c02bb6e21974a89ea9824bc53c9932abe5f9c`; codeload archive SHA-256
+  `d246967187a4f37cc850608dbaf5cff9d1df4d731259903d25539755cdfcc657`.
+- 2026-09-04, Milestone 1: canonical seven-target graph and unpublished
+  `others` stack membership were added without changing `deps.yml`.
+- 2026-09-04, Milestone 2 host proof: Linux x86_64 built and installed SDL3;
+  the package recorded X11, Wayland, KMSDRM, dummy, offscreen, Vulkan, OpenGL,
+  and OpenGL ES. Two archive writes matched SHA-256
+  `918025d233f719fb1969f5f7d02405d7e39262b58a2e06e24b8521e8809bccbe`.
+  Fresh CONFIG consumers linked and ran against both `SDL3::SDL3` and
+  `SDL3::SDL3-static`. Logs: `/tmp/sdl3-m2-host.log` and
+  `/tmp/sdl3-m2-consumer.log`.
+- Limitation: Docker, MSVC, PowerShell, and macOS are unavailable on this Linux
+  host, so cross-platform runtime validation remains a CI checkpoint before
+  publication.
+- 2026-09-04, Milestone 3: an explicit fake-release handoff fetched the packaged
+  archive atomically and the second invocation reused it with zero requests.
+  Freshly extracted module, explicit-static, and CONFIG consumers linked and
+  ran. An explicit incomplete depot root failed even with a valid host prefix.
+- 2026-09-04, MBD proof: `flsobral/didactic-doodle` revision
+  `c82ae744016f447fccb78087eed89f11b3eec0ff` configured and built all 13 targets
+  with `BOARD_BACKEND=SDL3`, `MAGIC_BACKEND=CPU`, `DOODLE_RENDERER=NONE`, tests
+  and examples disabled, and the staged SDL3 CONFIG package. Log:
+  `/tmp/sdl3-m3-mbd.log`.
+- 2026-09-04, Milestone 4: the `others build` planner produced exactly seven
+  unpublished SDL3 lanes and all seven wrapper dry runs resolved central runner,
+  image, generator, architecture, Release, and `/MT` policy. The focused native
+  build/stack/release suite passed 42 tests. Cross-platform execution remains
+  deferred because this host provides Linux x86_64 only.
+- 2026-09-04, Milestone 5: all scaffold placeholders were removed; structure,
+  shell syntax, central configuration, release contract, policy literals,
+  changed-file SPDX headers, and scoped diff checks passed. Fresh package module,
+  CONFIG, explicit-static, and MBD-shaped consumers remained green. `deps.yml`
+  was unchanged and no workflow, tag, release, or push was created.

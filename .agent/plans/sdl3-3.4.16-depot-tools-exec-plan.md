@@ -66,11 +66,11 @@ Plan path:
 
 Plan key and tracked execution artifacts:
 
-    add-sdl3-3.4.16
-    .agent/state/add-sdl3-3.4.16.md
-    .agent/evidence/add-sdl3-3.4.16.md
-    .agent/archive/add-sdl3-3.4.16-history.md
-    .agent/reports/add-sdl3-3.4.16-editorial.md
+    sdl3-3.4.16-depot-tools
+    .agent/state/sdl3-3.4.16-depot-tools.md
+    .agent/evidence/sdl3-3.4.16-depot-tools.md
+    .agent/archive/sdl3-3.4.16-depot-tools-history.md
+    .agent/reports/sdl3-3.4.16-depot-tools-editorial.md
 
 The plan itself and every durable first-party execution artifact above must be
 committed. Create state/evidence in the first implementation slice; create the
@@ -84,7 +84,7 @@ results, paths, hashes, and limitations in evidence.
 
 On resume:
 
-1. Read `.agent/state/add-sdl3-3.4.16.md`.
+1. Read `.agent/state/sdl3-3.4.16-depot-tools.md`.
 2. Inspect `git status --short -- <active paths>` and only the active milestone diff.
 3. Continue from the next concrete action in state.
 4. Search evidence/history only for a specific prior result.
@@ -107,11 +107,17 @@ current `sdl2/` implementation as the closest proven dependency.
   Windows runtime, and allocator behavior.
 - [x] Reviewed MBD's SDL3 contract: CONFIG-mode discovery and `SDL3::SDL3`, with
   desktop OpenGL, Metal, or Vulkan backends.
-- [ ] Milestone 1: scaffold `sdl3` and lock source/metadata/feature contracts.
-- [ ] Milestone 2: implement reproducible static build and deterministic package.
-- [ ] Milestone 3: implement strict fetch/CMake consumption and consumer fixtures.
-- [ ] Milestone 4: add the current one-workflow operation and validate seven lanes.
-- [ ] Milestone 5: documentation, cross-consumer proof, tracked artifacts, readiness.
+- [x] (2026-09-04) Milestone 1: scaffolded `sdl3` and locked the
+  source/metadata/feature contracts.
+- [x] (2026-09-04) Milestone 2: implemented the reproducible static build and
+  deterministic package, with a host Linux build and both exported targets proven.
+- [x] (2026-09-04) Milestone 3: implemented strict fetch/CMake consumption and
+  proved module, explicit-static, CONFIG, confinement, and MBD-shaped consumers.
+- [x] (2026-09-04) Milestone 4: added the current one-workflow operation and
+  validated planning and policy for all seven lanes; unavailable cross-platform
+  execution remains a pre-publication CI gate.
+- [x] (2026-09-04) Milestone 5: completed documentation, cross-consumer proof,
+  tracked artifacts, and non-publication readiness.
 - [ ] Publication gate: first release only with explicit authorization.
 
 ## Current Architecture and Scope
@@ -607,15 +613,16 @@ assets as recovery states rather than blindly creating new state.
 
 ## Outcomes & Retrospective
 
-Keep this short while active. At milestone/final completion record factual
-implementation commits, source checksum, final profile, changed paths, seven
-artifact hashes/build results, Linux backend summaries, Windows
-runtime/architecture/allocator/static-link results, macOS link result, module and
-CONFIG consumers, MBD tested revision/configuration, workflow run IDs, release
-tag/URL when authorized, metadata/checksum commit, and remaining downstream work.
+Milestones 1–5 delivered the SDL3 3.4.16 dependency, deterministic static
+packaging, strict fetching/discovery, seven-lane shared workflow, consumers, and
+documentation without changing `deps.yml` or publishing. Linux x86_64 built with
+the required backend profile; repeated archives matched; module, CONFIG,
+explicit-static, and MBD-shaped consumers passed.
 
-The final editorial report must contain the sections required by
-`.agent/PLANS.md`. Never describe planned behavior as delivered behavior.
+The other six lanes were planned and policy-resolved but could not execute on
+this Linux-only host. Their artifacts, Windows safety checks, macOS static-link
+metadata, workflow IDs, hashes, and release state remain part of the explicit
+publication gate. See `.agent/reports/sdl3-3.4.16-depot-tools-editorial.md`.
 
 ## Revision Note
 
