@@ -111,7 +111,8 @@ current `sdl2/` implementation as the closest proven dependency.
   source/metadata/feature contracts.
 - [x] (2026-09-04) Milestone 2: implemented the reproducible static build and
   deterministic package, with a host Linux build and both exported targets proven.
-- [ ] Milestone 3: implement strict fetch/CMake consumption and consumer fixtures.
+- [x] (2026-09-04) Milestone 3: implemented strict fetch/CMake consumption and
+  proved module, explicit-static, CONFIG, confinement, and MBD-shaped consumers.
 - [ ] Milestone 4: add the current one-workflow operation and validate seven lanes.
 - [ ] Milestone 5: documentation, cross-consumer proof, tracked artifacts, readiness.
 - [ ] Publication gate: first release only with explicit authorization.

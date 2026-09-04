@@ -20,3 +20,12 @@ SPDX-License-Identifier: MIT
 - Limitation: Docker, MSVC, PowerShell, and macOS are unavailable on this Linux
   host, so cross-platform runtime validation remains a CI checkpoint before
   publication.
+- 2026-09-04, Milestone 3: an explicit fake-release handoff fetched the packaged
+  archive atomically and the second invocation reused it with zero requests.
+  Freshly extracted module, explicit-static, and CONFIG consumers linked and
+  ran. An explicit incomplete depot root failed even with a valid host prefix.
+- 2026-09-04, MBD proof: `flsobral/didactic-doodle` revision
+  `c82ae744016f447fccb78087eed89f11b3eec0ff` configured and built all 13 targets
+  with `BOARD_BACKEND=SDL3`, `MAGIC_BACKEND=CPU`, `DOODLE_RENDERER=NONE`, tests
+  and examples disabled, and the staged SDL3 CONFIG package. Log:
+  `/tmp/sdl3-m3-mbd.log`.
