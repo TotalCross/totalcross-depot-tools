@@ -43,6 +43,30 @@ class NativeBuildConfigurationTests(unittest.TestCase):
         self.assertEqual("MultiThreaded", resolved["windows_expected_runtime"])
         self.assertEqual("cmake/TotalCrossWindowsStaticRuntime.cmake", resolved["windows_runtime_policy"])
 
+    def test_libpng_static_decode_tests_run_only_on_executable_targets(self) -> None:
+        executable_targets = (
+            "linux-x86_64",
+            "linux-aarch64",
+            "windows-x86",
+            "windows-x64",
+            "windows-arm64",
+            "macos-arm64",
+        )
+        cross_targets = (
+            "linux-armv7l",
+            "android-arm64",
+            "ios-arm64",
+            "ios-simulator-arm64",
+        )
+        for target in executable_targets:
+            resolved = NATIVE_BUILD.resolve(self.config, "libpng", target)
+            self.assertTrue(resolved["tests"], target)
+            self.assertIn("-DTC_LIBPNG_TESTS=ON", resolved["cmake_arguments"])
+        for target in cross_targets:
+            resolved = NATIVE_BUILD.resolve(self.config, "libpng", target)
+            self.assertFalse(resolved["tests"], target)
+            self.assertIn("-DTC_LIBPNG_TESTS=OFF", resolved["cmake_arguments"])
+
     def test_unknown_target_fails_compactly(self) -> None:
         with self.assertRaisesRegex(NATIVE_BUILD.NativeBuildError, "unknown target missing-target"):
             NATIVE_BUILD.resolve(self.config, "zlib", "missing-target")

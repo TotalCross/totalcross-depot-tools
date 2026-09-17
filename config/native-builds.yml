@@ -151,6 +151,9 @@ libraries:
   libpng:
     build_system: cmake
     package_script: libpng/scripts/package-artifact.sh
+    tests: true
+    cmake_arguments:
+      - -DTC_LIBPNG_TESTS=ON
     apple_xcframework:
       libraries:
         - libpng*.a
@@ -168,6 +171,23 @@ libraries:
     dependencies:
       zlib-ng:
         cmake_variable: ZLIB_DIR
+    target_overrides:
+      linux-armv7l:
+        tests: false
+        cmake_arguments:
+          - -DTC_LIBPNG_TESTS=OFF
+      android-arm64:
+        tests: false
+        cmake_arguments:
+          - -DTC_LIBPNG_TESTS=OFF
+      ios-arm64:
+        tests: false
+        cmake_arguments:
+          - -DTC_LIBPNG_TESTS=OFF
+      ios-simulator-arm64:
+        tests: false
+        cmake_arguments:
+          - -DTC_LIBPNG_TESTS=OFF
   mbedtls:
     build_system: cmake
     package_script: mbedtls/scripts/package-artifact.sh

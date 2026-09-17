@@ -181,3 +181,52 @@ install(FILES
   "${CMAKE_BINARY_DIR}/libpng-build/pnglibconf.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
+
+option(TC_LIBPNG_TESTS "Build depot-tools libpng static decode tests" OFF)
+
+if(TC_LIBPNG_TESTS)
+  enable_testing()
+
+  add_executable(tc_libpng_static_decode_test
+    "${CMAKE_CURRENT_LIST_DIR}/tests/png_static_decode_test.c"
+  )
+  target_compile_features(tc_libpng_static_decode_test PRIVATE c_std_99)
+  target_link_libraries(tc_libpng_static_decode_test PRIVATE png_static)
+
+  set(TC_LIBPNG_TEST_NAMES
+    pngsuite-basn2c08
+    pngsuite-basn3p01
+    pngsuite-basn3p02
+    pngsuite-basn3p04
+    pngsuite-basn3p08
+    pngsuite-ibasn3p08
+    benchmark-1980978876
+    benchmark--2109502521
+    benchmark-25156992
+  )
+  set(TC_LIBPNG_TEST_FILES
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/basn2c08.png"
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/basn3p01.png"
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/basn3p02.png"
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/basn3p04.png"
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/basn3p08.png"
+    "${libpng_SOURCE_DIR}/contrib/pngsuite/ibasn3p08.png"
+    "${CMAKE_CURRENT_LIST_DIR}/tests/fixtures/1980978876.jpg"
+    "${CMAKE_CURRENT_LIST_DIR}/tests/fixtures/-2109502521.jpg"
+    "${CMAKE_CURRENT_LIST_DIR}/tests/fixtures/25156992.jpg"
+  )
+
+  list(LENGTH TC_LIBPNG_TEST_NAMES TC_LIBPNG_TEST_COUNT)
+  math(EXPR TC_LIBPNG_TEST_LAST_INDEX "${TC_LIBPNG_TEST_COUNT} - 1")
+  foreach(TC_LIBPNG_TEST_INDEX RANGE ${TC_LIBPNG_TEST_LAST_INDEX})
+    list(GET TC_LIBPNG_TEST_NAMES ${TC_LIBPNG_TEST_INDEX} TC_LIBPNG_TEST_NAME)
+    list(GET TC_LIBPNG_TEST_FILES ${TC_LIBPNG_TEST_INDEX} TC_LIBPNG_TEST_FILE)
+    if(NOT EXISTS "${TC_LIBPNG_TEST_FILE}")
+      message(FATAL_ERROR "Missing libpng static decode fixture: ${TC_LIBPNG_TEST_FILE}")
+    endif()
+    add_test(
+      NAME "libpng.static_decode.${TC_LIBPNG_TEST_NAME}"
+      COMMAND tc_libpng_static_decode_test "${TC_LIBPNG_TEST_FILE}"
+    )
+  endforeach()
+endif()
