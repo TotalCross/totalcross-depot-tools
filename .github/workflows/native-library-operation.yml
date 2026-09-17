@@ -149,6 +149,13 @@ jobs:
       - name: Build, validate, install, and package
         shell: bash
         run: scripts/build-native-target.sh "${{ inputs.library }}" "${{ matrix.target }}"
+      - name: Upload build log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}-build-log
+          path: ${{ inputs.library }}/build/${{ matrix.build_dir_name }}/build-native-target.log
+          if-no-files-found: warn
       - name: Verify Windows static runtime
         if: ${{ matrix.platform_family == 'windows' }}
         shell: pwsh
@@ -187,6 +194,13 @@ jobs:
             scripts/fetch-native-dependencies.sh "${LIBRARY}" "${target}"
             scripts/build-native-target.sh "${LIBRARY}" "${target}"
           done
+      - name: Upload Apple build logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.library }}-apple-build-logs
+          path: ${{ inputs.library }}/build/*/build-native-target.log
+          if-no-files-found: warn
       - name: Package iOS XCFramework
         if: ${{ needs.plan.outputs.has_ios == 'true' }}
         shell: bash
@@ -234,8 +248,14 @@ jobs:
       - name: Download release artifacts
         uses: actions/download-artifact@v7
         with:
-          path: release-assets
-          merge-multiple: true
+          path: downloaded-artifacts
+          merge-multiple: false
+      - name: Select release archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          find downloaded-artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} release-assets/ \;
       - name: Verify declared release assets
         shell: bash
         run: python3 scripts/native-release.py verify-assets "${{ inputs.library }}" --paths 'release-assets/*'

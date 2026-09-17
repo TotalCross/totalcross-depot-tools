@@ -171,6 +171,27 @@ class NativeBuildTargetTests(unittest.TestCase):
         self.assertIn("scripts/build-cmake-multi.sh", action)
         self.assertNotIn("build_command=$(cat", action)
 
+    def test_native_operation_uploads_logs_separately_and_keeps_them_out_of_releases(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "native-library-operation.yml").read_text(
+            encoding="utf-8"
+        )
+        build = workflow.split("  build:", 1)[1].split("  apple:", 1)[0]
+        self.assertIn("if: ${{ always() }}", build)
+        self.assertIn("name: ${{ matrix.artifact_name }}-build-log", build)
+        self.assertIn(
+            "path: ${{ inputs.library }}/build/${{ matrix.build_dir_name }}/build-native-target.log",
+            build,
+        )
+        apple = workflow.split("  apple:", 1)[1].split("  publish:", 1)[0]
+        self.assertIn("if: ${{ always() }}", apple)
+        self.assertIn("name: ${{ inputs.library }}-apple-build-logs", apple)
+        self.assertIn("path: ${{ inputs.library }}/build/*/build-native-target.log", apple)
+        publish = workflow.split("  publish:", 1)[1]
+        self.assertIn("path: downloaded-artifacts", publish)
+        self.assertIn("merge-multiple: false", publish)
+        self.assertIn("find downloaded-artifacts -type f", publish)
+        self.assertIn("--paths 'release-assets/*'", publish)
+
     def test_operation_workflows_own_narrow_pr_filters_and_replace_legacy_pairs(self) -> None:
         libraries = (
             "axtls", "libjpeg", "libjpeg-turbo", "libpng", "mbedtls", "minizip", "minizip-ng",
