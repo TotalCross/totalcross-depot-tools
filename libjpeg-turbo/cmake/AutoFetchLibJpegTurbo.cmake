@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_libjpeg_turbo)
     set(LIBJPEG_TURBO_RELEASE_TAG "$ENV{LIBJPEG_TURBO_RELEASE_TAG}")
   elseif(NOT DEFINED LIBJPEG_TURBO_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(libjpeg-turbo LIBJPEG_TURBO_RELEASE_TAG "libjpeg-turbo-3.1.4.1")
+      tcvm_get_dependency_release(libjpeg-turbo LIBJPEG_TURBO_RELEASE_TAG "")
     else()
-      set(LIBJPEG_TURBO_RELEASE_TAG "libjpeg-turbo-3.1.4.1")
+      set(LIBJPEG_TURBO_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT LIBJPEG_TURBO_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No libjpeg-turbo release is pinned in deps.yml. Set LIBJPEG_TURBO_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED LIBJPEG_TURBO_GITHUB_REPO AND DEFINED ENV{LIBJPEG_TURBO_GITHUB_REPO})

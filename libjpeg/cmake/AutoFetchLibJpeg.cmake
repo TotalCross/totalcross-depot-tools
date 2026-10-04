@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_libjpeg)
     set(LIBJPEG_RELEASE_TAG "$ENV{LIBJPEG_RELEASE_TAG}")
   elseif(NOT DEFINED LIBJPEG_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(libjpeg LIBJPEG_RELEASE_TAG "libjpeg-10")
+      tcvm_get_dependency_release(libjpeg LIBJPEG_RELEASE_TAG "")
     else()
-      set(LIBJPEG_RELEASE_TAG "libjpeg-10")
+      set(LIBJPEG_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT LIBJPEG_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No libjpeg release is pinned in deps.yml. Set LIBJPEG_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED LIBJPEG_GITHUB_REPO AND DEFINED ENV{LIBJPEG_GITHUB_REPO})

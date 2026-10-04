@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_zlibng)
     set(ZLIB_NG_RELEASE_TAG "$ENV{ZLIB_NG_RELEASE_TAG}")
   elseif(NOT DEFINED ZLIB_NG_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(zlib-ng ZLIB_NG_RELEASE_TAG "zlib-ng-2.1.6-r2")
+      tcvm_get_dependency_release(zlib-ng ZLIB_NG_RELEASE_TAG "")
     else()
-      set(ZLIB_NG_RELEASE_TAG "zlib-ng-2.1.6-r2")
+      set(ZLIB_NG_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT ZLIB_NG_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No zlib-ng release is pinned in deps.yml. Set ZLIB_NG_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED ZLIB_NG_GITHUB_REPO AND DEFINED ENV{ZLIB_NG_GITHUB_REPO})

@@ -30,10 +30,15 @@ function(tcvm_auto_fetch_skia)
     set(SKIA_RELEASE_TAG "$ENV{SKIA_RELEASE_TAG}")
   elseif(NOT DEFINED SKIA_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(skia SKIA_RELEASE_TAG "skia-158dc9d7-r7")
+      tcvm_get_dependency_release(skia SKIA_RELEASE_TAG "")
     else()
-      set(SKIA_RELEASE_TAG "skia-158dc9d7-r7")
+      set(SKIA_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT SKIA_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No skia release is pinned in deps.yml. Set SKIA_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED SKIA_GITHUB_REPO AND DEFINED ENV{SKIA_GITHUB_REPO})

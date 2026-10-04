@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_minizipng)
     set(MINIZIP_NG_RELEASE_TAG "$ENV{MINIZIP_NG_RELEASE_TAG}")
   elseif(NOT DEFINED MINIZIP_NG_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(minizip-ng MINIZIP_NG_RELEASE_TAG "minizip-ng-4.2.2")
+      tcvm_get_dependency_release(minizip-ng MINIZIP_NG_RELEASE_TAG "")
     else()
-      set(MINIZIP_NG_RELEASE_TAG "minizip-ng-4.2.2")
+      set(MINIZIP_NG_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT MINIZIP_NG_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No minizip-ng release is pinned in deps.yml. Set MINIZIP_NG_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED MINIZIP_NG_GITHUB_REPO AND DEFINED ENV{MINIZIP_NG_GITHUB_REPO})

@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_mbedtls)
     set(MBEDTLS_RELEASE_TAG "$ENV{MBEDTLS_RELEASE_TAG}")
   elseif(NOT DEFINED MBEDTLS_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(mbedtls MBEDTLS_RELEASE_TAG "mbedtls-3.5.2-r2")
+      tcvm_get_dependency_release(mbedtls MBEDTLS_RELEASE_TAG "")
     else()
-      set(MBEDTLS_RELEASE_TAG "mbedtls-3.5.2-r2")
+      set(MBEDTLS_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT MBEDTLS_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No mbedtls release is pinned in deps.yml. Set MBEDTLS_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED MBEDTLS_GITHUB_REPO AND DEFINED ENV{MBEDTLS_GITHUB_REPO})
