@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_sqlite3)
     set(SQLITE3_RELEASE_TAG "$ENV{SQLITE3_RELEASE_TAG}")
   elseif(NOT DEFINED SQLITE3_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(sqlite3 SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+      tcvm_get_dependency_release(sqlite3 SQLITE3_RELEASE_TAG "")
     else()
-      set(SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+      set(SQLITE3_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT SQLITE3_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No sqlite3 release is pinned in deps.yml. Set SQLITE3_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED SQLITE3_GITHUB_REPO AND DEFINED ENV{SQLITE3_GITHUB_REPO})

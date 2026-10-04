@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: sqlite3
 version: 3.32.3
-release: sqlite3-3.32.3
+release: sqlite3-3.32.3-r2
 source:
   type: amalgamation
   url: https://www.sqlite.org/2020/sqlite-amalgamation-3320300.zip
