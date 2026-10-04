@@ -26,10 +26,6 @@ on:
         default: build
         type: choice
         options: [build, release, force-release]
-  pull_request:
-    branches: [main, master]
-    paths: [deps.yml, config/native-builds.yml, sdl3/**, scripts/build-cmake-multi.sh, scripts/build-native-target.sh, scripts/fetch-native-dependencies.sh, scripts/native-build.py, .github/actions/build-native-library/action.yml, .github/workflows/sdl3.yml, .github/workflows/native-library-operation.yml]
-
 permissions:
   contents: write
 
