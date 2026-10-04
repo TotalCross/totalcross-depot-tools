@@ -10,7 +10,7 @@ Usage: fetch.sh [options]
 Options:
   --platform PLATFORM      Target platform: linux, windows, android, ios, ios-simulator, macos
   --arch ARCH              Target architecture, e.g. x86_64, armv7l, aarch64
-  --release-tag TAG        GitHub release tag, default: sqlite3-3.32.3
+  --release-tag TAG        Explicit release handoff; defaults to the deps.yml pin
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: SQLITE3_GITHUB_TOKEN, then GITHUB_TOKEN
@@ -20,10 +20,11 @@ EOF
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/.." && pwd)"
 
 platform=""
 arch=""
-release_tag="sqlite3-3.32.3"
+release_tag=""
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
 dest_root="${script_dir}/local"
@@ -72,6 +73,23 @@ done
 
 if [ -z "${platform}" ] || [ -z "${arch}" ]; then
   usage >&2
+  exit 2
+fi
+
+if [ -z "${release_tag}" ] && [ -f "${repo_root}/deps.yml" ]; then
+  release_tag="$(awk '
+    /^  sqlite3:[[:space:]]*$/ { in_sqlite3 = 1; next }
+    in_sqlite3 && /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ { in_sqlite3 = 0 }
+    in_sqlite3 && /^    release:[[:space:]]*/ {
+      sub(/^    release:[[:space:]]*/, "")
+      print
+      exit
+    }
+  ' "${repo_root}/deps.yml")"
+fi
+
+if [ -z "${release_tag}" ]; then
+  echo "No sqlite3 release is pinned in deps.yml; pass --release-tag for an explicit release handoff." >&2
   exit 2
 fi
 

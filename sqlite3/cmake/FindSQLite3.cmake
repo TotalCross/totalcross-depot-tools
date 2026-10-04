@@ -2,11 +2,24 @@
 # SPDX-License-Identifier: MIT
 get_filename_component(SQLite3_DEPENDENCY_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(SQLite3_LOCAL_ROOT "${SQLite3_DEPENDENCY_DIR}/local")
+set(SQLite3_RELEASE_HELPER "${SQLite3_DEPENDENCY_DIR}/../cmake/DepotDependencyRelease.cmake")
+if(EXISTS "${SQLite3_RELEASE_HELPER}")
+  include("${SQLite3_RELEASE_HELPER}")
+endif()
 
 if(NOT DEFINED SQLITE3_RELEASE_TAG AND DEFINED ENV{SQLITE3_RELEASE_TAG})
   set(SQLITE3_RELEASE_TAG "$ENV{SQLITE3_RELEASE_TAG}")
 elseif(NOT DEFINED SQLITE3_RELEASE_TAG)
-  set(SQLITE3_RELEASE_TAG "sqlite3-3.32.3")
+  if(COMMAND tcvm_get_dependency_release)
+    tcvm_get_dependency_release(sqlite3 SQLITE3_RELEASE_TAG "")
+  else()
+    set(SQLITE3_RELEASE_TAG "")
+  endif()
+endif()
+
+if(NOT SQLITE3_RELEASE_TAG)
+  message(FATAL_ERROR
+    "No sqlite3 release is pinned in deps.yml. Set SQLITE3_RELEASE_TAG for an explicit release handoff.")
 endif()
 
 if(NOT DEFINED SQLITE3_GITHUB_REPO AND DEFINED ENV{SQLITE3_GITHUB_REPO})
