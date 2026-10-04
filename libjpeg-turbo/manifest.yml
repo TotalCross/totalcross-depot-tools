@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: libjpeg-turbo
 version: 3.1.4.1
-release: libjpeg-turbo-3.1.4.1
+release: libjpeg-turbo-3.1.4.1-r2
 source:
   type: git
   url: https://github.com/libjpeg-turbo/libjpeg-turbo.git

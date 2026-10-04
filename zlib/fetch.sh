@@ -10,7 +10,7 @@ Usage: fetch.sh [options]
 Options:
   --platform PLATFORM      Target platform: linux, windows, android, ios, ios-simulator, macos
   --arch ARCH              Target architecture, e.g. x86_64, armv7l, aarch64
-  --release-tag TAG        GitHub release tag, default: zlib-1.3.1-r2
+  --release-tag TAG        Explicit release handoff; defaults to the deps.yml pin
   --github-repo OWNER/REPO GitHub repository, default: TotalCross/totalcross-depot-tools
   --github-token-env NAME  Environment variable containing a GitHub token,
                            default: ZLIB_GITHUB_TOKEN, then GITHUB_TOKEN
@@ -19,10 +19,12 @@ EOF
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/.." && pwd)"
+source "${repo_root}/scripts/dependency-release.sh"
 
 platform=""
 arch=""
-release_tag="zlib-1.3.1-r2"
+release_tag=""
 github_repo="TotalCross/totalcross-depot-tools"
 github_token_env=""
 dest_root="${script_dir}/local"
@@ -64,6 +66,14 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+if [ -z "${release_tag}" ]; then
+  release_tag="$(tc_dependency_release_from_deps "${repo_root}/deps.yml" "zlib")"
+fi
+if [ -z "${release_tag}" ]; then
+  echo "No zlib release is pinned in deps.yml; pass --release-tag for an explicit release handoff." >&2
+  exit 2
+fi
 
 if [ -z "$platform" ] || [ -z "$arch" ]; then
   usage >&2

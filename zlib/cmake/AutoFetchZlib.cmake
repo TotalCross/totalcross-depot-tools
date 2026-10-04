@@ -17,10 +17,15 @@ function(tcvm_auto_fetch_zlib)
     set(ZLIB_RELEASE_TAG "$ENV{ZLIB_RELEASE_TAG}")
   elseif(NOT DEFINED ZLIB_RELEASE_TAG)
     if(COMMAND tcvm_get_dependency_release)
-      tcvm_get_dependency_release(zlib ZLIB_RELEASE_TAG "zlib-1.3.1-r2")
+      tcvm_get_dependency_release(zlib ZLIB_RELEASE_TAG "")
     else()
-      set(ZLIB_RELEASE_TAG "zlib-1.3.1-r2")
+      set(ZLIB_RELEASE_TAG "")
     endif()
+  endif()
+
+  if(NOT ZLIB_RELEASE_TAG)
+    message(FATAL_ERROR
+      "No zlib release is pinned in deps.yml. Set ZLIB_RELEASE_TAG for an explicit release handoff.")
   endif()
 
   if(NOT DEFINED ZLIB_GITHUB_REPO AND DEFINED ENV{ZLIB_GITHUB_REPO})

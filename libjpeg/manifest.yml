@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 name: libjpeg
 version: 10
-release: libjpeg-10
+release: libjpeg-10-r2
 source:
   type: archive
   url: https://ijg.org/files/jpegsrc.v10.tar.gz

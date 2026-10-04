@@ -8,11 +8,13 @@ usage() {
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/.." && pwd)"
+source "${repo_root}/scripts/dependency-release.sh"
 source "${script_dir}/../scripts/github-release.sh"
 source "${script_dir}/../scripts/artifact-install.sh"
 platform=""
 arch=""
-release_tag="axtls-2.1.5-tc.1"
+release_tag=""
 github_repo="TotalCross/totalcross-depot-tools"
 token_env="AXTLS_GITHUB_TOKEN"
 dest_root="${script_dir}/local"
@@ -29,6 +31,14 @@ while [ "$#" -gt 0 ]; do
     *) usage; exit 2 ;;
   esac
 done
+
+if [ -z "${release_tag}" ]; then
+  release_tag="$(tc_dependency_release_from_deps "${repo_root}/deps.yml" "axtls")"
+fi
+if [ -z "${release_tag}" ]; then
+  echo "No axtls release is pinned in deps.yml; pass --release-tag for an explicit release handoff." >&2
+  exit 2
+fi
 [ -n "${platform}" ] && [ -n "${arch}" ] || { usage; exit 2; }
 
 case "${platform}/${arch}" in
